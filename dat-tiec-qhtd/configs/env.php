@@ -1,6 +1,6 @@
 <?php
 
-define('BASE_URL',          'http://localhost/BaseExam/');
+define('BASE_URL',          'http://localhost/dat-tiec-qhtd/');
 
 define('PATH_ROOT',         __DIR__ . '/../');
 
