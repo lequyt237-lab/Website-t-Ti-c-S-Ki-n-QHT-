@@ -1,6 +1,11 @@
 <?php 
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/configs/env.php';
+require_once __DIR__ . '/configs/helper.php';
 
 spl_autoload_register(function ($class) {    
     $fileName = "$class.php";
@@ -16,8 +21,5 @@ spl_autoload_register(function ($class) {
     }
 });
 
-require_once './configs/env.php';
-require_once './configs/helper.php';
-
 // Điều hướng
-require_once './routes/index.php';
+require_once __DIR__ . '/routes/index.php';

@@ -1,6 +1,18 @@
 <?php
 
-define('BASE_URL',          'http://localhost/dat-tiec-qhtd/');
+// Tự động nhận diện BASE_URL linh hoạt
+if (!defined('BASE_URL')) {
+    if (php_sapi_name() === 'cli' || empty($_SERVER['HTTP_HOST'])) {
+        define('BASE_URL', 'http://localhost/dat-tiec-qhtd/');
+    } else {
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+        $host = $_SERVER['HTTP_HOST'];
+        $scriptDir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
+        $scriptDir = str_replace('\\', '/', $scriptDir);
+        $scriptDir = rtrim($scriptDir, '/') . '/';
+        define('BASE_URL', $protocol . $host . $scriptDir);
+    }
+}
 
 define('PATH_ROOT',         __DIR__ . '/../');
 
@@ -20,7 +32,7 @@ define('DB_HOST',     'localhost');
 define('DB_PORT',     '3306');
 define('DB_USERNAME', 'root');
 define('DB_PASSWORD', '');
-define('DB_NAME',     'qht_banquet');
+define('DB_NAME',     'ql_dat_tiec');
 define('DB_OPTIONS', [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,

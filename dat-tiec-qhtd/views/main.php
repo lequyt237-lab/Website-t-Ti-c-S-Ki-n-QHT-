@@ -141,7 +141,39 @@
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
         <div class="vr-nav"></div>
-        <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q"><i class="bi bi-person"></i></a>
+        <?php if (is_logged_in()): 
+            $currentUser = auth_user();
+        ?>
+          <div class="dropdown ms-1">
+            <a href="#" class="nav-link-q dropdown-toggle d-flex align-items-center gap-1 text-decoration-none" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person-circle fs-5" style="color:var(--terra)"></i>
+              <span class="fw-medium text-truncate" style="max-width: 140px;"><?= htmlspecialchars($currentUser['ho_ten']) ?></span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="border-color: var(--stone); font-size: 0.85rem;">
+              <li class="px-3 py-2 border-bottom">
+                <div class="fw-semibold text-dark"><?= htmlspecialchars($currentUser['ho_ten']) ?></div>
+                <div class="text-muted small text-truncate" style="max-width: 180px;"><?= htmlspecialchars($currentUser['email']) ?></div>
+                <?php if (is_admin()): ?>
+                  <span class="badge bg-danger mt-1">Quản Trị Viên</span>
+                <?php else: ?>
+                  <span class="badge bg-secondary mt-1">Thành Viên</span>
+                <?php endif; ?>
+              </li>
+              <li>
+                <a class="dropdown-item py-2 text-danger" href="<?= BASE_URL ?>?action=dang-xuat">
+                  <i class="bi bi-box-arrow-right me-2"></i>Đăng Xuất
+                </a>
+              </li>
+            </ul>
+          </div>
+        <?php else: ?>
+          <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q" title="Đăng nhập">
+            <i class="bi bi-person me-1"></i>Đăng Nhập
+          </a>
+          <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q" title="Đăng ký">
+            Đăng Ký
+          </a>
+        <?php endif; ?>
         <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-book ms-2">
           <i class="bi bi-calendar2-check me-1"></i> Đặt Bàn
         </a>
@@ -158,12 +190,54 @@
         <a href="<?= BASE_URL ?>?action=ban-phong" class="nav-link-q">Bàn &amp; Phòng</a>
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
-        <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
+        <?php if (is_logged_in()): 
+            $currentUser = auth_user();
+        ?>
+          <div class="p-2 rounded bg-light border" style="border-color:var(--stone)!important;">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-person-circle fs-4" style="color:var(--terra)"></i>
+              <div>
+                <div class="fw-bold"><?= htmlspecialchars($currentUser['ho_ten']) ?></div>
+                <div class="small text-muted"><?= htmlspecialchars($currentUser['email']) ?></div>
+              </div>
+            </div>
+          </div>
+          <a href="<?= BASE_URL ?>?action=dang-xuat" class="nav-link-q text-danger">
+            <i class="bi bi-box-arrow-right me-1"></i>Đăng Xuất
+          </a>
+        <?php else: ?>
+          <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
+          <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
+        <?php endif; ?>
         <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-book d-inline-block w-auto mt-1">Đặt Bàn Ngay</a>
       </div>
     </div>
   </div>
 </nav>
+
+<!-- FLASH MESSAGE TOAST / BANNER NẾU CÓ (DÀNH CHO TRANG CHỦ HOẶC CÁC TRANG KHÁC) -->
+<?php 
+  $globalSuccess = (!isset($view) || !str_contains($view, 'auth/')) ? get_flash('success') : null;
+  $globalError   = (!isset($view) || !str_contains($view, 'auth/')) ? get_flash('error') : null;
+?>
+<?php if ($globalSuccess || $globalError): ?>
+  <div class="container" style="position: fixed; top: 85px; left: 50%; transform: translateX(-50%); z-index: 1050; max-width: 600px;">
+    <?php if ($globalSuccess): ?>
+      <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #198754;">
+        <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+        <span><?= $globalSuccess ?></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <?php endif; ?>
+    <?php if ($globalError): ?>
+      <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" style="border-left: 4px solid #dc3545;">
+        <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
+        <span><?= $globalError ?></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    <?php endif; ?>
+  </div>
+<?php endif; ?>
 
 <!-- PAGE CONTENT -->
 <?php if (isset($view)) require_once PATH_VIEW . $view . '.php'; ?>
