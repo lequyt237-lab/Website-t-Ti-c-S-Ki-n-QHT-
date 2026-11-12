@@ -1,6 +1,7 @@
 <?php
 
-define('BASE_URL',          'http://localhost/dat-tiec-qhtd/');
+$isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1']);
+define('BASE_URL', $isLocal ? 'http://localhost/dat-tiec-qhtd/' : 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/');
 
 define('PATH_ROOT',         __DIR__ . '/../');
 

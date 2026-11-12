@@ -13,7 +13,7 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           local-dir: ./dat-tiec-qhtd/
-          server-dir: /dat-tiec-qht.nfy.fyi/htdocs/
+          server-dir: /htdocs/
           exclude: |
             **/.git*
             **/.git*/**
