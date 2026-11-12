@@ -1,5 +1,6 @@
 <?php
 
+feat-dk-dn
 // Tự động nhận diện BASE_URL linh hoạt
 if (!defined('BASE_URL')) {
     if (php_sapi_name() === 'cli' || empty($_SERVER['HTTP_HOST'])) {
@@ -13,6 +14,10 @@ if (!defined('BASE_URL')) {
         define('BASE_URL', $protocol . $host . $scriptDir);
     }
 }
+=======
+$isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1']);
+define('BASE_URL', $isLocal ? 'http://localhost/dat-tiec-qhtd/' : 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/');
+main
 
 define('PATH_ROOT',         __DIR__ . '/../');
 
