@@ -154,18 +154,7 @@
             <i class="bi bi-box-arrow-right"></i>
           </a>
         <?php else: ?>
-          <?php if (isset($_SESSION['user'])): ?>
-          <?php if ($_SESSION['user']['vai_tro'] === 'admin'): ?>
-            <a href="<?= BASE_URL ?>?action=admin" class="nav-link-q text-primary fw-bold">
-              <i class="bi bi-shield-lock-fill"></i> Trang Quản Trị (Admin)
-            </a>
-          <?php endif; ?>
-          <span class="nav-link-q text-muted">Xin chào, <?= htmlspecialchars($_SESSION['user']['ho_ten']) ?></span>
-          <a href="<?= BASE_URL ?>?action=dang-xuat" class="nav-link-q text-danger">Đăng Xuất</a>
-        <?php else: ?>
           <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
-          <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
-        <?php endif; ?>
           <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
         <?php endif; ?>
         <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-book ms-2">
