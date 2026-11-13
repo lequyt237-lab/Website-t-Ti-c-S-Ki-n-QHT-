@@ -141,7 +141,33 @@
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
         <div class="vr-nav"></div>
-        <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q"><i class="bi bi-person"></i></a>
+        <?php if (isset($_SESSION['user'])): ?>
+          <?php if ($_SESSION['user']['vai_tro'] === 'admin'): ?>
+            <a href="<?= BASE_URL ?>?action=admin" class="btn btn-sm btn-outline-warning text-dark fw-bold me-1" style="font-size: 0.72rem; letter-spacing: 1px; border-radius: 4px;">
+              <i class="bi bi-shield-lock-fill me-1 text-danger"></i> Quản Trị
+            </a>
+          <?php endif; ?>
+          <span class="small fw-semibold text-secondary me-2">
+            <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user']['ho_ten']) ?>
+          </span>
+          <a href="<?= BASE_URL ?>?action=dang-xuat" class="nav-link-q text-danger" title="Đăng xuất" style="padding: 4px 8px !important;">
+            <i class="bi bi-box-arrow-right"></i>
+          </a>
+        <?php else: ?>
+          <?php if (isset($_SESSION['user'])): ?>
+          <?php if ($_SESSION['user']['vai_tro'] === 'admin'): ?>
+            <a href="<?= BASE_URL ?>?action=admin" class="nav-link-q text-primary fw-bold">
+              <i class="bi bi-shield-lock-fill"></i> Trang Quản Trị (Admin)
+            </a>
+          <?php endif; ?>
+          <span class="nav-link-q text-muted">Xin chào, <?= htmlspecialchars($_SESSION['user']['ho_ten']) ?></span>
+          <a href="<?= BASE_URL ?>?action=dang-xuat" class="nav-link-q text-danger">Đăng Xuất</a>
+        <?php else: ?>
+          <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
+          <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
+        <?php endif; ?>
+          <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
+        <?php endif; ?>
         <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-book ms-2">
           <i class="bi bi-calendar2-check me-1"></i> Đặt Bàn
         </a>
@@ -158,7 +184,18 @@
         <a href="<?= BASE_URL ?>?action=ban-phong" class="nav-link-q">Bàn &amp; Phòng</a>
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
-        <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
+        <?php if (isset($_SESSION['user'])): ?>
+          <?php if ($_SESSION['user']['vai_tro'] === 'admin'): ?>
+            <a href="<?= BASE_URL ?>?action=admin" class="nav-link-q text-primary fw-bold">
+              <i class="bi bi-shield-lock-fill"></i> Trang Quản Trị (Admin)
+            </a>
+          <?php endif; ?>
+          <span class="nav-link-q text-muted">Xin chào, <?= htmlspecialchars($_SESSION['user']['ho_ten']) ?></span>
+          <a href="<?= BASE_URL ?>?action=dang-xuat" class="nav-link-q text-danger">Đăng Xuất</a>
+        <?php else: ?>
+          <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
+          <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
+        <?php endif; ?>
         <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-book d-inline-block w-auto mt-1">Đặt Bàn Ngay</a>
       </div>
     </div>
