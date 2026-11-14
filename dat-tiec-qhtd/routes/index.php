@@ -12,6 +12,13 @@ match ($action) {
     'xu-ly-dang-ky'     => (new AuthController)->register(),
     'dang-xuat'         => (new AuthController)->logout(),
 
+    // Thực đơn & Ẩm thực
+    'thuc-don'          => (new MenuController)->index(),
+
+    // Đặt bàn / Đặt phòng
+    'dat-ban'           => header('Location: ' . BASE_URL . '#dat-ban') ?: exit,
+    'xu-ly-dat-ban'     => (new BookingController)->submit(),
+
     // Quản trị viên (Admin)
     'admin'             => (new AdminController)->index(),
 

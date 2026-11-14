@@ -249,7 +249,7 @@
                     tận tâm cho sinh nhật, mừng thọ, họp mặt gia đình hay tiệc công ty.
                 </p>
                 <div class="d-flex flex-wrap gap-3">
-                    <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-primary-q">
+                    <a href="#dat-ban" class="btn-primary-q">
                         <i class="bi bi-calendar2-check me-2"></i>Đặt Bàn Ngay
                     </a>
                     <a href="<?= BASE_URL ?>?action=thuc-don" class="btn-ghost-q">
@@ -424,6 +424,268 @@
     </div>
 </section>
 
+<!-- ═══ BOOKING FORM SECTION ═══ -->
+<section class="booking-sec py-5" id="dat-ban" style="background: var(--cream); border-top: 1px solid var(--stone); border-bottom: 1px solid var(--stone);">
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+
+                <div class="text-center mb-4">
+                    <div class="sec-eyebrow justify-content-center">Đặt Bàn Trực Tuyến</div>
+                    <h2 class="sec-title">Đặt Bàn &amp; Phòng Tiệc <em>Gia Đình</em></h2>
+                    <p class="sec-body mx-auto mt-2" style="max-width: 620px;">
+                        Chỉ vài thao tác đơn giản, nhà hàng sẽ chuẩn bị không gian ấm cúng, sang trọng và chu đáo nhất cho bữa tiệc của bạn.
+                    </p>
+                </div>
+
+                <!-- Thông báo thành công -->
+                <?php if (isset($_SESSION['booking_success'])): ?>
+                    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4 border-0" role="alert" style="border-radius: 10px; background: #e8f5e9; color: #1b5e20;">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-check-circle-fill fs-5 mt-1 text-success"></i>
+                            <div><?= $_SESSION['booking_success']; unset($_SESSION['booking_success']); ?></div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Thông báo lỗi nếu có -->
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4 border-0" role="alert" style="border-radius: 10px;">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-exclamation-triangle-fill fs-5 mt-1 text-danger"></i>
+                            <div><?= $_SESSION['error']; unset($_SESSION['error']); ?></div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
+
+                <?php 
+                // Xử lý dữ liệu điền sẵn nếu đã đăng nhập hoặc nếu submit bị lỗi
+                $oldBooking = $_SESSION['booking_old'] ?? [];
+                unset($_SESSION['booking_old']);
+
+                $isLoggedIn = isset($_SESSION['user']);
+                $currentUser = $_SESSION['user'] ?? null;
+
+                $defaultName  = $oldBooking['ho_ten'] ?? ($currentUser['ho_ten'] ?? '');
+                $defaultPhone = $oldBooking['so_dien_thoai'] ?? ($currentUser['so_dien_thoai'] ?? '');
+                $defaultEmail = $oldBooking['email'] ?? ($currentUser['email'] ?? '');
+                ?>
+
+                <!-- Thẻ Form Đặt Tiệc -->
+                <div class="card border-0 shadow-sm" style="border-radius: 14px; background: #fff; border: 1.5px solid var(--stone) !important;">
+                    <div class="card-body p-4 p-md-5">
+
+                        <!-- Trạng thái đăng nhập -->
+                        <?php if ($isLoggedIn): ?>
+                            <div class="alert alert-light border d-flex align-items-center justify-content-between p-3 mb-4" style="border-radius: 8px; background: rgba(44, 74, 53, 0.04) !important; border-color: rgba(44,74,53,0.15) !important;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-person-check-fill text-success fs-5"></i>
+                                    <span class="small">
+                                        Đang đặt tiệc với tài khoản: <b><?= htmlspecialchars($currentUser['ho_ten']) ?></b> (Thông tin liên hệ đã được tự động điền)
+                                    </span>
+                                </div>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Khách hàng thành viên</span>
+                            </div>
+                        <?php else: ?>
+                            <div class="small text-muted mb-4 p-2 px-3 bg-light rounded-2 d-flex align-items-center gap-2">
+                                <i class="bi bi-info-circle text-primary"></i>
+                                <span>Bạn đã có tài khoản? <a href="<?= BASE_URL ?>?action=dang-nhap" class="fw-semibold text-decoration-none" style="color:var(--terra)">Đăng nhập ngay</a> để tự động điền thông tin và tích lũy ưu đãi.</span>
+                            </div>
+                        <?php endif; ?>
+
+                        <form action="<?= BASE_URL ?>?action=xu-ly-dat-ban" method="POST" id="bookingForm">
+                            <!-- Hàng 1: Thông tin người đặt -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="fw-bold small text-uppercase text-secondary" style="letter-spacing: 1px;">
+                                        <i class="bi bi-person-lines-fill me-1 text-primary"></i> 1. Thông Tin Người Đặt
+                                    </h6>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Họ và tên <span class="text-danger">*</span></label>
+                                    <input type="text" name="ho_ten" class="form-control" placeholder="Nguyễn Văn A" 
+                                           value="<?= htmlspecialchars($defaultName) ?>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Số điện thoại <span class="text-danger">*</span></label>
+                                    <input type="tel" name="so_dien_thoai" class="form-control" placeholder="0912 345 678" 
+                                           value="<?= htmlspecialchars($defaultPhone) ?>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Địa chỉ Email <span class="text-danger">*</span></label>
+                                    <input type="email" name="email" class="form-control" placeholder="email@example.com" 
+                                           value="<?= htmlspecialchars($defaultEmail) ?>" required>
+                                </div>
+                            </div>
+
+                            <hr style="border-color: var(--stone); opacity: 0.6;">
+
+                            <!-- Hàng 2: Chọn Vị trí & Loại dịp -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="fw-bold small text-uppercase text-secondary" style="letter-spacing: 1px;">
+                                        <i class="bi bi-geo-alt-fill me-1 text-danger"></i> 2. Chọn Không Gian &amp; Dịp Tiệc
+                                    </h6>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Chọn Bàn hoặc Phòng riêng <span class="text-danger">*</span></label>
+                                    <select name="banphong_id" id="select_banphong" class="form-select" required>
+                                        <option value="">-- Chọn không gian phù hợp --</option>
+                                        <?php if (!empty($roomsAndTables)): ?>
+                                            <?php foreach ($roomsAndTables as $tbl): ?>
+                                                <?php 
+                                                $selected = ($oldBooking['banphong_id'] ?? 0) == $tbl['id'] ? 'selected' : '';
+                                                $extraText = $tbl['loai'] === 'phong_rieng' 
+                                                    ? ' [Phòng VIP - ' . $tbl['suc_chua'] . ' người' . ($tbl['phu_phi'] > 0 ? ' - Phụ phí: ' . number_format($tbl['phu_phi']) . 'đ' : '') . ']'
+                                                    : ' [Bàn sảnh - ' . $tbl['suc_chua'] . ' người]';
+                                                ?>
+                                                <option value="<?= $tbl['id'] ?>" data-capacity="<?= $tbl['suc_chua'] ?>" data-fee="<?= $tbl['phu_phi'] ?>" <?= $selected ?>>
+                                                    <?= htmlspecialchars($tbl['ten']) . $extraText ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <option value="1">Bàn A1 [Bàn sảnh - 8 người]</option>
+                                            <option value="4">Phòng Hoa Lan [Phòng VIP - 20 người - Phụ phí: 500,000đ]</option>
+                                            <option value="5">Phòng Trúc Xanh [Phòng VIP - 30 người - Phụ phí: 800,000đ]</option>
+                                        <?php endif; ?>
+                                    </select>
+                                    <div class="form-text small" id="table_hint">
+                                        <i class="bi bi-info-circle me-1"></i> Phòng riêng phù hợp tiệc ấm cúng, có trang trí theo yêu cầu.
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-semibold">Mục đích dùng bữa / Loại dịp <span class="text-danger">*</span></label>
+                                    <select name="loaidip_id" class="form-select" required>
+                                        <option value="">-- Chọn dịp (Ăn uống bạn bè, gia đình, sự kiện...) --</option>
+                                        <?php if (!empty($occasions)): ?>
+                                            <?php foreach ($occasions as $occ): ?>
+                                                <?php $selected = ($oldBooking['loaidip_id'] ?? 0) == $occ['id'] ? 'selected' : ''; ?>
+                                                <option value="<?= $occ['id'] ?>" <?= $selected ?>>
+                                                    <?= htmlspecialchars($occ['ten']) ?> (<?= htmlspecialchars($occ['mo_ta'] ?? '') ?>)
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <option value="5">Gặp gỡ bạn bè (Tụ họp bạn bè, ăn uống thân mật dưới sảnh)</option>
+                                            <option value="6">Bữa ăn thường ngày / Dịp khác (Đặt bàn dùng bữa thông thường)</option>
+                                            <option value="1">Sinh nhật (Tiệc kỷ niệm ngày sinh)</option>
+                                            <option value="2">Mừng thọ (Tiệc tri ân ông bà, cha mẹ)</option>
+                                            <option value="3">Họp mặt gia đình (Tiệc sum vầy gia đình)</option>
+                                            <option value="4">Tiệc công ty (Liên hoan, gặp mặt đối tác)</option>
+                                        <?php endif; ?>
+                                    </select>
+                                    <div class="form-text small">
+                                        <i class="bi bi-people me-1"></i> Đi ăn bạn bè 2–3 người dưới sảnh chọn <b>Gặp gỡ bạn bè</b> hoặc <b>Bữa ăn thường ngày</b>.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr style="border-color: var(--stone); opacity: 0.6;">
+
+                            <!-- Hàng 3: Thời gian & Số lượng khách -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="fw-bold small text-uppercase text-secondary" style="letter-spacing: 1px;">
+                                        <i class="bi bi-calendar3 me-1 text-success"></i> 3. Thời Gian &amp; Số Lượng Khách
+                                    </h6>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Ngày đặt tiệc <span class="text-danger">*</span></label>
+                                    <!-- CHẶN NGÀY TRONG QUÁ KHỨ BẰNG min=HÔM NAY -->
+                                    <input type="date" name="ngay_dat" id="input_ngay_dat" class="form-control" 
+                                           min="<?= date('Y-m-d') ?>" 
+                                           value="<?= htmlspecialchars($oldBooking['ngay_dat'] ?? date('Y-m-d')) ?>" required>
+                                    <div class="form-text small text-muted"><i class="bi bi-shield-check text-success"></i> Đã chặn ngày trong quá khứ</div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Khung giờ / Ca tiệc <span class="text-danger">*</span></label>
+                                    <select name="ca" class="form-select" required>
+                                        <option value="trua" <?= ($oldBooking['ca'] ?? '') === 'trua' ? 'selected' : '' ?>>
+                                            Ca trưa (11:00 – 14:00)
+                                        </option>
+                                        <option value="toi" <?= ($oldBooking['ca'] ?? 'toi') === 'toi' ? 'selected' : '' ?>>
+                                            Ca tối (17:00 – 21:30)
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-semibold">Số lượng khách <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="bi bi-people"></i></span>
+                                        <input type="number" name="so_nguoi" id="input_so_nguoi" class="form-control" 
+                                               min="1" max="100" 
+                                               value="<?= htmlspecialchars($oldBooking['so_nguoi'] ?? '4') ?>" required>
+                                        <span class="input-group-text bg-light text-muted">người</span>
+                                    </div>
+                                    <!-- Cảnh báo đoàn lớn -->
+                                    <div id="warning_doan_lon" class="alert alert-warning py-2 px-3 mt-2 small d-none" style="border-radius: 8px;">
+                                        <i class="bi bi-telephone-outbound-fill text-danger me-1"></i>
+                                        <b>Đoàn tiệc lớn (&gt; 30 người):</b> Quý khách vui lòng liên hệ trực tiếp Quản trị viên qua Hotline: <b><a href="tel:0123456789" class="text-dark fw-bold">0123 456 789</a></b> để được tư vấn thiết kế sảnh riêng và nhận ưu đãi đoàn tiệc.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr style="border-color: var(--stone); opacity: 0.6;">
+
+                            <!-- Hàng 4: Ghi chú & Yêu cầu đặc biệt -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <h6 class="fw-bold small text-uppercase text-secondary" style="letter-spacing: 1px;">
+                                        <i class="bi bi-chat-left-heart-fill me-1 text-warning"></i> 4. Yêu Cầu Đặc Biệt &amp; Ghi Chú
+                                    </h6>
+                                    <label class="form-label small fw-semibold">Ghi chú cho nhà hàng</label>
+                                    <textarea name="ghi_chu" class="form-control" rows="3" 
+                                              placeholder="Ví dụ: Đặt thêm bánh kem sinh nhật, yêu cầu trang trí bóng bay/hoa tươi mừng thọ, cần ghế trẻ em, chuẩn bị máy chiếu sân khấu..."><?= htmlspecialchars($oldBooking['ghi_chu'] ?? '') ?></textarea>
+                                    <div class="form-text small">Mọi yêu cầu trang trí hoặc chuẩn bị riêng sẽ được đội ngũ chăm sóc khách hàng tư vấn chi tiết khi gọi xác nhận.</div>
+                                </div>
+                            </div>
+
+                            <!-- Nút Xác Nhận -->
+                            <div class="text-center pt-2">
+                                <button type="submit" class="btn btn-primary-q px-5 py-3 fs-6 w-100 w-md-auto" style="border-radius: 6px;">
+                                    <i class="bi bi-calendar2-check-fill me-2"></i> GỬI YÊU CẦU ĐẶT BÀN NGAY
+                                </button>
+                                <div class="small text-muted mt-2">
+                                    <i class="bi bi-shield-lock me-1"></i> Thông tin của quý khách được bảo mật tuyệt đối. Miễn phí hủy trước 4 tiếng.
+                                </div>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Script kiểm tra số lượng người đoàn lớn & ràng buộc ngày -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputSoNguoi = document.getElementById('input_so_nguoi');
+        const warningDoanLon = document.getElementById('warning_doan_lon');
+
+        function checkSoNguoi() {
+            if (!inputSoNguoi || !warningDoanLon) return;
+            const val = parseInt(inputSoNguoi.value, 10);
+            if (val > 30) {
+                warningDoanLon.classList.remove('d-none');
+            } else {
+                warningDoanLon.classList.add('d-none');
+            }
+        }
+
+        if (inputSoNguoi) {
+            inputSoNguoi.addEventListener('input', checkSoNguoi);
+            checkSoNguoi(); // kiểm tra ngay khi tải trang
+        }
+    });
+</script>
+
 <!-- ═══ PROCESS ═══ -->
 <section class="proc-sec">
     <div class="container">
@@ -484,7 +746,7 @@
         <h2>Sẵn sàng cho<br><em>bữa tiệc tiếp theo?</em></h2>
         <p>Đặt bàn ngay hôm nay để nhận tư vấn miễn phí và ưu đãi dành cho khách mới.</p>
         <div>
-            <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-cta">
+            <a href="#dat-ban" class="btn-cta">
                 <i class="bi bi-calendar2-check me-1"></i> Đặt Bàn Ngay
             </a>
             <a href="<?= BASE_URL ?>?action=thuc-don" class="btn-cta-out">Xem Thực Đơn</a>

@@ -157,7 +157,7 @@
           <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
           <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
         <?php endif; ?>
-        <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-book ms-2">
+        <a href="<?= BASE_URL ?>#dat-ban" class="btn-book ms-2">
           <i class="bi bi-calendar2-check me-1"></i> Đặt Bàn
         </a>
       </div>
@@ -185,7 +185,7 @@
           <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
           <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
         <?php endif; ?>
-        <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-book d-inline-block w-auto mt-1">Đặt Bàn Ngay</a>
+        <a href="<?= BASE_URL ?>#dat-ban" class="btn-book d-inline-block w-auto mt-1">Đặt Bàn Ngay</a>
       </div>
     </div>
   </div>
