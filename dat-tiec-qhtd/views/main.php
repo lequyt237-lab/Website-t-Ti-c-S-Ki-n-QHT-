@@ -142,6 +142,9 @@
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
         <div class="vr-nav"></div>
         <?php if (isset($_SESSION['user'])): ?>
+          <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="nav-link-q <?= (($_GET['action'] ?? '') === 'lich-su-dat-ban') ? 'fw-bold text-success' : '' ?>" title="Xem lịch sử đặt bàn">
+            <i class="bi bi-clock-history me-1"></i>Lịch Sử
+          </a>
           <?php if ($_SESSION['user']['vai_tro'] === 'admin'): ?>
             <a href="<?= BASE_URL ?>?action=admin" class="btn btn-sm btn-outline-warning text-dark fw-bold me-1" style="font-size: 0.72rem; letter-spacing: 1px; border-radius: 4px;">
               <i class="bi bi-shield-lock-fill me-1 text-danger"></i> Quản Trị
@@ -154,6 +157,9 @@
             <i class="bi bi-box-arrow-right"></i>
           </a>
         <?php else: ?>
+          <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="nav-link-q" title="Tra cứu đơn đặt bàn">
+            <i class="bi bi-search me-1"></i>Tra Cứu
+          </a>
           <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
           <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
         <?php endif; ?>
@@ -174,6 +180,9 @@
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
         <?php if (isset($_SESSION['user'])): ?>
+          <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="nav-link-q fw-bold text-success">
+            <i class="bi bi-clock-history me-1"></i> Lịch Sử Đặt Bàn
+          </a>
           <?php if ($_SESSION['user']['vai_tro'] === 'admin'): ?>
             <a href="<?= BASE_URL ?>?action=admin" class="nav-link-q text-primary fw-bold">
               <i class="bi bi-shield-lock-fill"></i> Trang Quản Trị (Admin)
@@ -182,6 +191,9 @@
           <span class="nav-link-q text-muted">Xin chào, <?= htmlspecialchars($_SESSION['user']['ho_ten']) ?></span>
           <a href="<?= BASE_URL ?>?action=dang-xuat" class="nav-link-q text-danger">Đăng Xuất</a>
         <?php else: ?>
+          <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="nav-link-q">
+            <i class="bi bi-search me-1"></i> Tra Cứu Đặt Bàn
+          </a>
           <a href="<?= BASE_URL ?>?action=dang-nhap" class="nav-link-q">Đăng Nhập</a>
           <a href="<?= BASE_URL ?>?action=dang-ky" class="nav-link-q">Đăng Ký</a>
         <?php endif; ?>

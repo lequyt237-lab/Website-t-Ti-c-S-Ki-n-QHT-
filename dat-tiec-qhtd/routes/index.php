@@ -15,5 +15,10 @@ match ($action) {
     // Quản trị viên (Admin)
     'admin'             => (new AdminController)->index(),
 
+    // Lịch sử đặt bàn & Khách hàng
+    'lich-su-dat-ban'   => (new BookingController)->history(),
+    'chi-tiet-dat-ban'  => (new BookingController)->detail(),
+    'huy-dat-ban'       => (new BookingController)->cancel(),
+
     default             => (new HomeController)->index(),
 };
