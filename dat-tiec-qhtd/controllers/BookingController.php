@@ -177,10 +177,6 @@ class BookingController
         header('Location: ' . BASE_URL . '#dat-ban');
         exit;
     }
-}
-
-
-    }
 
     /**
      * Trang xem lịch sử đặt bàn của khách hàng

@@ -71,8 +71,6 @@ class BookingModel extends BaseModel
         }
         return false;
     }
-}
-
 
     /**
      * Lấy danh sách đơn đặt bàn của một người dùng theo trạng thái (nếu có)
