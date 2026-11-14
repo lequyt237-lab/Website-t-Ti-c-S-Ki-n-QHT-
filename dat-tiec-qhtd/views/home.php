@@ -235,6 +235,20 @@
 <!-- ═══ HERO ═══ -->
 <section class="hero">
     <div class="container position-relative" style="z-index:2">
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success alert-dismissible fade show border-0 shadow mb-4" role="alert" style="border-radius: 8px;">
+                <i class="bi bi-check-circle-fill me-2 fs-5 align-middle"></i>
+                <?= $_SESSION['success']; unset($_SESSION['success']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger alert-dismissible fade show border-0 shadow mb-4" role="alert" style="border-radius: 8px;">
+                <i class="bi bi-exclamation-triangle-fill me-2 fs-5 align-middle"></i>
+                <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
         <div class="row align-items-center g-5">
 
             <!-- Left -->
@@ -254,6 +268,9 @@
                     </a>
                     <a href="<?= BASE_URL ?>?action=thuc-don" class="btn-ghost-q">
                         Xem Thực Đơn
+                    </a>
+                    <a href="<?= isset($_SESSION['user']) ? '#lich-su-dat-ban' : BASE_URL . '?action=lich-su-dat-ban' ?>" class="btn-ghost-q" style="border-color: rgba(212,168,67,0.4); color: var(--amber-lt);">
+                        <i class="bi bi-clock-history me-1"></i>Lịch Sử Đặt Bàn
                     </a>
                 </div>
                 <div class="hero-stats">
@@ -312,6 +329,209 @@
             </div>
 
         </div>
+    </div>
+</section>
+
+<!-- ═══ LỊCH SỬ ĐẶT BÀN (DÀNH CHO KHÁCH HÀNG) ═══ -->
+<section class="home-history-sec py-5" id="lich-su-dat-ban" style="background: var(--cream-dk); border-bottom: 1px solid var(--stone);">
+    <div class="container">
+        
+        <?php if (isset($_SESSION['user'])): ?>
+            <!-- KHÁCH ĐÃ ĐĂNG NHẬP: HIỂN THỊ ĐƠN ĐẶT BÀN GẦN ĐÂY -->
+            <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+                <div>
+                    <div class="sec-eyebrow">
+                        <i class="bi bi-clock-history me-1 text-danger"></i>Lịch Sử Của Bạn
+                    </div>
+                    <h2 class="sec-title mb-1">Đơn Đặt Bàn <em>Gần Đây</em></h2>
+                    <p class="sec-body mb-0">
+                        Xin chào <strong><?= htmlspecialchars($_SESSION['user']['ho_ten']) ?></strong>! Dưới đây là các đơn tiệc gần nhất của bạn tại QHT Banquet.
+                    </p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="btn btn-outline-dark px-3 py-2 fw-semibold" style="border-radius: 4px; font-size: 0.85rem;">
+                        <i class="bi bi-collection me-1"></i> Xem tất cả lịch sử (<?= $bookingStats['total'] ?? 0 ?>)
+                    </a>
+                    <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-primary-q py-2 px-3" style="font-size: 0.8rem;">
+                        <i class="bi bi-calendar2-plus me-1"></i> Đặt Bàn Mới
+                    </a>
+                </div>
+            </div>
+
+            <!-- Thống kê nhanh trạng thái -->
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <span class="badge bg-white text-dark border px-3 py-2 fw-semibold shadow-sm">
+                    <i class="bi bi-journal-check text-primary me-1"></i> Tổng đơn: <strong><?= $bookingStats['total'] ?? 0 ?></strong>
+                </span>
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 fw-semibold shadow-sm">
+                    <i class="bi bi-hourglass-split me-1 text-warning"></i> Chờ duyệt: <strong><?= $bookingStats['cho_duyet'] ?? 0 ?></strong>
+                </span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fw-semibold shadow-sm">
+                    <i class="bi bi-check-circle-fill me-1 text-success"></i> Đã xác nhận: <strong><?= $bookingStats['da_duyet'] ?? 0 ?></strong>
+                </span>
+                <?php if (($bookingStats['da_huy'] ?? 0) > 0 || ($bookingStats['tu_choi'] ?? 0) > 0): ?>
+                    <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fw-semibold shadow-sm">
+                        <i class="bi bi-slash-circle me-1"></i> Đã hủy / Từ chối: <strong><?= ($bookingStats['da_huy'] ?? 0) + ($bookingStats['tu_choi'] ?? 0) ?></strong>
+                    </span>
+                <?php endif; ?>
+            </div>
+
+            <?php if (empty($userBookings)): ?>
+                <!-- Trạng thái chưa có đơn -->
+                <div class="card border-0 shadow-sm p-4 p-md-5 text-center" style="border-radius: 12px; background: #ffffff;">
+                    <div class="text-muted mb-3">
+                        <i class="bi bi-calendar-event" style="font-size: 3rem; color: var(--amber);"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Bạn chưa có đơn đặt bàn nào gần đây</h5>
+                    <p class="text-muted small mb-4" style="max-width: 480px; margin: 0 auto;">
+                        Hãy khám phá các set tiệc gia đình thượng hạng và không gian phòng riêng ấm cúng tại QHT Banquet ngay hôm nay!
+                    </p>
+                    <div>
+                        <a href="<?= BASE_URL ?>?action=dat-ban" class="btn-primary-q">
+                            <i class="bi bi-calendar2-check me-1"></i> Đặt Bàn Ngay
+                        </a>
+                    </div>
+                </div>
+            <?php else: ?>
+                <!-- Lưới danh sách đơn đặt bàn -->
+                <div class="row g-4">
+                    <?php foreach ($userBookings as $b): ?>
+                        <?php
+                        $statusMap = [
+                            'cho_duyet' => ['badge' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle', 'text' => 'Chờ duyệt', 'icon' => 'bi-hourglass-split'],
+                            'da_duyet'  => ['badge' => 'bg-success-subtle text-success border border-success-subtle', 'text' => 'Đã duyệt', 'icon' => 'bi-check-circle-fill'],
+                            'tu_choi'   => ['badge' => 'bg-danger-subtle text-danger border border-danger-subtle', 'text' => 'Từ chối', 'icon' => 'bi-x-circle-fill'],
+                            'da_huy'    => ['badge' => 'bg-secondary-subtle text-secondary border border-secondary-subtle', 'text' => 'Đã hủy', 'icon' => 'bi-slash-circle'],
+                        ];
+                        $st = $statusMap[$b['trang_thai']] ?? ['badge' => 'bg-secondary text-white', 'text' => $b['trang_thai'], 'icon' => 'bi-info-circle'];
+                        ?>
+                        <div class="col-lg-6">
+                            <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px; background: #ffffff; transition: transform 0.25s, box-shadow 0.25s;">
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fw-bold text-secondary">#DB<?= str_pad($b['id'], 4, '0', STR_PAD_LEFT) ?></span>
+                                        <span class="badge <?= $st['badge'] ?> px-2 py-1 fw-semibold">
+                                            <i class="bi <?= $st['icon'] ?> me-1"></i><?= $st['text'] ?>
+                                        </span>
+                                    </div>
+                                    <span class="text-muted small">
+                                        <i class="bi bi-clock me-1"></i><?= date('d/m/Y H:i', strtotime($b['ngay_tao'])) ?>
+                                    </span>
+                                </div>
+
+                                <div class="d-flex align-items-start justify-content-between mb-3 pb-3 border-bottom">
+                                    <div>
+                                        <h5 class="fw-bold text-dark mb-1">
+                                            <i class="bi bi-<?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'star-fill text-warning' : 'circle-fill text-success' ?> me-1" style="font-size: 0.85rem;"></i>
+                                            <?= htmlspecialchars($b['ten_ban'] ?? 'Bàn sảnh') ?>
+                                        </h5>
+                                        <span class="badge <?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-secondary border' ?> small">
+                                            <?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'Phòng VIP riêng tư' : 'Bàn sảnh chung' ?>
+                                        </span>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-semibold">
+                                            <i class="bi bi-balloon-heart me-1"></i><?= htmlspecialchars($b['ten_dip'] ?? 'Dịp tiệc') ?>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 small text-secondary mb-3">
+                                    <div class="col-sm-6">
+                                        <div><i class="bi bi-calendar3 text-danger me-1"></i> <strong>Ngày:</strong> <?= date('d/m/Y', strtotime($b['ngay_dat'])) ?></div>
+                                        <div>
+                                            <i class="bi bi-sun text-warning me-1"></i> <strong>Ca:</strong> 
+                                            <?= $b['ca'] === 'trua' ? 'Trưa (11:00-14:00)' : 'Tối (17:00-21:30)' ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div><i class="bi bi-people text-info me-1"></i> <strong>Khách:</strong> <?= $b['so_nguoi'] ?> người</div>
+                                        <div>
+                                            <i class="bi bi-journals text-primary me-1"></i> <strong>Thực đơn:</strong> 
+                                            <?= !empty($b['ten_set']) ? htmlspecialchars($b['ten_set']) : 'Gọi món lẻ' ?>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="pt-3 border-top d-flex justify-content-between align-items-center mt-auto">
+                                    <div>
+                                        <span class="text-muted small">Tổng tiền:</span>
+                                        <span class="fw-bold text-danger fs-5 ms-1"><?= number_format($b['tong_tien'], 0, ',', '.') ?> đ</span>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <?php if ($b['trang_thai'] === 'cho_duyet'): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-danger px-3 fw-semibold" onclick="promptCancelBooking(<?= $b['id'] ?>)">
+                                                <i class="bi bi-x-circle me-1"></i>Hủy bàn
+                                            </button>
+                                        <?php endif; ?>
+                                        <button type="button" class="btn btn-sm btn-dark px-3 fw-semibold" onclick="viewBookingDetail(<?= $b['id'] ?>)">
+                                            <i class="bi bi-eye me-1"></i>Chi tiết
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="btn btn-outline-dark px-4 py-2 fw-semibold">
+                        <i class="bi bi-clock-history me-1"></i> Xem Toàn Bộ Lịch Sử Đặt Bàn Của Bạn <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            <?php endif; ?>
+
+        <?php else: ?>
+            <!-- KHÁCH CHƯA ĐĂNG NHẬP: KHUNG TRA CỨU NHANH TRÊN TRANG CHỦ -->
+            <div class="row align-items-center g-4">
+                <div class="col-lg-7">
+                    <div class="sec-eyebrow">
+                        <i class="bi bi-search me-1 text-danger"></i>Tra Cứu Trực Tuyến
+                    </div>
+                    <h2 class="sec-title mb-2">Xem Lịch Sử <em>Đặt Bàn</em></h2>
+                    <p class="sec-body mb-4">
+                        Quý khách đã gửi yêu cầu đặt tiệc tại QHT Banquet? Nhập số điện thoại đặt bàn hoặc mã đơn để kiểm tra nhanh trạng thái phê duyệt và thông tin thực đơn.
+                    </p>
+
+                    <form action="<?= BASE_URL ?>" method="GET" class="d-flex flex-sm-row flex-column gap-2 mb-3">
+                        <input type="hidden" name="action" value="lich-su-dat-ban">
+                        <div class="input-group input-group-lg shadow-sm">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-phone"></i></span>
+                            <input type="text" name="search" class="form-control border-start-0" placeholder="Nhập số điện thoại hoặc mã đơn..." required>
+                        </div>
+                        <button type="submit" class="btn-primary-q text-nowrap py-3 px-4">
+                            <i class="bi bi-search me-1"></i> Tra Cứu
+                        </button>
+                    </form>
+                    <div class="small text-muted">
+                        <i class="bi bi-shield-check text-success me-1"></i> Thông tin tra cứu được bảo mật và hiển thị nhanh chóng.
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="p-4 rounded-3 border bg-white shadow-sm text-center">
+                        <div class="p-3 d-inline-block rounded-circle bg-warning-subtle text-warning mb-3">
+                            <i class="bi bi-person-circle fs-1"></i>
+                        </div>
+                        <h5 class="fw-bold mb-2">Tài Khoản QHT Banquet</h5>
+                        <p class="text-muted small mb-3">
+                            Đăng nhập tài khoản để tự động lưu trữ, theo dõi và quản lý mọi đơn đặt tiệc của gia đình bạn một cách trọn vẹn nhất.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="<?= BASE_URL ?>?action=dang-nhap" class="btn btn-warning fw-bold px-3 py-2">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Đăng Nhập
+                            </a>
+                            <a href="<?= BASE_URL ?>?action=dang-ky" class="btn btn-outline-secondary px-3 py-2">
+                                Đăng Ký Mới
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
     </div>
 </section>
 
@@ -754,3 +974,6 @@
         <a href="tel:0123456789" class="hotline">0123 456 789</a>
     </div>
 </section>
+
+<!-- MODAL CHI TIẾT & HỦY BÀN -->
+<?php require_once PATH_VIEW . 'booking_modal.php'; ?>
