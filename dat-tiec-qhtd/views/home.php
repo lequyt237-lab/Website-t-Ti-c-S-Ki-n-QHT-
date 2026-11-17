@@ -454,8 +454,9 @@
                                     <div class="col-sm-6">
                                         <div><i class="bi bi-calendar3 text-danger me-1"></i> <strong>Ngày:</strong> <?= date('d/m/Y', strtotime($b['ngay_dat'])) ?></div>
                                         <div>
-                                            <i class="bi bi-sun text-warning me-1"></i> <strong>Ca:</strong> 
-                                            <?= $b['ca'] === 'trua' ? 'Trưa (11:00-14:00)' : 'Tối (17:00-21:30)' ?>
+                                            <i class="bi bi-clock text-danger me-1"></i> <strong>Giờ đến:</strong> 
+                                            <?= !empty($b['gio_den']) ? date('H:i', strtotime($b['gio_den'])) : ($b['ca'] === 'trua' ? '11:30' : '18:30') ?>
+                                            <span class="badge bg-light text-secondary border small ms-1">Ca <?= $b['ca'] === 'trua' ? 'Trưa' : 'Tối' ?></span>
                                         </div>
                                     </div>
                                     <div class="col-sm-6">
@@ -827,15 +828,21 @@
                                 </div>
 
                                 <div class="col-md-4">
-                                    <label class="form-label small fw-semibold">Khung giờ / Ca tiệc <span class="text-danger">*</span></label>
-                                    <select name="ca" class="form-select" required>
-                                        <option value="trua" <?= ($oldBooking['ca'] ?? '') === 'trua' ? 'selected' : '' ?>>
-                                            Ca trưa (11:00 – 14:00)
-                                        </option>
-                                        <option value="toi" <?= ($oldBooking['ca'] ?? 'toi') === 'toi' ? 'selected' : '' ?>>
-                                            Ca tối (17:00 – 21:30)
-                                        </option>
-                                    </select>
+                                    <label class="form-label small fw-semibold">Giờ đến dùng tiệc <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="bi bi-clock"></i></span>
+                                        <input type="time" name="gio_den" id="input_gio_den" class="form-control" 
+                                               min="10:00" max="22:00" 
+                                               value="<?= htmlspecialchars($oldBooking['gio_den'] ?? '18:30') ?>" required>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="document.getElementById('input_gio_den').value='11:30'" style="font-size: 0.72rem;">11:30</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="document.getElementById('input_gio_den').value='12:00'" style="font-size: 0.72rem;">12:00</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="document.getElementById('input_gio_den').value='18:00'" style="font-size: 0.72rem;">18:00</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="document.getElementById('input_gio_den').value='18:30'" style="font-size: 0.72rem;">18:30</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="document.getElementById('input_gio_den').value='19:00'" style="font-size: 0.72rem;">19:00</button>
+                                    </div>
+                                    <div class="form-text small text-muted"><i class="bi bi-info-circle text-primary"></i> Phục vụ từ 10:00 – 22:00</div>
                                 </div>
 
                                 <div class="col-md-4">

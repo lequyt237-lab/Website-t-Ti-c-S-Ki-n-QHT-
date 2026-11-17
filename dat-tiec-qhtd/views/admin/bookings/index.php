@@ -190,19 +190,24 @@
                                 </div>
                             </td>
 
-                            <!-- Ngày & Ca -->
+                            <!-- Ngày & Giờ đến -->
                             <td>
                                 <div class="fw-semibold text-primary">
                                     <i class="bi bi-calendar3 me-1"></i><?= date('d/m/Y', strtotime($b['ngay_dat'])) ?>
                                 </div>
-                                <div class="small mt-1">
+                                <div class="mt-1 d-flex align-items-center gap-1 flex-wrap">
+                                    <?php if (!empty($b['gio_den'])): ?>
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold py-1 px-2">
+                                            <i class="bi bi-clock-fill me-1"></i><?= date('H:i', strtotime($b['gio_den'])) ?>
+                                        </span>
+                                    <?php endif; ?>
                                     <?php if ($b['ca'] === 'trua'): ?>
-                                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle py-1 px-2">
-                                            ☀️ Ca Trưa (11:00 - 14:00)
+                                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle py-1 px-2" style="font-size:0.75rem;">
+                                            ☀️ Trưa
                                         </span>
                                     <?php else: ?>
-                                        <span class="badge bg-dark-subtle text-dark border border-dark-subtle py-1 px-2">
-                                            🌙 Ca Tối (17:00 - 21:30)
+                                        <span class="badge bg-dark-subtle text-dark border border-dark-subtle py-1 px-2" style="font-size:0.75rem;">
+                                            🌙 Tối
                                         </span>
                                     <?php endif; ?>
                                 </div>

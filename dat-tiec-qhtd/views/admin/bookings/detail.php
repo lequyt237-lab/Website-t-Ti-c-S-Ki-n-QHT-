@@ -158,6 +158,9 @@
                         <div class="text-muted small text-uppercase fw-semibold mb-1">Thời gian tổ chức</div>
                         <div class="fw-bold fs-6 text-primary">
                             <i class="bi bi-calendar3 me-1"></i><?= date('d/m/Y', strtotime($booking['ngay_dat'])) ?>
+                            <?php if (!empty($booking['gio_den'])): ?>
+                                <span class="badge bg-danger ms-2 fs-6 py-1 px-2"><i class="bi bi-clock me-1"></i><?= date('H:i', strtotime($booking['gio_den'])) ?></span>
+                            <?php endif; ?>
                         </div>
                         <div class="small fw-semibold mt-1">
                             <?php if ($booking['ca'] === 'trua'): ?>
