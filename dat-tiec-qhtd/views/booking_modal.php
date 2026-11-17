@@ -235,10 +235,11 @@ function viewBookingDetail(bookingId) {
             document.getElementById('modalBookingDate').textContent = formattedDate;
 
             const shiftBadge = document.getElementById('modalBookingShift');
+            const timeStr = b.gio_den ? b.gio_den.substring(0, 5) + ' - ' : '';
             if (b.ca === 'trua') {
-                shiftBadge.innerHTML = '<i class="bi bi-sun-fill text-warning me-1"></i>Ca Trưa (11:00 - 14:00)';
+                shiftBadge.innerHTML = '<i class="bi bi-clock text-danger me-1"></i>' + timeStr + 'Ca Trưa';
             } else {
-                shiftBadge.innerHTML = '<i class="bi bi-moon-stars-fill text-primary me-1"></i>Ca Tối (17:00 - 21:30)';
+                shiftBadge.innerHTML = '<i class="bi bi-clock text-danger me-1"></i>' + timeStr + 'Ca Tối';
             }
 
             document.getElementById('modalGuestCount').textContent = b.so_nguoi + ' người';

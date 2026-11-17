@@ -29,7 +29,13 @@ class BookingController
         $loaidipId          = !empty($_POST['loaidip_id']) ? (int)$_POST['loaidip_id'] : null;
         $yeuCauPhongRieng   = !empty($_POST['yeu_cau_phong_rieng']) ? 1 : 0;
         $ngayDat            = trim($_POST['ngay_dat'] ?? '');
-        $ca                 = trim($_POST['ca'] ?? 'toi');
+        $gioDen             = trim($_POST['gio_den'] ?? '');
+        if (empty($gioDen)) {
+            $gioDen = '18:30';
+        }
+        // Tự động phân loại ca dựa trên giờ đến (trước 15h: ca trưa, từ 15h: ca tối)
+        $hour               = (int)explode(':', $gioDen)[0];
+        $ca                 = ($hour < 15) ? 'trua' : 'toi';
         $soNguoi            = (int)($_POST['so_nguoi'] ?? 1);
         $ghiChu             = trim($_POST['ghi_chu'] ?? '');
 
@@ -70,6 +76,7 @@ class BookingController
                 'loaidip_id'          => $loaidipId,
                 'yeu_cau_phong_rieng' => $yeuCauPhongRieng,
                 'ngay_dat'            => $ngayDat,
+                'gio_den'             => $gioDen,
                 'ca'                  => $ca,
                 'so_nguoi'            => $soNguoi,
                 'ghi_chu'             => $ghiChu,
@@ -109,6 +116,7 @@ class BookingController
             'loaidip_id'          => $loaidipId,
             'set_id'              => null,
             'ngay_dat'            => $ngayDat,
+            'gio_den'             => $gioDen,
             'ca'                  => $ca,
             'so_nguoi'            => $soNguoi,
             'yeu_cau_phong_rieng' => $yeuCauPhongRieng,
@@ -120,14 +128,15 @@ class BookingController
 
         if ($bookingId) {
             unset($_SESSION['booking_old']);
-            $caText = $ca === 'trua' ? 'Ca trưa (11:00 - 14:00)' : 'Ca tối (17:00 - 21:30)';
+            $caText = $ca === 'trua' ? 'Ca trưa' : 'Ca tối';
             $roomPrefText = $yeuCauPhongRieng ? '<span class="badge bg-warning text-dark">Có yêu cầu phòng riêng VIP</span>' : 'Bàn sảnh chung';
             $_SESSION['booking_success'] = sprintf(
                 '<b>Gửi yêu cầu đặt bàn thành công! (Mã đơn: #%d)</b><br>
-                 Ngày: <b>%s</b> (%s) | Số khách: <b>%d người</b> | Nhu cầu: %s.<br>
+                 Ngày đến: <b>%s</b> lúc <b>%s (%s)</b> | Số khách: <b>%d người</b> | Nhu cầu: %s.<br>
                  Yêu cầu của bạn đã được tiếp nhận. Quản trị viên sẽ tiến hành xếp bàn phù hợp và liên hệ qua SĐT <b>%s</b> trong vòng 15 phút để xác nhận.',
                 $bookingId,
                 date('d/m/Y', strtotime($ngayDat)),
+                date('H:i', strtotime($gioDen)),
                 $caText,
                 $soNguoi,
                 $roomPrefText,

@@ -274,8 +274,9 @@
                                     <div class="col-sm-6">
                                         <div><i class="bi bi-calendar3 text-danger me-1"></i> <strong>Ngày:</strong> <?= date('d/m/Y', strtotime($b['ngay_dat'])) ?></div>
                                         <div>
-                                            <i class="bi bi-sun text-warning me-1"></i> <strong>Ca:</strong> 
-                                            <?= $b['ca'] === 'trua' ? 'Ca Trưa (11:00-14:00)' : 'Ca Tối (17:00-21:30)' ?>
+                                            <i class="bi bi-clock text-danger me-1"></i> <strong>Giờ đến:</strong> 
+                                            <?= !empty($b['gio_den']) ? date('H:i', strtotime($b['gio_den'])) : ($b['ca'] === 'trua' ? '11:30' : '18:30') ?>
+                                            <span class="badge bg-light text-secondary border small ms-1">Ca <?= $b['ca'] === 'trua' ? 'Trưa' : 'Tối' ?></span>
                                         </div>
                                     </div>
                                     <div class="col-sm-6">
@@ -393,7 +394,11 @@
                                             <div class="text-muted small mb-2"><?= !empty($b['ten_dip']) ? htmlspecialchars($b['ten_dip']) : 'Không chỉ định dịp' ?></div>
                                             <div class="small text-secondary mb-2">
                                                 <div><i class="bi bi-calendar3 me-1 text-danger"></i> Ngày: <?= date('d/m/Y', strtotime($b['ngay_dat'])) ?></div>
-                                                <div><i class="bi bi-clock me-1 text-warning"></i> Ca: <?= $b['ca'] === 'trua' ? 'Trưa (11:00-14:00)' : 'Tối (17:00-21:30)' ?></div>
+                                                <div>
+                                                    <i class="bi bi-clock me-1 text-danger"></i> Giờ đến: 
+                                                    <?= !empty($b['gio_den']) ? date('H:i', strtotime($b['gio_den'])) : ($b['ca'] === 'trua' ? '11:30' : '18:30') ?>
+                                                    (Ca <?= $b['ca'] === 'trua' ? 'Trưa' : 'Tối' ?>)
+                                                </div>
                                                 <div><i class="bi bi-people me-1 text-info"></i> Số lượng: <?= $b['so_nguoi'] ?> khách</div>
                                             </div>
                                         </div>

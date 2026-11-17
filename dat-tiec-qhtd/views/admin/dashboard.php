@@ -134,9 +134,16 @@
                                         <?= !empty($b['ten_dip']) ? htmlspecialchars($b['ten_dip']) : '<span class="text-muted fst-italic" style="font-size: 0.8rem;">Không chỉ định</span>' ?>
                                     </td>
                                     <td>
-                                        <div><?= date('d/m/Y', strtotime($b['ngay_dat'])) ?></div>
+                                        <div>
+                                            <?= date('d/m/Y', strtotime($b['ngay_dat'])) ?>
+                                            <?php if (!empty($b['gio_den'])): ?>
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1" style="font-size:0.7rem;">
+                                                    <i class="bi bi-clock me-1"></i><?= date('H:i', strtotime($b['gio_den'])) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                         <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.7rem;">
-                                            Ca <?= $b['ca'] == 'trua' ? 'Trưa (11:00-14:00)' : 'Tối (17:00-21:30)' ?>
+                                            Ca <?= $b['ca'] == 'trua' ? 'Trưa' : 'Tối' ?>
                                         </span>
                                     </td>
                                     <td>
