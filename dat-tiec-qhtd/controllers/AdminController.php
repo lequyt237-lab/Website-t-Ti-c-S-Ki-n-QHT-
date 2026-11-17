@@ -65,5 +65,177 @@ class AdminController extends BaseModel
 
         require_once PATH_VIEW . 'admin/layout.php';
     }
+
+    /* ═══════════════════════════════════════════
+       QUẢN LÝ SET TIỆC
+    ═══════════════════════════════════════════ */
+
+    // Danh sách Set Tiệc
+    public function setTiec()
+    {
+        $model = new SetTiecModel();
+        $sets = $model->getAll();
+
+        $title = 'Quản Lý Thực Đơn Set Tiệc';
+        $adminView = 'set_tiec';
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    // Form thêm mới Set Tiệc
+    public function setTiecCreate()
+    {
+        $model = new SetTiecModel();
+        $allMonAn = $model->getAllMonAn();
+        $nhomMon = $model->getNhomMon();
+
+        $title = 'Thêm Set Tiệc Mới';
+        $adminView = 'set_tiec_form';
+        $formAction = BASE_URL . '?action=admin-set-tiec-store';
+        $set = null;
+        $selectedMonIds = [];
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    // Lưu Set Tiệc mới
+    public function setTiecStore()
+    {
+        $model = new SetTiecModel();
+
+        $data = [
+            'ten'             => trim($_POST['ten'] ?? ''),
+            'gia'             => floatval($_POST['gia'] ?? 0),
+            'so_nguoi_phu_hop'=> intval($_POST['so_nguoi_phu_hop'] ?? 0),
+            'mo_ta'           => trim($_POST['mo_ta'] ?? ''),
+        ];
+
+        // Validate
+        if (empty($data['ten']) || $data['gia'] <= 0 || $data['so_nguoi_phu_hop'] <= 0) {
+            $_SESSION['error'] = 'Vui lòng điền đầy đủ thông tin (tên, giá > 0, số người > 0).';
+            header('Location: ' . BASE_URL . '?action=admin-set-tiec-create');
+            exit;
+        }
+
+        $setId = $model->create($data);
+
+        // Thêm món vào set
+        $monIds = $_POST['mon_ids'] ?? [];
+        if (!empty($monIds)) {
+            $model->syncMonForSet($setId, $monIds);
+        }
+
+        $_SESSION['success'] = "Đã thêm Set Tiệc \"{$data['ten']}\" thành công!";
+        header('Location: ' . BASE_URL . '?action=admin-set-tiec');
+        exit;
+    }
+
+    // Form chỉnh sửa Set Tiệc
+    public function setTiecEdit()
+    {
+        $id = intval($_GET['id'] ?? 0);
+        $model = new SetTiecModel();
+        $set = $model->getById($id);
+
+        if (!$set) {
+            $_SESSION['error'] = 'Không tìm thấy Set Tiệc này.';
+            header('Location: ' . BASE_URL . '?action=admin-set-tiec');
+            exit;
+        }
+
+        $allMonAn = $model->getAllMonAn();
+        $nhomMon = $model->getNhomMon();
+        $selectedMonIds = $model->getMonIdsBySetId($id);
+
+        $title = 'Chỉnh Sửa: ' . htmlspecialchars($set['ten']);
+        $adminView = 'set_tiec_form';
+        $formAction = BASE_URL . '?action=admin-set-tiec-update&id=' . $id;
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    // Cập nhật Set Tiệc
+    public function setTiecUpdate()
+    {
+        $id = intval($_GET['id'] ?? 0);
+        $model = new SetTiecModel();
+        $set = $model->getById($id);
+
+        if (!$set) {
+            $_SESSION['error'] = 'Không tìm thấy Set Tiệc này.';
+            header('Location: ' . BASE_URL . '?action=admin-set-tiec');
+            exit;
+        }
+
+        $data = [
+            'ten'             => trim($_POST['ten'] ?? ''),
+            'gia'             => floatval($_POST['gia'] ?? 0),
+            'so_nguoi_phu_hop'=> intval($_POST['so_nguoi_phu_hop'] ?? 0),
+            'mo_ta'           => trim($_POST['mo_ta'] ?? ''),
+        ];
+
+        if (empty($data['ten']) || $data['gia'] <= 0 || $data['so_nguoi_phu_hop'] <= 0) {
+            $_SESSION['error'] = 'Vui lòng điền đầy đủ thông tin.';
+            header('Location: ' . BASE_URL . '?action=admin-set-tiec-edit&id=' . $id);
+            exit;
+        }
+
+        $model->update($id, $data);
+
+        // Đồng bộ danh sách món
+        $monIds = $_POST['mon_ids'] ?? [];
+        $model->syncMonForSet($id, $monIds);
+
+        $_SESSION['success'] = "Đã cập nhật Set Tiệc \"{$data['ten']}\" thành công!";
+        header('Location: ' . BASE_URL . '?action=admin-set-tiec');
+        exit;
+    }
+
+    // Xóa Set Tiệc
+    public function setTiecDelete()
+    {
+        $id = intval($_GET['id'] ?? 0);
+        $model = new SetTiecModel();
+        $set = $model->getById($id);
+
+        if (!$set) {
+            $_SESSION['error'] = 'Không tìm thấy Set Tiệc.';
+            header('Location: ' . BASE_URL . '?action=admin-set-tiec');
+            exit;
+        }
+
+        // Kiểm tra set có đang được dùng trong đơn đặt bàn không
+        if ($model->isSetInUse($id)) {
+            $_SESSION['error'] = "Không thể xóa \"{$set['ten']}\" vì đang có đơn đặt bàn sử dụng set này.";
+            header('Location: ' . BASE_URL . '?action=admin-set-tiec');
+            exit;
+        }
+
+        $model->delete($id);
+        $_SESSION['success'] = "Đã xóa Set Tiệc \"{$set['ten']}\" thành công!";
+        header('Location: ' . BASE_URL . '?action=admin-set-tiec');
+        exit;
+    }
+
+    // Chi tiết Set Tiệc (xem danh sách món)
+    public function setTiecDetail()
+    {
+        $id = intval($_GET['id'] ?? 0);
+        $model = new SetTiecModel();
+        $set = $model->getById($id);
+
+        if (!$set) {
+            $_SESSION['error'] = 'Không tìm thấy Set Tiệc.';
+            header('Location: ' . BASE_URL . '?action=admin-set-tiec');
+            exit;
+        }
+
+        $monTrongSet = $model->getMonBySetId($id);
+
+        $title = 'Chi Tiết: ' . htmlspecialchars($set['ten']);
+        $adminView = 'set_tiec_detail';
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
 }
 
