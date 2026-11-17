@@ -20,7 +20,10 @@ match ($action) {
     'xu-ly-dat-ban'     => (new BookingController)->submit(),
 
     // Quản trị viên (Admin)
-    'admin'             => (new AdminController)->index(),
+    'admin'                     => (new AdminController)->index(),
+    'admin-dat-ban'             => (new AdminController)->bookings(),
+    'admin-dat-ban-chi-tiet'    => (new AdminController)->bookingDetail(),
+    'admin-dat-ban-cap-nhat'    => (new AdminController)->updateBookingStatus(),
 
     // Lịch sử đặt bàn & Khách hàng
     'lich-su-dat-ban'   => (new BookingController)->history(),

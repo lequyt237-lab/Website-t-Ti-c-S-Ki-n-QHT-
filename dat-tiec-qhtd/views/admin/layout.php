@@ -294,7 +294,7 @@
         <ul class="sidebar-menu">
             <li class="menu-header">Tổng Quan</li>
             <li class="menu-item">
-                <a href="<?= BASE_URL ?>?action=admin" class="menu-link active">
+                <a href="<?= BASE_URL ?>?action=admin" class="menu-link <?= ($activeMenu ?? '') === 'dashboard' ? 'active' : '' ?>">
                     <i class="bi bi-grid-1x2-fill"></i>
                     <span>Bảng Điều Khiển</span>
                 </a>
@@ -302,7 +302,7 @@
 
             <li class="menu-header">Nghiệp Vụ Đặt Bàn</li>
             <li class="menu-item">
-                <a href="<?= BASE_URL ?>?action=admin" class="menu-link">
+                <a href="<?= BASE_URL ?>?action=admin-dat-ban" class="menu-link <?= ($activeMenu ?? '') === 'dat-ban' ? 'active' : '' ?>">
                     <i class="bi bi-calendar2-check-fill"></i>
                     <span>Duyệt Đặt Bàn</span>
                 </a>
