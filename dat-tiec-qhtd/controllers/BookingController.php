@@ -23,15 +23,15 @@ class BookingController
             exit;
         }
 
-        $hoTen       = trim($_POST['ho_ten'] ?? '');
-        $soDienThoai = trim($_POST['so_dien_thoai'] ?? '');
-        $email       = trim($_POST['email'] ?? '');
-        $banphongId  = (int)($_POST['banphong_id'] ?? 0);
-        $loaidipId   = (int)($_POST['loaidip_id'] ?? 0);
-        $ngayDat     = trim($_POST['ngay_dat'] ?? '');
-        $ca          = trim($_POST['ca'] ?? 'toi');
-        $soNguoi     = (int)($_POST['so_nguoi'] ?? 1);
-        $ghiChu      = trim($_POST['ghi_chu'] ?? '');
+        $hoTen              = trim($_POST['ho_ten'] ?? '');
+        $soDienThoai        = trim($_POST['so_dien_thoai'] ?? '');
+        $email              = trim($_POST['email'] ?? '');
+        $loaidipId          = !empty($_POST['loaidip_id']) ? (int)$_POST['loaidip_id'] : null;
+        $yeuCauPhongRieng   = !empty($_POST['yeu_cau_phong_rieng']) ? 1 : 0;
+        $ngayDat            = trim($_POST['ngay_dat'] ?? '');
+        $ca                 = trim($_POST['ca'] ?? 'toi');
+        $soNguoi            = (int)($_POST['so_nguoi'] ?? 1);
+        $ghiChu             = trim($_POST['ghi_chu'] ?? '');
 
         // 1. Kiểm tra thông tin bắt buộc
         $errors = [];
@@ -43,12 +43,6 @@ class BookingController
         }
         if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Vui lòng nhập địa chỉ email hợp lệ.';
-        }
-        if ($banphongId <= 0) {
-            $errors[] = 'Vui lòng chọn bàn hoặc phòng tiệc.';
-        }
-        if ($loaidipId <= 0) {
-            $errors[] = 'Vui lòng chọn loại dịp tổ chức tiệc.';
         }
 
         // 2. CHẶN THỜI GIAN TRONG QUÁ KHỨ
@@ -66,49 +60,19 @@ class BookingController
             $errors[] = 'Với đoàn tiệc lớn trên 30 khách, quý khách vui lòng liên hệ trực tiếp Quản trị viên qua Hotline: 0123 456 789 để được bố trí sảnh riêng.';
         }
 
-        // 4. Lấy thông tin bàn/phòng và kiểm tra sức chứa
-        $table = null;
-        if ($banphongId > 0) {
-            $table = $this->bookingModel->getTableById($banphongId);
-            if (!$table) {
-                $errors[] = 'Bàn hoặc phòng được chọn không tồn tại trong hệ thống.';
-            } elseif ($soNguoi > $table['suc_chua']) {
-                $errors[] = sprintf(
-                    'Số lượng khách (%d người) vượt quá sức chứa của %s (tối đa %d người). Quý khách vui lòng chọn phòng lớn hơn.',
-                    $soNguoi,
-                    htmlspecialchars($table['ten']),
-                    $table['suc_chua']
-                );
-            }
-        }
-
-        // 5. Kiểm tra trùng lịch đặt (chống trùng bàn/phòng trong cùng 1 ngày và ca)
-        if (empty($errors) && $table) {
-            $isBooked = $this->bookingModel->checkTableBooked($banphongId, $ngayDat, $ca);
-            if ($isBooked) {
-                $caText = $ca === 'trua' ? 'Ca trưa (11:00 - 14:00)' : 'Ca tối (17:00 - 21:30)';
-                $errors[] = sprintf(
-                    'Rất tiếc! %s đã có khách đặt vào %s ngày %s. Quý khách vui lòng chọn vị trí hoặc ca khác.',
-                    htmlspecialchars($table['ten']),
-                    $caText,
-                    date('d/m/Y', strtotime($ngayDat))
-                );
-            }
-        }
-
         // Nếu có lỗi -> Lưu session và chuyển về form
         if (!empty($errors)) {
             $_SESSION['error'] = implode('<br>', $errors);
             $_SESSION['booking_old'] = [
-                'ho_ten'        => $hoTen,
-                'so_dien_thoai' => $soDienThoai,
-                'email'         => $email,
-                'banphong_id'   => $banphongId,
-                'loaidip_id'    => $loaidipId,
-                'ngay_dat'      => $ngayDat,
-                'ca'            => $ca,
-                'so_nguoi'      => $soNguoi,
-                'ghi_chu'       => $ghiChu,
+                'ho_ten'              => $hoTen,
+                'so_dien_thoai'       => $soDienThoai,
+                'email'               => $email,
+                'loaidip_id'          => $loaidipId,
+                'yeu_cau_phong_rieng' => $yeuCauPhongRieng,
+                'ngay_dat'            => $ngayDat,
+                'ca'                  => $ca,
+                'so_nguoi'            => $soNguoi,
+                'ghi_chu'             => $ghiChu,
             ];
             header('Location: ' . BASE_URL . '#dat-ban');
             exit;
@@ -138,36 +102,35 @@ class BookingController
             }
         }
 
-        // 7. Tính tổng tiền tạm tính (Phụ phí phòng riêng nếu có)
-        $tongTien = (float)($table['phu_phi'] ?? 0);
-
-        // 8. Tạo đơn đặt bàn
+        // 7. Tạo đơn đặt bàn (Bàn phòng do Quản trị viên sắp xếp sau khi kiểm tra)
         $bookingId = $this->bookingModel->createBooking([
-            'nguoidung_id'    => $nguoidungId,
-            'banphong_id'     => $banphongId,
-            'loaidip_id'      => $loaidipId,
-            'set_id'          => null,
-            'ngay_dat'        => $ngayDat,
-            'ca'              => $ca,
-            'so_nguoi'        => $soNguoi,
-            'gia_set_luc_dat' => null,
-            'tong_tien'       => $tongTien,
-            'trang_thai'      => 'cho_duyet',
-            'ghi_chu'         => $ghiChu,
+            'nguoidung_id'        => $nguoidungId,
+            'banphong_id'         => null,
+            'loaidip_id'          => $loaidipId,
+            'set_id'              => null,
+            'ngay_dat'            => $ngayDat,
+            'ca'                  => $ca,
+            'so_nguoi'            => $soNguoi,
+            'yeu_cau_phong_rieng' => $yeuCauPhongRieng,
+            'gia_set_luc_dat'     => null,
+            'tong_tien'           => 0,
+            'trang_thai'          => 'cho_duyet',
+            'ghi_chu'             => $ghiChu,
         ]);
 
         if ($bookingId) {
             unset($_SESSION['booking_old']);
-            $caText = $ca === 'trua' ? 'Ca trưa' : 'Ca tối';
+            $caText = $ca === 'trua' ? 'Ca trưa (11:00 - 14:00)' : 'Ca tối (17:00 - 21:30)';
+            $roomPrefText = $yeuCauPhongRieng ? '<span class="badge bg-warning text-dark">Có yêu cầu phòng riêng VIP</span>' : 'Bàn sảnh chung';
             $_SESSION['booking_success'] = sprintf(
                 '<b>Gửi yêu cầu đặt bàn thành công! (Mã đơn: #%d)</b><br>
-                 Vị trí: <b>%s</b> | Ngày: <b>%s</b> (%s) | Khách: <b>%d người</b>.<br>
-                 Bộ phận chăm sóc khách hàng của QHT Banquet sẽ liên hệ qua SĐT <b>%s</b> trong vòng 15 phút để xác nhận.',
+                 Ngày: <b>%s</b> (%s) | Số khách: <b>%d người</b> | Nhu cầu: %s.<br>
+                 Yêu cầu của bạn đã được tiếp nhận. Quản trị viên sẽ tiến hành xếp bàn phù hợp và liên hệ qua SĐT <b>%s</b> trong vòng 15 phút để xác nhận.',
                 $bookingId,
-                htmlspecialchars($table['ten']),
                 date('d/m/Y', strtotime($ngayDat)),
                 $caText,
                 $soNguoi,
+                $roomPrefText,
                 htmlspecialchars($soDienThoai)
             );
         } else {

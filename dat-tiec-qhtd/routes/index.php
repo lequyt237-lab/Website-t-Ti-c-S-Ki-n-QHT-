@@ -21,6 +21,9 @@ match ($action) {
 
     // Quản trị viên (Admin)
     'admin'                   => (new AdminController)->index(),
+    'admin-dat-ban'           => (new AdminController)->bookings(),
+    'admin-dat-ban-chi-tiet'  => (new AdminController)->bookingDetail(),
+    'admin-dat-ban-cap-nhat'  => (new AdminController)->updateBookingStatus(),
     'admin-set-tiec'          => (new AdminController)->setTiec(),
     'admin-set-tiec-create'   => (new AdminController)->setTiecCreate(),
     'admin-set-tiec-store'    => (new AdminController)->setTiecStore(),

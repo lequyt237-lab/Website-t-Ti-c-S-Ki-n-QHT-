@@ -48,22 +48,23 @@ class BookingModel extends BaseModel
     public function createBooking($data)
     {
         $sql = "INSERT INTO {$this->table} 
-                (nguoidung_id, banphong_id, loaidip_id, set_id, ngay_dat, ca, so_nguoi, gia_set_luc_dat, tong_tien, trang_thai, ghi_chu) 
+                (nguoidung_id, banphong_id, loaidip_id, set_id, ngay_dat, ca, so_nguoi, yeu_cau_phong_rieng, gia_set_luc_dat, tong_tien, trang_thai, ghi_chu) 
                 VALUES 
-                (:nguoidung_id, :banphong_id, :loaidip_id, :set_id, :ngay_dat, :ca, :so_nguoi, :gia_set_luc_dat, :tong_tien, :trang_thai, :ghi_chu)";
+                (:nguoidung_id, :banphong_id, :loaidip_id, :set_id, :ngay_dat, :ca, :so_nguoi, :yeu_cau_phong_rieng, :gia_set_luc_dat, :tong_tien, :trang_thai, :ghi_chu)";
         $stmt = $this->pdo->prepare($sql);
         $res = $stmt->execute([
-            ':nguoidung_id'     => $data['nguoidung_id'],
-            ':banphong_id'      => $data['banphong_id'],
-            ':loaidip_id'       => $data['loaidip_id'],
-            ':set_id'           => $data['set_id'] ?? null,
-            ':ngay_dat'         => $data['ngay_dat'],
-            ':ca'               => $data['ca'],
-            ':so_nguoi'         => $data['so_nguoi'],
-            ':gia_set_luc_dat'  => $data['gia_set_luc_dat'] ?? null,
-            ':tong_tien'        => $data['tong_tien'] ?? 0,
-            ':trang_thai'       => $data['trang_thai'] ?? 'cho_duyet',
-            ':ghi_chu'          => $data['ghi_chu'] ?? '',
+            ':nguoidung_id'        => $data['nguoidung_id'],
+            ':banphong_id'         => !empty($data['banphong_id']) ? $data['banphong_id'] : null,
+            ':loaidip_id'          => !empty($data['loaidip_id']) ? $data['loaidip_id'] : null,
+            ':set_id'              => $data['set_id'] ?? null,
+            ':ngay_dat'            => $data['ngay_dat'],
+            ':ca'                  => $data['ca'],
+            ':so_nguoi'            => $data['so_nguoi'],
+            ':yeu_cau_phong_rieng' => !empty($data['yeu_cau_phong_rieng']) ? 1 : 0,
+            ':gia_set_luc_dat'     => $data['gia_set_luc_dat'] ?? null,
+            ':tong_tien'           => $data['tong_tien'] ?? 0,
+            ':trang_thai'          => $data['trang_thai'] ?? 'cho_duyet',
+            ':ghi_chu'             => $data['ghi_chu'] ?? '',
         ]);
 
         if ($res) {

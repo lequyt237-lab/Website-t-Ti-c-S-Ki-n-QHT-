@@ -423,16 +423,29 @@
                                 <div class="d-flex align-items-start justify-content-between mb-3 pb-3 border-bottom">
                                     <div>
                                         <h5 class="fw-bold text-dark mb-1">
-                                            <i class="bi bi-<?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'star-fill text-warning' : 'circle-fill text-success' ?> me-1" style="font-size: 0.85rem;"></i>
-                                            <?= htmlspecialchars($b['ten_ban'] ?? 'Bàn sảnh') ?>
+                                            <?php if (!empty($b['ten_ban'])): ?>
+                                                <i class="bi bi-<?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'star-fill text-warning' : 'circle-fill text-success' ?> me-1" style="font-size: 0.85rem;"></i>
+                                                <?= htmlspecialchars($b['ten_ban']) ?>
+                                            <?php else: ?>
+                                                <i class="bi bi-clock-history text-secondary me-1" style="font-size: 0.85rem;"></i>
+                                                <span class="text-muted">Đang chờ xếp bàn</span>
+                                            <?php endif; ?>
                                         </h5>
-                                        <span class="badge <?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-secondary border' ?> small">
-                                            <?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'Phòng VIP riêng tư' : 'Bàn sảnh chung' ?>
-                                        </span>
+                                        <?php if (!empty($b['ten_ban'])): ?>
+                                            <span class="badge <?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-secondary border' ?> small">
+                                                <?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'Phòng VIP riêng tư' : 'Bàn sảnh chung' ?>
+                                            </span>
+                                        <?php elseif (!empty($b['yeu_cau_phong_rieng'])): ?>
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle small">
+                                                <i class="bi bi-door-closed me-1"></i> Yêu cầu phòng VIP
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge bg-light text-secondary border small">Bàn sảnh thường</span>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="text-end">
                                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-semibold">
-                                            <i class="bi bi-balloon-heart me-1"></i><?= htmlspecialchars($b['ten_dip'] ?? 'Dịp tiệc') ?>
+                                            <i class="bi bi-balloon-heart me-1"></i><?= htmlspecialchars($b['ten_dip'] ?? 'Dùng bữa tự do') ?>
                                         </span>
                                     </div>
                                 </div>
@@ -742,44 +755,37 @@
 
                             <hr style="border-color: var(--stone); opacity: 0.6;">
 
-                            <!-- Hàng 2: Chọn Vị trí & Loại dịp -->
+                            <!-- Hàng 2: Yêu cầu Phòng riêng & Loại dịp tiệc -->
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <h6 class="fw-bold small text-uppercase text-secondary" style="letter-spacing: 1px;">
-                                        <i class="bi bi-geo-alt-fill me-1 text-danger"></i> 2. Chọn Không Gian &amp; Dịp Tiệc
+                                        <i class="bi bi-geo-alt-fill me-1 text-danger"></i> 2. Không Gian &amp; Dịp Tiệc
                                     </h6>
                                 </div>
+
+                                <!-- Ô tích yêu cầu phòng riêng -->
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Chọn Bàn hoặc Phòng riêng <span class="text-danger">*</span></label>
-                                    <select name="banphong_id" id="select_banphong" class="form-select" required>
-                                        <option value="">-- Chọn không gian phù hợp --</option>
-                                        <?php if (!empty($roomsAndTables)): ?>
-                                            <?php foreach ($roomsAndTables as $tbl): ?>
-                                                <?php 
-                                                $selected = ($oldBooking['banphong_id'] ?? 0) == $tbl['id'] ? 'selected' : '';
-                                                $extraText = $tbl['loai'] === 'phong_rieng' 
-                                                    ? ' [Phòng VIP - ' . $tbl['suc_chua'] . ' người' . ($tbl['phu_phi'] > 0 ? ' - Phụ phí: ' . number_format($tbl['phu_phi']) . 'đ' : '') . ']'
-                                                    : ' [Bàn sảnh - ' . $tbl['suc_chua'] . ' người]';
-                                                ?>
-                                                <option value="<?= $tbl['id'] ?>" data-capacity="<?= $tbl['suc_chua'] ?>" data-fee="<?= $tbl['phu_phi'] ?>" <?= $selected ?>>
-                                                    <?= htmlspecialchars($tbl['ten']) . $extraText ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        <?php else: ?>
-                                            <option value="1">Bàn A1 [Bàn sảnh - 8 người]</option>
-                                            <option value="4">Phòng Hoa Lan [Phòng VIP - 20 người - Phụ phí: 500,000đ]</option>
-                                            <option value="5">Phòng Trúc Xanh [Phòng VIP - 30 người - Phụ phí: 800,000đ]</option>
-                                        <?php endif; ?>
-                                    </select>
-                                    <div class="form-text small" id="table_hint">
-                                        <i class="bi bi-info-circle me-1"></i> Phòng riêng phù hợp tiệc ấm cúng, có trang trí theo yêu cầu.
+                                    <label class="form-label small fw-semibold">Yêu cầu không gian riêng</label>
+                                    <div class="card p-3 border h-100 bg-light" style="border-radius: 8px;">
+                                        <div class="form-check d-flex align-items-center gap-2 mb-1">
+                                            <input class="form-check-input mt-0" type="checkbox" name="yeu_cau_phong_rieng" value="1" id="check_phong_rieng" 
+                                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer;" 
+                                                   <?= !empty($oldBooking['yeu_cau_phong_rieng']) ? 'checked' : '' ?>>
+                                            <label class="form-check-label fw-bold text-dark mb-0" for="check_phong_rieng" style="cursor: pointer;">
+                                                <i class="bi bi-door-closed-fill text-warning me-1"></i> Có yêu cầu phòng riêng (VIP)
+                                            </label>
+                                        </div>
+                                        <div class="form-text small text-muted mt-2 mb-0">
+                                            <i class="bi bi-info-circle me-1"></i> Tích chọn nếu quý khách cần không gian riêng tư. Vị trí bàn/phòng cụ thể sẽ do <b>Quản trị viên sắp xếp</b> phù hợp với số lượng khách của bạn.
+                                        </div>
                                     </div>
                                 </div>
 
+                                <!-- Loại dịp tiệc (không bắt buộc) -->
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-semibold">Mục đích dùng bữa / Loại dịp <span class="text-danger">*</span></label>
-                                    <select name="loaidip_id" class="form-select" required>
-                                        <option value="">-- Chọn dịp (Ăn uống bạn bè, gia đình, sự kiện...) --</option>
+                                    <label class="form-label small fw-semibold">Mục đích dùng bữa / Loại dịp <span class="text-muted fw-normal">(Không bắt buộc)</span></label>
+                                    <select name="loaidip_id" class="form-select">
+                                        <option value="">-- Chọn loại dịp tiệc (nếu có) --</option>
                                         <?php if (!empty($occasions)): ?>
                                             <?php foreach ($occasions as $occ): ?>
                                                 <?php $selected = ($oldBooking['loaidip_id'] ?? 0) == $occ['id'] ? 'selected' : ''; ?>
@@ -788,16 +794,16 @@
                                                 </option>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <option value="5">Gặp gỡ bạn bè (Tụ họp bạn bè, ăn uống thân mật dưới sảnh)</option>
-                                            <option value="6">Bữa ăn thường ngày / Dịp khác (Đặt bàn dùng bữa thông thường)</option>
                                             <option value="1">Sinh nhật (Tiệc kỷ niệm ngày sinh)</option>
                                             <option value="2">Mừng thọ (Tiệc tri ân ông bà, cha mẹ)</option>
                                             <option value="3">Họp mặt gia đình (Tiệc sum vầy gia đình)</option>
                                             <option value="4">Tiệc công ty (Liên hoan, gặp mặt đối tác)</option>
+                                            <option value="5">Gặp gỡ bạn bè (Tụ họp bạn bè, ăn uống thân mật)</option>
+                                            <option value="6">Bữa ăn thường ngày (Dùng bữa thông thường)</option>
                                         <?php endif; ?>
                                     </select>
-                                    <div class="form-text small">
-                                        <i class="bi bi-people me-1"></i> Đi ăn bạn bè 2–3 người dưới sảnh chọn <b>Gặp gỡ bạn bè</b> hoặc <b>Bữa ăn thường ngày</b>.
+                                    <div class="form-text small text-muted">
+                                        <i class="bi bi-balloon-heart me-1"></i> Không bắt buộc. Bạn có thể chọn để nhà hàng chuẩn bị phong cách trang trí hoặc phục vụ phù hợp.
                                     </div>
                                 </div>
                             </div>

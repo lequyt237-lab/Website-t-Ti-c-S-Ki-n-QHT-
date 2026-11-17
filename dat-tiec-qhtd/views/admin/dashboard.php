@@ -107,13 +107,32 @@
                         <?php else: ?>
                             <?php foreach ($recentBookings as $b): ?>
                                 <tr>
-                                    <td class="ps-3 fw-bold text-secondary">#<?= $b['id'] ?></td>
+                                    <td class="ps-3 fw-bold">
+                                        <a href="<?= BASE_URL ?>?action=admin-dat-ban-chi-tiet&id=<?= $b['id'] ?>" class="text-decoration-none text-primary" title="Xem chi tiết đơn">
+                                            #<?= $b['id'] ?>
+                                        </a>
+                                    </td>
                                     <td>
                                         <div class="fw-semibold"><?= htmlspecialchars($b['khach_hang']) ?></div>
                                         <div class="text-muted" style="font-size: 0.75rem;"><?= htmlspecialchars($b['so_dien_thoai']) ?></div>
                                     </td>
-                                    <td><span class="badge bg-light text-dark border"><?= htmlspecialchars($b['ten_ban']) ?></span></td>
-                                    <td><?= htmlspecialchars($b['ten_dip']) ?></td>
+                                    <td>
+                                        <?php if (empty($b['ten_ban'])): ?>
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-1 px-2" style="font-size: 0.75rem;">
+                                                <i class="bi bi-clock-history me-1"></i>Chưa xếp bàn
+                                            </span>
+                                            <?php if (!empty($b['yeu_cau_phong_rieng'])): ?>
+                                                <span class="badge ms-1" style="background:#f3e8ff; color:#7c3aed; border:1px solid #c4b5fd; font-size: 0.7rem;">
+                                                    <i class="bi bi-door-open me-1"></i>VIP
+                                                </span>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span class="badge bg-light text-dark border"><?= htmlspecialchars($b['ten_ban']) ?></span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?= !empty($b['ten_dip']) ? htmlspecialchars($b['ten_dip']) : '<span class="text-muted fst-italic" style="font-size: 0.8rem;">Không chỉ định</span>' ?>
+                                    </td>
                                     <td>
                                         <div><?= date('d/m/Y', strtotime($b['ngay_dat'])) ?></div>
                                         <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.7rem;">
