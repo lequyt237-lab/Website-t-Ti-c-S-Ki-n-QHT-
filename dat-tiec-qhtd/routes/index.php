@@ -20,7 +20,14 @@ match ($action) {
     'xu-ly-dat-ban'     => (new BookingController)->submit(),
 
     // Quản trị viên (Admin)
-    'admin'             => (new AdminController)->index(),
+    'admin'                   => (new AdminController)->index(),
+    'admin-set-tiec'          => (new AdminController)->setTiec(),
+    'admin-set-tiec-create'   => (new AdminController)->setTiecCreate(),
+    'admin-set-tiec-store'    => (new AdminController)->setTiecStore(),
+    'admin-set-tiec-edit'     => (new AdminController)->setTiecEdit(),
+    'admin-set-tiec-update'   => (new AdminController)->setTiecUpdate(),
+    'admin-set-tiec-delete'   => (new AdminController)->setTiecDelete(),
+    'admin-set-tiec-detail'   => (new AdminController)->setTiecDetail(),
 
     // Lịch sử đặt bàn & Khách hàng
     'lich-su-dat-ban'   => (new BookingController)->history(),

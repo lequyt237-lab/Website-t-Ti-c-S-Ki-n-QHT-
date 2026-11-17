@@ -290,11 +290,12 @@
             <span>Sang Trang Khách</span>
         </a>
 
+        <?php $currentAction = $_GET['action'] ?? 'admin'; ?>
         <!-- Menu các chức năng theo Use Case Sơ Đồ -->
         <ul class="sidebar-menu">
             <li class="menu-header">Tổng Quan</li>
             <li class="menu-item">
-                <a href="<?= BASE_URL ?>?action=admin" class="menu-link active">
+                <a href="<?= BASE_URL ?>?action=admin" class="menu-link <?= $currentAction === 'admin' ? 'active' : '' ?>">
                     <i class="bi bi-grid-1x2-fill"></i>
                     <span>Bảng Điều Khiển</span>
                 </a>
@@ -316,7 +317,7 @@
 
             <li class="menu-header">Ẩm Thực & Sự Kiện</li>
             <li class="menu-item">
-                <a href="<?= BASE_URL ?>?action=admin" class="menu-link">
+                <a href="<?= BASE_URL ?>?action=admin-set-tiec" class="menu-link <?= str_starts_with($currentAction, 'admin-set-tiec') ? 'active' : '' ?>">
                     <i class="bi bi-egg-fried"></i>
                     <span>Thực Đơn & Set Tiệc</span>
                 </a>
