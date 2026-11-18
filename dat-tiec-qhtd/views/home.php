@@ -478,6 +478,11 @@
                                                 <i class="bi bi-x-circle me-1"></i>Hủy bàn
                                             </button>
                                         <?php endif; ?>
+                                        <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
+                                            <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">
+                                                <i class="bi bi-cart-plus me-1"></i>Đặt món
+                                            </a>
+                                        <?php endif; ?>
                                         <button type="button" class="btn btn-sm btn-dark px-3 fw-semibold" onclick="viewBookingDetail(<?= $b['id'] ?>)">
                                             <i class="bi bi-eye me-1"></i>Chi tiết
                                         </button>

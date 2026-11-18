@@ -264,5 +264,127 @@ class BookingModel extends BaseModel
         $stmt->execute($params);
         return $stmt->fetchAll();
     }
+
+    /**
+     * Lưu danh sách món ăn và set tiệc cho đơn đặt bàn, cập nhật lại tổng tiền
+     */
+    public function saveBookingDishes($bookingId, array $dishes, $setId = null, $extraNote = null)
+    {
+        try {
+            $this->pdo->beginTransaction();
+
+            // 1. Kiểm tra đơn đặt bàn
+            $stmt = $this->pdo->prepare("SELECT * FROM {$this->table} WHERE id = :id FOR UPDATE");
+            $stmt->execute([':id' => $bookingId]);
+            $booking = $stmt->fetch();
+            if (!$booking) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            // 2. Xóa các món cũ trong chitiet_mon của đơn này
+            $delStmt = $this->pdo->prepare("DELETE FROM chitiet_mon WHERE datban_id = :datban_id");
+            $delStmt->execute([':datban_id' => $bookingId]);
+
+            // 3. Chèn các món mới vào chitiet_mon và tính tổng tiền món
+            $totalDishesPrice = 0;
+            if (!empty($dishes)) {
+                $monIds = array_keys($dishes);
+                $monIds = array_filter($monIds, fn($id) => is_numeric($id) && (int)$id > 0);
+
+                if (!empty($monIds)) {
+                    $inClause = implode(',', array_fill(0, count($monIds), '?'));
+                    $stmtMon = $this->pdo->prepare("SELECT id, gia FROM mon_an WHERE id IN ($inClause)");
+                    $stmtMon->execute(array_values($monIds));
+                    $monPrices = $stmtMon->fetchAll(PDO::FETCH_KEY_PAIR);
+
+                    $insertStmt = $this->pdo->prepare("
+                        INSERT INTO chitiet_mon (datban_id, mon_id, so_luong, don_gia) 
+                        VALUES (:datban_id, :mon_id, :so_luong, :don_gia)
+                    ");
+
+                    foreach ($dishes as $monId => $qty) {
+                        $monId = (int)$monId;
+                        $qty = (int)$qty;
+                        if ($qty > 0 && isset($monPrices[$monId])) {
+                            $unitPrice = (float)$monPrices[$monId];
+                            $insertStmt->execute([
+                                ':datban_id' => $bookingId,
+                                ':mon_id'    => $monId,
+                                ':so_luong'   => $qty,
+                                ':don_gia'    => $unitPrice,
+                            ]);
+                            $totalDishesPrice += ($unitPrice * $qty);
+                        }
+                    }
+                }
+            }
+
+            // 4. Xử lý Set tiệc nếu có
+            $totalSetPrice = 0;
+            $setPriceLucDat = null;
+            if (!empty($setId)) {
+                $stmtSet = $this->pdo->prepare("SELECT id, gia FROM set_tiec WHERE id = :id LIMIT 1");
+                $stmtSet->execute([':id' => (int)$setId]);
+                $setRow = $stmtSet->fetch();
+                if ($setRow) {
+                    $totalSetPrice = (float)$setRow['gia'];
+                    $setPriceLucDat = $totalSetPrice;
+                    $setId = (int)$setRow['id'];
+                } else {
+                    $setId = null;
+                }
+            } else {
+                $setId = null;
+            }
+
+            // 5. Tính phụ phí bàn/phòng nếu có
+            $phuPhi = 0;
+            if (!empty($booking['banphong_id'])) {
+                $stmtTable = $this->pdo->prepare("SELECT loai, phu_phi FROM ban_phong WHERE id = :id LIMIT 1");
+                $stmtTable->execute([':id' => $booking['banphong_id']]);
+                $tableRow = $stmtTable->fetch();
+                if ($tableRow && $tableRow['loai'] === 'phong_rieng') {
+                    $phuPhi = (float)$tableRow['phu_phi'];
+                }
+            }
+
+            // 6. Tính tổng tiền mới
+            $newTotal = $totalDishesPrice + $totalSetPrice + $phuPhi;
+
+            // 7. Cập nhật ghi chú nếu có
+            $finalNote = $booking['ghi_chu'] ?? '';
+            if ($extraNote !== null) {
+                $finalNote = trim($extraNote);
+            }
+
+            // 8. Cập nhật dat_ban
+            $updateSql = "
+                UPDATE {$this->table} 
+                SET set_id = :set_id,
+                    gia_set_luc_dat = :gia_set_luc_dat,
+                    tong_tien = :tong_tien,
+                    ghi_chu = :ghi_chu
+                WHERE id = :id
+            ";
+            $upStmt = $this->pdo->prepare($updateSql);
+            $upStmt->execute([
+                ':set_id'          => $setId,
+                ':gia_set_luc_dat' => $setPriceLucDat,
+                ':tong_tien'       => $newTotal,
+                ':ghi_chu'         => $finalNote,
+                ':id'              => $bookingId,
+            ]);
+
+            $this->pdo->commit();
+            return true;
+        } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log("Lỗi đặt món: " . $e->getMessage());
+            return false;
+        }
+    }
 }
 

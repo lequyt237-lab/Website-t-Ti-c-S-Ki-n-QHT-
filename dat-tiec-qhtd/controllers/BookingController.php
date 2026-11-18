@@ -120,18 +120,30 @@ class BookingController
 
         if ($bookingId) {
             unset($_SESSION['booking_old']);
+            $_SESSION['last_booking_id'] = $bookingId;
             $caText = $ca === 'trua' ? 'Ca trưa (11:00 - 14:00)' : 'Ca tối (17:00 - 21:30)';
             $roomPrefText = $yeuCauPhongRieng ? '<span class="badge bg-warning text-dark">Có yêu cầu phòng riêng VIP</span>' : 'Bàn sảnh chung';
             $_SESSION['booking_success'] = sprintf(
                 '<b>Gửi yêu cầu đặt bàn thành công! (Mã đơn: #%d)</b><br>
                  Ngày: <b>%s</b> (%s) | Số khách: <b>%d người</b> | Nhu cầu: %s.<br>
-                 Yêu cầu của bạn đã được tiếp nhận. Quản trị viên sẽ tiến hành xếp bàn phù hợp và liên hệ qua SĐT <b>%s</b> trong vòng 15 phút để xác nhận.',
+                 Yêu cầu của bạn đã được tiếp nhận. Quản trị viên sẽ tiến hành xếp bàn phù hợp và liên hệ qua SĐT <b>%s</b> trong vòng 15 phút để xác nhận.<br>
+                 <div class="mt-3 d-flex flex-wrap gap-2">
+                     <a href="%s?action=dat-mon&booking_id=%d" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm">
+                         <i class="bi bi-cart-plus-fill me-1"></i> Đặt món ngay cho bàn này
+                     </a>
+                     <a href="%s?action=lich-su-dat-ban" class="btn btn-outline-success btn-sm">
+                         <i class="bi bi-receipt me-1"></i> Xem lịch sử đặt bàn
+                     </a>
+                 </div>',
                 $bookingId,
                 date('d/m/Y', strtotime($ngayDat)),
                 $caText,
                 $soNguoi,
                 $roomPrefText,
-                htmlspecialchars($soDienThoai)
+                htmlspecialchars($soDienThoai),
+                BASE_URL,
+                $bookingId,
+                BASE_URL
             );
         } else {
             $_SESSION['error'] = 'Có lỗi xảy ra khi lưu thông tin đặt bàn. Vui lòng thử lại hoặc gọi Hotline hỗ trợ.';
@@ -252,6 +264,154 @@ class BookingController
         }
 
         $this->redirectBack();
+    }
+
+    /**
+     * Giao diện chọn món & đặt món cho đơn đặt bàn
+     */
+    public function orderFood()
+    {
+        $bookingId  = (int)($_GET['booking_id'] ?? 0);
+        $isLoggedIn = isset($_SESSION['user']);
+        $userId     = $isLoggedIn ? $_SESSION['user']['id'] : null;
+
+        if ($bookingId <= 0) {
+            if ($isLoggedIn) {
+                $userBookings = $this->bookingModel->getBookingsByUserId($userId);
+                $activeBookings = array_filter($userBookings, fn($b) => !in_array($b['trang_thai'], ['da_huy', 'tu_choi']));
+                if (!empty($activeBookings)) {
+                    $first = reset($activeBookings);
+                    header('Location: ' . BASE_URL . '?action=dat-mon&booking_id=' . $first['id']);
+                    exit;
+                }
+            }
+            $_SESSION['error'] = 'Vui lòng chọn đơn đặt bàn trước khi đặt món.';
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        // Lấy thông tin đơn đặt bàn
+        $booking = $this->bookingModel->getBookingDetail($bookingId);
+        if (!$booking) {
+            $_SESSION['error'] = 'Không tìm thấy đơn đặt bàn #' . $bookingId;
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        // Kiểm tra quyền truy cập: nếu đã đăng nhập và không phải admin, đơn phải thuộc user
+        if ($isLoggedIn && ($_SESSION['user']['vai_tro'] ?? '') !== 'admin') {
+            if ((int)$booking['nguoidung_id'] !== (int)$userId) {
+                $_SESSION['error'] = 'Bạn không có quyền quản lý đơn đặt bàn này.';
+                header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+                exit;
+            }
+        }
+
+        // Không cho phép đặt món nếu đơn đã bị hủy hoặc từ chối
+        if (in_array($booking['trang_thai'], ['da_huy', 'tu_choi'])) {
+            $_SESSION['error'] = 'Đơn đặt bàn #' . $bookingId . ' đã ở trạng thái "' . ($booking['trang_thai'] === 'da_huy' ? 'Đã hủy' : 'Từ chối') . '", không thể chỉnh sửa món ăn.';
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        // Lấy danh sách món ăn đã chọn trước đó (nếu có)
+        $currentDishes = $this->bookingModel->getOrderDishes($bookingId);
+        $currentDishesMap = [];
+        foreach ($currentDishes as $cd) {
+            $currentDishesMap[$cd['mon_id']] = [
+                'so_luong' => (int)$cd['so_luong'],
+                'don_gia'  => (float)$cd['don_gia'],
+                'ten_mon'  => $cd['ten_mon'],
+            ];
+        }
+
+        // Lấy danh sách tất cả món ăn & nhóm món
+        $menuModel = new MenuModel();
+        $dishes = $menuModel->getAllDishes();
+        $categories = $menuModel->getCategories();
+
+        // Lấy danh sách set tiệc
+        $setTiecModel = new SetTiecModel();
+        $sets = $setTiecModel->getAll();
+
+        // Lấy danh sách món trong từng set để hiển thị
+        $setDishes = [];
+        foreach ($sets as $st) {
+            $setDishes[$st['id']] = $setTiecModel->getMonBySetId($st['id']);
+        }
+
+        $title = 'Đặt món cho đơn #DB' . str_pad($bookingId, 4, '0', STR_PAD_LEFT) . ' - QHT Banquet';
+        $view  = 'order_food';
+        require_once PATH_VIEW . 'main.php';
+    }
+
+    /**
+     * Xử lý lưu các món ăn và set tiệc khách đã chọn
+     */
+    public function saveFoodOrder()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        $bookingId  = (int)($_POST['booking_id'] ?? 0);
+        $isLoggedIn = isset($_SESSION['user']);
+        $userId     = $isLoggedIn ? $_SESSION['user']['id'] : null;
+
+        if ($bookingId <= 0) {
+            $_SESSION['error'] = 'Mã đơn đặt bàn không hợp lệ.';
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        $booking = $this->bookingModel->getBookingDetail($bookingId);
+        if (!$booking) {
+            $_SESSION['error'] = 'Không tìm thấy thông tin đơn đặt bàn.';
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        if ($isLoggedIn && ($_SESSION['user']['vai_tro'] ?? '') !== 'admin') {
+            if ((int)$booking['nguoidung_id'] !== (int)$userId) {
+                $_SESSION['error'] = 'Bạn không có quyền thao tác trên đơn đặt bàn này.';
+                header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+                exit;
+            }
+        }
+
+        if (in_array($booking['trang_thai'], ['da_huy', 'tu_choi'])) {
+            $_SESSION['error'] = 'Đơn đặt bàn đã hủy hoặc từ chối, không thể lưu món.';
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        $setId = !empty($_POST['set_id']) ? (int)$_POST['set_id'] : null;
+        $rawDishes = $_POST['dishes'] ?? [];
+        $dishes = [];
+        if (is_array($rawDishes)) {
+            foreach ($rawDishes as $monId => $qty) {
+                $qty = (int)$qty;
+                if ($qty > 0) {
+                    $dishes[(int)$monId] = $qty;
+                }
+            }
+        }
+
+        $ghiChu = trim($_POST['ghi_chu'] ?? '');
+
+        $result = $this->bookingModel->saveBookingDishes($bookingId, $dishes, $setId, $ghiChu);
+
+        if ($result) {
+            $countDishes = count($dishes);
+            $setInfo = $setId ? ' và 1 Set tiệc' : '';
+            $_SESSION['success'] = "<b>Đặt món thành công!</b> Đơn đặt bàn <b>#DB" . str_pad($bookingId, 4, '0', STR_PAD_LEFT) . "</b> đã được cập nhật thực đơn gồm {$countDishes} món lẻ{$setInfo}. Quý khách có thể xem lại chi tiết ngay bên dưới.";
+        } else {
+            $_SESSION['error'] = 'Có lỗi xảy ra khi lưu món ăn. Vui lòng kiểm tra lại.';
+        }
+
+        header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+        exit;
     }
 
     /**

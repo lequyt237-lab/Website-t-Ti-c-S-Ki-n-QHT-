@@ -275,7 +275,11 @@ function viewBookingDetail(bookingId) {
             } else {
                 if (!b.ten_set) {
                     dishesSection.style.display = 'block';
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-2 fst-italic">Khách gọi món trực tiếp khi đến nhà hàng.</td></tr>';
+                    let orderLink = '';
+                    if (b.trang_thai !== 'da_huy' && b.trang_thai !== 'tu_choi') {
+                        orderLink = `<br><a href="<?= BASE_URL ?>?action=dat-mon&booking_id=${b.id}" class="btn btn-sm btn-warning text-dark fw-bold mt-2 shadow-sm"><i class="bi bi-cart-plus me-1"></i>Đặt món ăn trước ngay</a>`;
+                    }
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3 fst-italic">Khách chưa chọn món trước hoặc gọi món trực tiếp khi đến nhà hàng.${orderLink}</td></tr>`;
                 } else {
                     dishesSection.style.display = 'none';
                 }
@@ -296,17 +300,24 @@ function viewBookingDetail(bookingId) {
             document.getElementById('modalCreatedAt').textContent = b.ngay_tao || '';
             document.getElementById('modalTotalPrice').textContent = Number(b.tong_tien || 0).toLocaleString('vi-VN') + ' đ';
 
-            // Nút hủy bàn (nếu đang chờ duyệt)
+            // Nút tác vụ (Hủy đơn & Đặt món)
             const cancelBtnWrapper = document.getElementById('modalCancelButtonWrapper');
+            let actionButtonsHtml = '';
             if (b.trang_thai === 'cho_duyet') {
-                cancelBtnWrapper.innerHTML = `
-                    <button type="button" class="btn btn-outline-danger btn-sm fw-semibold" onclick="promptCancelBooking(${b.id})">
-                        <i class="bi bi-x-circle me-1"></i>Hủy Đặt Bàn Này
+                actionButtonsHtml += `
+                    <button type="button" class="btn btn-outline-danger btn-sm fw-semibold me-2" onclick="promptCancelBooking(${b.id})">
+                        <i class="bi bi-x-circle me-1"></i>Hủy đơn
                     </button>
                 `;
-            } else {
-                cancelBtnWrapper.innerHTML = '';
             }
+            if (b.trang_thai !== 'da_huy' && b.trang_thai !== 'tu_choi') {
+                actionButtonsHtml += `
+                    <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=${b.id}" class="btn btn-warning text-dark btn-sm fw-bold shadow-sm">
+                        <i class="bi bi-cart-plus-fill me-1"></i>${dishes.length > 0 || b.ten_set ? 'Cập nhật món ăn' : 'Đặt món cho bàn này'}
+                    </a>
+                `;
+            }
+            cancelBtnWrapper.innerHTML = actionButtonsHtml;
 
             spinner.style.display = 'none';
             content.style.display = 'block';

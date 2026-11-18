@@ -307,6 +307,11 @@
                                             <i class="bi bi-x-circle me-1"></i>Hủy đơn
                                         </button>
                                     <?php endif; ?>
+                                    <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
+                                        <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">
+                                            <i class="bi bi-cart-plus me-1"></i>Đặt món
+                                        </a>
+                                    <?php endif; ?>
                                     <button type="button" class="btn btn-sm btn-dark px-3 fw-semibold" onclick="viewBookingDetail(<?= $b['id'] ?>)">
                                         <i class="bi bi-eye me-1"></i>Chi tiết
                                     </button>
@@ -399,9 +404,16 @@
                                         </div>
                                         <div class="pt-3 border-top d-flex justify-content-between align-items-center">
                                             <div class="fw-bold text-danger"><?= number_format($b['tong_tien'], 0, ',', '.') ?> đ</div>
-                                            <button type="button" class="btn btn-sm btn-dark px-3" onclick="viewBookingDetail(<?= $b['id'] ?>)">
-                                                <i class="bi bi-eye me-1"></i>Xem chi tiết
-                                            </button>
+                                            <div class="d-flex gap-2">
+                                                <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
+                                                    <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">
+                                                        <i class="bi bi-cart-plus me-1"></i>Đặt món
+                                                    </a>
+                                                <?php endif; ?>
+                                                <button type="button" class="btn btn-sm btn-dark px-3" onclick="viewBookingDetail(<?= $b['id'] ?>)">
+                                                    <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

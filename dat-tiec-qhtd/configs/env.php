@@ -1,7 +1,16 @@
 <?php
 
 $isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1']);
-define('BASE_URL', $isLocal ? 'http://localhost/dat-tiec-qhtd/' : 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/');
+if ($isLocal) {
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+    $basePath = rtrim($scriptDir, '/') . '/';
+    if ($basePath === '/' || empty($basePath)) {
+        $basePath = '/nhom1/dat-tiec-qhtd/';
+    }
+    define('BASE_URL', 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $basePath);
+} else {
+    define('BASE_URL', 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/');
+}
 
 define('PATH_ROOT',         __DIR__ . '/../');
 

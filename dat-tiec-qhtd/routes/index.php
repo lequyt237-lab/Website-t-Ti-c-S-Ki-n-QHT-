@@ -37,5 +37,9 @@ match ($action) {
     'chi-tiet-dat-ban'  => (new BookingController)->detail(),
     'huy-dat-ban'       => (new BookingController)->cancel(),
 
+    // Đặt món cho bàn tiệc
+    'dat-mon'           => (new BookingController)->orderFood(),
+    'xu-ly-dat-mon'     => (new BookingController)->saveFoodOrder(),
+
     default             => (new HomeController)->index(),
 };
