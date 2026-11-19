@@ -1,7 +1,14 @@
 <?php
 
 $isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1']);
-define('BASE_URL', $isLocal ? 'http://localhost/dat-tiec-qhtd/' : 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/');
+if ($isLocal) {
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+    $baseFolder = rtrim($scriptDir, '/') . '/';
+    $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($baseFolder === '//' ? '/' : $baseFolder);
+} else {
+    $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/';
+}
+define('BASE_URL', $baseUrl);
 
 define('PATH_ROOT',         __DIR__ . '/../');
 
