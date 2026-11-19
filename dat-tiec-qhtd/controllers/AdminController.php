@@ -24,31 +24,31 @@ class AdminController extends BaseModel
         }
     }
 
-    // Trang chủ Dashboard quản trị
+    // 1. Trang chủ Dashboard quản trị
     public function index()
     {
-        // 1. Thống kê tổng số
-        $totalUsers = $this->pdo->query("SELECT COUNT(*) FROM nguoidung")->fetchColumn();
-        $totalTables = $this->pdo->query("SELECT COUNT(*) FROM ban_phong")->fetchColumn();
-        $totalDishes = $this->pdo->query("SELECT COUNT(*) FROM mon_an")->fetchColumn();
-        $totalSets   = $this->pdo->query("SELECT COUNT(*) FROM set_tiec")->fetchColumn();
-        $totalBookings = $this->pdo->query("SELECT COUNT(*) FROM dat_ban")->fetchColumn();
+        // Thống kê tổng số
+        $totalUsers      = $this->pdo->query("SELECT COUNT(*) FROM nguoidung")->fetchColumn();
+        $totalTables     = $this->pdo->query("SELECT COUNT(*) FROM ban_phong")->fetchColumn();
+        $totalDishes     = $this->pdo->query("SELECT COUNT(*) FROM mon_an")->fetchColumn();
+        $totalSets       = $this->pdo->query("SELECT COUNT(*) FROM set_tiec")->fetchColumn();
+        $totalBookings   = $this->pdo->query("SELECT COUNT(*) FROM dat_ban")->fetchColumn();
         $pendingBookings = $this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'cho_duyet'")->fetchColumn();
 
-        // 2. Danh sách đơn đặt bàn gần đây
+        // Danh sách đơn đặt bàn gần đây
         $sqlRecentBookings = "
             SELECT db.*, nd.ho_ten AS khach_hang, nd.so_dien_thoai, bp.ten AS ten_ban, ld.ten AS ten_dip, st.ten AS ten_set
             FROM dat_ban db
             JOIN nguoidung nd ON db.nguoidung_id = nd.id
-            JOIN ban_phong bp ON db.banphong_id = bp.id
-            JOIN loai_dip ld ON db.loaidip_id = ld.id
+            LEFT JOIN ban_phong bp ON db.banphong_id = bp.id
+            LEFT JOIN loai_dip ld ON db.loaidip_id = ld.id
             LEFT JOIN set_tiec st ON db.set_id = st.id
             ORDER BY db.id DESC
             LIMIT 8
         ";
         $recentBookings = $this->pdo->query($sqlRecentBookings)->fetchAll();
 
-        // 3. Danh sách bàn/phòng
+        // Danh sách bàn/phòng
         $tables = $this->pdo->query("SELECT * FROM ban_phong ORDER BY id ASC")->fetchAll();
 
         $stats = [
@@ -60,8 +60,9 @@ class AdminController extends BaseModel
             'pending'  => $pendingBookings,
         ];
 
-        $title = 'Bảng điều khiển Quản trị - QHT Banquet';
-        $adminView = 'dashboard';
+        $title      = 'Bảng điều khiển Quản trị - QHT Banquet';
+        $activeMenu = 'dashboard';
+        $adminView  = 'dashboard';
 
         require_once PATH_VIEW . 'admin/layout.php';
     }
@@ -237,5 +238,263 @@ class AdminController extends BaseModel
 
         require_once PATH_VIEW . 'admin/layout.php';
     }
-}
 
+    // 2. Quản lý danh sách Đặt Bàn (Bộ lọc trạng thái, tìm kiếm, ngày tháng)
+    public function bookings()
+    {
+        $status = trim($_GET['status'] ?? 'all');
+        $search = trim($_GET['q'] ?? '');
+        $date   = trim($_GET['date'] ?? '');
+
+        // Đếm số lượng theo từng trạng thái để làm badge tab
+        $counts = [
+            'all'        => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban")->fetchColumn(),
+            'cho_duyet'  => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'cho_duyet'")->fetchColumn(),
+            'da_duyet'   => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'da_duyet'")->fetchColumn(),
+            'hoan_thanh' => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'hoan_thanh'")->fetchColumn(),
+            'tu_choi'    => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'tu_choi'")->fetchColumn(),
+            'huy'        => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'huy'")->fetchColumn(),
+        ];
+
+        // Xây dựng câu truy vấn có lọc
+        $sql = "
+            SELECT db.*, 
+                   nd.ho_ten AS khach_hang, nd.so_dien_thoai, nd.email,
+                   bp.ten AS ten_ban, bp.loai AS loai_ban, bp.suc_chua, bp.phu_phi,
+                   ld.ten AS ten_dip,
+                   st.ten AS ten_set
+            FROM dat_ban db
+            JOIN nguoidung nd ON db.nguoidung_id = nd.id
+            LEFT JOIN ban_phong bp ON db.banphong_id = bp.id
+            LEFT JOIN loai_dip ld ON db.loaidip_id = ld.id
+            LEFT JOIN set_tiec st ON db.set_id = st.id
+            WHERE 1=1
+        ";
+        $params = [];
+
+        if ($status !== 'all' && in_array($status, ['cho_duyet', 'da_duyet', 'hoan_thanh', 'tu_choi', 'huy'])) {
+            $sql .= " AND db.trang_thai = :status";
+            $params[':status'] = $status;
+        }
+
+        if (!empty($date)) {
+            $sql .= " AND db.ngay_dat = :date";
+            $params[':date'] = $date;
+        }
+
+        if (!empty($search)) {
+            $sql .= " AND (nd.ho_ten LIKE :q OR nd.so_dien_thoai LIKE :q OR db.id = :exact_id)";
+            $params[':q'] = "%$search%";
+            $params[':exact_id'] = (int)$search;
+        }
+
+        $sql .= " ORDER BY db.id DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        $bookings = $stmt->fetchAll();
+
+        $title      = 'Quản lý Duyệt Đặt Bàn - QHT Banquet';
+        $activeMenu = 'dat-ban';
+        $adminView  = 'bookings/index';
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    // 3. Xem chi tiết đơn đặt bàn
+    public function bookingDetail()
+    {
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            $_SESSION['error'] = 'Mã đơn đặt bàn không hợp lệ.';
+            header('Location: ' . BASE_URL . '?action=admin-dat-ban');
+            exit;
+        }
+
+        $sql = "
+            SELECT db.*, 
+                   nd.ho_ten AS khach_hang, nd.so_dien_thoai, nd.email,
+                   bp.ten AS ten_ban, bp.loai AS loai_ban, bp.suc_chua, bp.phu_phi, bp.mo_ta AS mota_ban,
+                   ld.ten AS ten_dip, ld.mo_ta AS mota_dip,
+                   st.ten AS ten_set, st.gia AS gia_set
+            FROM dat_ban db
+            JOIN nguoidung nd ON db.nguoidung_id = nd.id
+            LEFT JOIN ban_phong bp ON db.banphong_id = bp.id
+            LEFT JOIN loai_dip ld ON db.loaidip_id = ld.id
+            LEFT JOIN set_tiec st ON db.set_id = st.id
+            WHERE db.id = :id
+            LIMIT 1
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        $booking = $stmt->fetch();
+
+        if (!$booking) {
+            $_SESSION['error'] = "Không tìm thấy đơn đặt bàn #$id.";
+            header('Location: ' . BASE_URL . '?action=admin-dat-ban');
+            exit;
+        }
+
+        // Lấy danh sách tất cả bàn & phòng để Admin xếp bàn
+        $allTables = $this->pdo->query("SELECT * FROM ban_phong ORDER BY loai DESC, suc_chua ASC, id ASC")->fetchAll();
+
+        // Lấy danh sách món ăn gọi thêm trong chi tiết nếu có
+        $sqlExtraDishes = "
+            SELECT cm.*, ma.ten AS ten_mon, ma.nhom_mon
+            FROM chitiet_mon cm
+            JOIN mon_an ma ON cm.mon_id = ma.id
+            WHERE cm.datban_id = :datban_id
+        ";
+        $stmtExtra = $this->pdo->prepare($sqlExtraDishes);
+        $stmtExtra->execute([':datban_id' => $id]);
+        $extraDishes = $stmtExtra->fetchAll();
+
+        // Kiểm tra xem vị trí này vào ngày & ca đó có bị trùng với đơn khác đã duyệt không (nếu đã xếp bàn)
+        $conflictBooking = null;
+        if (!empty($booking['banphong_id'])) {
+            $sqlConflictCheck = "
+                SELECT id, trang_thai 
+                FROM dat_ban 
+                WHERE banphong_id = :banphong_id 
+                  AND ngay_dat = :ngay_dat 
+                  AND ca = :ca 
+                  AND trang_thai = 'da_duyet' 
+                  AND id != :current_id
+            ";
+            $stmtConflict = $this->pdo->prepare($sqlConflictCheck);
+            $stmtConflict->execute([
+                ':banphong_id' => $booking['banphong_id'],
+                ':ngay_dat'    => $booking['ngay_dat'],
+                ':ca'          => $booking['ca'],
+                ':current_id'  => $id
+            ]);
+            $conflictBooking = $stmtConflict->fetch();
+        }
+
+        $title      = "Chi tiết Đơn Đặt Bàn #$id - QHT Banquet";
+        $activeMenu = 'dat-ban';
+        $adminView  = 'bookings/detail';
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    // 4. Xử lý Cập nhật trạng thái đơn đặt bàn (Duyệt, Xếp bàn, Từ chối, Hoàn thành, Hủy)
+    public function updateBookingStatus()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '?action=admin-dat-ban');
+            exit;
+        }
+
+        $id         = (int)($_POST['id'] ?? 0);
+        $newStatus  = trim($_POST['trang_thai'] ?? '');
+        $note       = trim($_POST['ghi_chu'] ?? '');
+        $banphongId = isset($_POST['banphong_id']) && $_POST['banphong_id'] !== '' ? (int)$_POST['banphong_id'] : null;
+
+        $validStatuses = ['cho_duyet', 'da_duyet', 'tu_choi', 'hoan_thanh', 'huy'];
+        if (!in_array($newStatus, $validStatuses)) {
+            $_SESSION['error'] = 'Trạng thái cập nhật không hợp lệ.';
+            header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$id");
+            exit;
+        }
+
+        // Lấy thông tin đơn hiện tại
+        $stmtCurr = $this->pdo->prepare("SELECT * FROM dat_ban WHERE id = :id LIMIT 1");
+        $stmtCurr->execute([':id' => $id]);
+        $booking = $stmtCurr->fetch();
+
+        if (!$booking) {
+            $_SESSION['error'] = 'Đơn đặt bàn không tồn tại.';
+            header('Location: ' . BASE_URL . '?action=admin-dat-ban');
+            exit;
+        }
+
+        // Nếu không gửi banphong_id từ form (ví dụ duyệt nhanh từ list), giữ nguyên bàn cũ
+        if (!isset($_POST['banphong_id'])) {
+            $banphongId = $booking['banphong_id'];
+        }
+
+        // Nếu chuyển sang "Đã duyệt" -> BẮT BUỘC phải xếp bàn cho khách!
+        if ($newStatus === 'da_duyet') {
+            if (empty($banphongId)) {
+                $_SESSION['error'] = 'Không thể duyệt đơn này! Bạn vui lòng chọn/xếp bàn hoặc phòng cho khách trước khi Duyệt đặt bàn.';
+                header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$id");
+                exit;
+            }
+
+            // Kiểm tra chống trùng bàn/phòng vào cùng ngày và ca
+            $sqlConflict = "
+                SELECT COUNT(*) FROM dat_ban 
+                WHERE banphong_id = :banphong_id 
+                  AND ngay_dat = :ngay_dat 
+                  AND ca = :ca 
+                  AND trang_thai = 'da_duyet' 
+                  AND id != :id
+            ";
+            $stmtConf = $this->pdo->prepare($sqlConflict);
+            $stmtConf->execute([
+                ':banphong_id' => $banphongId,
+                ':ngay_dat'    => $booking['ngay_dat'],
+                ':ca'          => $booking['ca'],
+                ':id'          => $id,
+            ]);
+            $isConflict = $stmtConf->fetchColumn() > 0;
+
+            if ($isConflict) {
+                $_SESSION['error'] = 'Không thể duyệt đơn này! Bàn/phòng này đã có một đơn khác được duyệt trong cùng ca và ngày.';
+                header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$id");
+                exit;
+            }
+        }
+
+        // Tính lại tổng tiền nếu có phụ phí phòng VIP khi Admin xếp/đổi bàn
+        $tongTien = (float)$booking['tong_tien'];
+        if ($banphongId && $banphongId != $booking['banphong_id']) {
+            // Lấy phụ phí của bàn mới
+            $stmtNew = $this->pdo->prepare("SELECT phu_phi FROM ban_phong WHERE id = :id LIMIT 1");
+            $stmtNew->execute([':id' => $banphongId]);
+            $newRow = $stmtNew->fetch();
+            $newFee = (float)($newRow['phu_phi'] ?? 0);
+
+            // Lấy phụ phí của bàn cũ
+            $oldFee = 0;
+            if (!empty($booking['banphong_id'])) {
+                $stmtOld = $this->pdo->prepare("SELECT phu_phi FROM ban_phong WHERE id = :id LIMIT 1");
+                $stmtOld->execute([':id' => $booking['banphong_id']]);
+                $oldRow = $stmtOld->fetch();
+                $oldFee = (float)($oldRow['phu_phi'] ?? 0);
+            }
+            $tongTien = max(0, $tongTien - $oldFee + $newFee);
+        }
+
+        // Cập nhật trạng thái, bàn/phòng, tổng tiền và ghi chú
+        $sqlUpdate = "UPDATE dat_ban SET banphong_id = :banphong_id, trang_thai = :trang_thai, tong_tien = :tong_tien, ghi_chu = :ghi_chu WHERE id = :id";
+        $stmtUp = $this->pdo->prepare($sqlUpdate);
+        $stmtUp->execute([
+            ':banphong_id' => $banphongId,
+            ':trang_thai'  => $newStatus,
+            ':tong_tien'   => $tongTien,
+            ':ghi_chu'     => $note,
+            ':id'          => $id,
+        ]);
+
+        $statusLabels = [
+            'cho_duyet'  => 'Chờ duyệt',
+            'da_duyet'   => 'Đã duyệt',
+            'tu_choi'    => 'Từ chối',
+            'hoan_thanh' => 'Hoàn thành',
+            'huy'        => 'Đã hủy',
+        ];
+
+        $_SESSION['success'] = "Cập nhật đơn đặt bàn #$id sang trạng thái [{$statusLabels[$newStatus]}] thành công!";
+
+        // Chuyển hướng
+        $redirect = $_POST['redirect'] ?? 'list';
+        if ($redirect === 'detail') {
+            header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$id");
+        } else {
+            header('Location: ' . BASE_URL . '?action=admin-dat-ban');
+        }
+        exit;
+    }
+}

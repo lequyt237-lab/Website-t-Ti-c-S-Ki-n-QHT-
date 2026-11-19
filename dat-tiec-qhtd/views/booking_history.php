@@ -223,7 +223,7 @@
                     ];
                     $st = $statusMap[$b['trang_thai']] ?? ['badge' => 'bg-secondary text-white', 'text' => $b['trang_thai'], 'icon' => 'bi-info-circle'];
                     ?>
-                    <div class="col-lg-6 booking-item-card" data-search="<?= strtolower(htmlspecialchars($b['id'] . ' ' . $b['ten_ban'] . ' ' . $b['ten_dip'] . ' ' . ($b['ten_set'] ?? ''))) ?>">
+                    <div class="col-lg-6 booking-item-card" data-search="<?= strtolower(htmlspecialchars($b['id'] . ' ' . ($b['ten_ban'] ?? '') . ' ' . ($b['ten_dip'] ?? '') . ' ' . ($b['ten_set'] ?? ''))) ?>">
                         <div class="history-card p-4 h-100 d-flex flex-column justify-content-between">
                             
                             <!-- Card Header -->
@@ -244,16 +244,27 @@
                                 <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
                                     <div>
                                         <h5 class="fw-bold text-dark mb-1">
-                                            <i class="bi bi-<?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'star-fill text-warning' : 'circle-fill text-success' ?> me-1" style="font-size: 0.85rem;"></i>
-                                            <?= htmlspecialchars($b['ten_ban'] ?? 'Bàn sảnh') ?>
+                                            <?php if (empty($b['ten_ban'])): ?>
+                                                <i class="bi bi-clock-history text-warning me-1" style="font-size: 0.85rem;"></i>
+                                                <span class="text-secondary fst-italic">Đang chờ xếp bàn</span>
+                                            <?php else: ?>
+                                                <i class="bi bi-<?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'star-fill text-warning' : 'circle-fill text-success' ?> me-1" style="font-size: 0.85rem;"></i>
+                                                <?= htmlspecialchars($b['ten_ban']) ?>
+                                            <?php endif; ?>
                                         </h5>
-                                        <span class="badge bg-light text-secondary border small">
-                                            <?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'Phòng VIP riêng tư' : 'Bàn sảnh chung' ?>
-                                        </span>
+                                        <?php if (!empty($b['yeu_cau_phong_rieng'])): ?>
+                                            <span class="badge border small" style="background:#f3e8ff; color:#7c3aed; border-color:#c4b5fd !important;">
+                                                <i class="bi bi-door-open me-1"></i>Có yêu cầu phòng VIP
+                                            </span>
+                                        <?php elseif (!empty($b['ten_ban'])): ?>
+                                            <span class="badge bg-light text-secondary border small">
+                                                <?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'Phòng VIP riêng tư' : 'Bàn sảnh chung' ?>
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="text-end">
                                         <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-semibold">
-                                            <i class="bi bi-balloon-heart me-1"></i><?= htmlspecialchars($b['ten_dip'] ?? 'Dịp tiệc') ?>
+                                            <i class="bi bi-balloon-heart me-1"></i><?= !empty($b['ten_dip']) ? htmlspecialchars($b['ten_dip']) : 'Không chỉ định dịp' ?>
                                         </span>
                                     </div>
                                 </div>
@@ -263,8 +274,9 @@
                                     <div class="col-sm-6">
                                         <div><i class="bi bi-calendar3 text-danger me-1"></i> <strong>Ngày:</strong> <?= date('d/m/Y', strtotime($b['ngay_dat'])) ?></div>
                                         <div>
-                                            <i class="bi bi-sun text-warning me-1"></i> <strong>Ca:</strong> 
-                                            <?= $b['ca'] === 'trua' ? 'Ca Trưa (11:00-14:00)' : 'Ca Tối (17:00-21:30)' ?>
+                                            <i class="bi bi-clock text-danger me-1"></i> <strong>Giờ đến:</strong> 
+                                            <?= !empty($b['gio_den']) ? date('H:i', strtotime($b['gio_den'])) : ($b['ca'] === 'trua' ? '11:30' : '18:30') ?>
+                                            <span class="badge bg-light text-secondary border small ms-1">Ca <?= $b['ca'] === 'trua' ? 'Trưa' : 'Tối' ?></span>
                                         </div>
                                     </div>
                                     <div class="col-sm-6">
@@ -295,6 +307,11 @@
                                         <button type="button" class="btn btn-sm btn-outline-danger px-3 fw-semibold" onclick="promptCancelBooking(<?= $b['id'] ?>)">
                                             <i class="bi bi-x-circle me-1"></i>Hủy đơn
                                         </button>
+                                    <?php endif; ?>
+                                    <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
+                                        <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">
+                                            <i class="bi bi-cart-plus me-1"></i>Đặt món
+                                        </a>
                                     <?php endif; ?>
                                     <button type="button" class="btn btn-sm btn-dark px-3 fw-semibold" onclick="viewBookingDetail(<?= $b['id'] ?>)">
                                         <i class="bi bi-eye me-1"></i>Chi tiết
@@ -373,19 +390,35 @@
                                                 <span class="fw-bold fs-6 text-secondary">#DB<?= str_pad($b['id'], 4, '0', STR_PAD_LEFT) ?></span>
                                                 <span class="badge <?= $st['badge'] ?> px-2 py-1"><i class="bi <?= $st['icon'] ?> me-1"></i><?= $st['text'] ?></span>
                                             </div>
-                                            <h6 class="fw-bold text-dark mb-1"><?= htmlspecialchars($b['ten_ban'] ?? 'Bàn sảnh') ?></h6>
-                                            <div class="text-muted small mb-2"><?= htmlspecialchars($b['ten_dip'] ?? 'Dịp tiệc') ?></div>
+                                            <h6 class="fw-bold text-dark mb-1">
+                                                <?= !empty($b['ten_ban']) ? htmlspecialchars($b['ten_ban']) : '<span class="text-secondary fst-italic">Đang chờ xếp bàn</span>' ?>
+                                                <?php if (!empty($b['yeu_cau_phong_rieng'])): ?>
+                                                    <span class="badge ms-1 small" style="background:#f3e8ff; color:#7c3aed; font-size:0.65rem;">VIP</span>
+                                                <?php endif; ?>
+                                            </h6>
+                                            <div class="text-muted small mb-2"><?= !empty($b['ten_dip']) ? htmlspecialchars($b['ten_dip']) : 'Không chỉ định dịp' ?></div>
                                             <div class="small text-secondary mb-2">
                                                 <div><i class="bi bi-calendar3 me-1 text-danger"></i> Ngày: <?= date('d/m/Y', strtotime($b['ngay_dat'])) ?></div>
-                                                <div><i class="bi bi-clock me-1 text-warning"></i> Ca: <?= $b['ca'] === 'trua' ? 'Trưa (11:00-14:00)' : 'Tối (17:00-21:30)' ?></div>
+                                                <div>
+                                                    <i class="bi bi-clock me-1 text-danger"></i> Giờ đến: 
+                                                    <?= !empty($b['gio_den']) ? date('H:i', strtotime($b['gio_den'])) : ($b['ca'] === 'trua' ? '11:30' : '18:30') ?>
+                                                    (Ca <?= $b['ca'] === 'trua' ? 'Trưa' : 'Tối' ?>)
+                                                </div>
                                                 <div><i class="bi bi-people me-1 text-info"></i> Số lượng: <?= $b['so_nguoi'] ?> khách</div>
                                             </div>
                                         </div>
                                         <div class="pt-3 border-top d-flex justify-content-between align-items-center">
                                             <div class="fw-bold text-danger"><?= number_format($b['tong_tien'], 0, ',', '.') ?> đ</div>
-                                            <button type="button" class="btn btn-sm btn-dark px-3" onclick="viewBookingDetail(<?= $b['id'] ?>)">
-                                                <i class="bi bi-eye me-1"></i>Xem chi tiết
-                                            </button>
+                                            <div class="d-flex gap-2">
+                                                <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
+                                                    <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">
+                                                        <i class="bi bi-cart-plus me-1"></i>Đặt món
+                                                    </a>
+                                                <?php endif; ?>
+                                                <button type="button" class="btn btn-sm btn-dark px-3" onclick="viewBookingDetail(<?= $b['id'] ?>)">
+                                                    <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

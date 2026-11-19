@@ -3,12 +3,22 @@
 $isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1']);
 if ($isLocal) {
     $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+ tiec
     $baseFolder = rtrim($scriptDir, '/') . '/';
     $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($baseFolder === '//' ? '/' : $baseFolder);
 } else {
     $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/';
 }
 define('BASE_URL', $baseUrl);
+    $basePath = rtrim($scriptDir, '/') . '/';
+    if ($basePath === '/' || empty($basePath)) {
+        $basePath = '/nhom1/dat-tiec-qhtd/';
+    }
+    define('BASE_URL', 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $basePath);
+} else {
+    define('BASE_URL', 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/');
+}
+ main
 
 define('PATH_ROOT',         __DIR__ . '/../');
 

@@ -25,6 +25,9 @@ match ($action) {
 
     // Quản trị viên (Admin)
     'admin'                   => (new AdminController)->index(),
+    'admin-dat-ban'           => (new AdminController)->bookings(),
+    'admin-dat-ban-chi-tiet'  => (new AdminController)->bookingDetail(),
+    'admin-dat-ban-cap-nhat'  => (new AdminController)->updateBookingStatus(),
     'admin-set-tiec'          => (new AdminController)->setTiec(),
     'admin-set-tiec-create'   => (new AdminController)->setTiecCreate(),
     'admin-set-tiec-store'    => (new AdminController)->setTiecStore(),
@@ -37,6 +40,10 @@ match ($action) {
     'lich-su-dat-ban'   => (new BookingController)->history(),
     'chi-tiet-dat-ban'  => (new BookingController)->detail(),
     'huy-dat-ban'       => (new BookingController)->cancel(),
+
+    // Đặt món cho bàn tiệc
+    'dat-mon'           => (new BookingController)->orderFood(),
+    'xu-ly-dat-mon'     => (new BookingController)->saveFoodOrder(),
 
     default             => (new HomeController)->index(),
 };
