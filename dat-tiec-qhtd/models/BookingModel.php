@@ -173,8 +173,9 @@ class BookingModel extends BaseModel
                 COUNT(*) AS total,
                 SUM(CASE WHEN trang_thai = 'cho_duyet' THEN 1 ELSE 0 END) AS cho_duyet,
                 SUM(CASE WHEN trang_thai = 'da_duyet' THEN 1 ELSE 0 END) AS da_duyet,
+                SUM(CASE WHEN trang_thai = 'yeu_cau_huy' THEN 1 ELSE 0 END) AS yeu_cau_huy,
                 SUM(CASE WHEN trang_thai = 'tu_choi' THEN 1 ELSE 0 END) AS tu_choi,
-                SUM(CASE WHEN trang_thai = 'da_huy' THEN 1 ELSE 0 END) AS da_huy
+                SUM(CASE WHEN trang_thai IN ('da_huy', 'huy') THEN 1 ELSE 0 END) AS da_huy
             FROM {$this->table}
             WHERE nguoidung_id = :user_id
         ";
@@ -184,11 +185,12 @@ class BookingModel extends BaseModel
         $stats = $stmt->fetch();
 
         return [
-            'total'     => (int)($stats['total'] ?? 0),
-            'cho_duyet' => (int)($stats['cho_duyet'] ?? 0),
-            'da_duyet'  => (int)($stats['da_duyet'] ?? 0),
-            'tu_choi'   => (int)($stats['tu_choi'] ?? 0),
-            'da_huy'    => (int)($stats['da_huy'] ?? 0),
+            'total'       => (int)($stats['total'] ?? 0),
+            'cho_duyet'   => (int)($stats['cho_duyet'] ?? 0),
+            'da_duyet'    => (int)($stats['da_duyet'] ?? 0),
+            'yeu_cau_huy' => (int)($stats['yeu_cau_huy'] ?? 0),
+            'tu_choi'     => (int)($stats['tu_choi'] ?? 0),
+            'da_huy'      => (int)($stats['da_huy'] ?? 0),
         ];
     }
 
@@ -239,6 +241,48 @@ class BookingModel extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([':datban_id' => $bookingId]);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Khách hàng gửi yêu cầu hủy đơn đặt bàn
+     */
+    public function requestCancelBooking($bookingId, $userId, $lyDoHuy = '')
+    {
+        $hasLyDo = false;
+        try {
+            $check = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'ly_do_huy'")->fetch();
+            $hasLyDo = !empty($check);
+        } catch (Exception $e) {
+            $hasLyDo = false;
+        }
+
+        if ($hasLyDo) {
+            $sql = "
+                UPDATE {$this->table}
+                SET trang_thai = 'yeu_cau_huy',
+                    ly_do_huy = :ly_do_huy
+                WHERE id = :id AND nguoidung_id = :user_id AND trang_thai IN ('cho_duyet', 'da_duyet')
+            ";
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([
+                ':ly_do_huy' => $lyDoHuy,
+                ':id'        => $bookingId,
+                ':user_id'   => $userId,
+            ]);
+        } else {
+            $sql = "
+                UPDATE {$this->table}
+                SET trang_thai = 'yeu_cau_huy',
+                    ghi_chu = CONCAT(COALESCE(ghi_chu, ''), ' | [YÊU CẦU HỦY: ', :ly_do_huy, ']')
+                WHERE id = :id AND nguoidung_id = :user_id AND trang_thai IN ('cho_duyet', 'da_duyet')
+            ";
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([
+                ':ly_do_huy' => $lyDoHuy,
+                ':id'        => $bookingId,
+                ':user_id'   => $userId,
+            ]);
+        }
     }
 
     /**

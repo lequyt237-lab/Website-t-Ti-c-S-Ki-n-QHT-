@@ -234,7 +234,7 @@ class BookingController
     }
 
     /**
-     * Hủy đơn đặt bàn dành cho khách hàng
+     * Khách hàng gửi yêu cầu hủy đơn đặt bàn đến Quản trị viên
      */
     public function cancel()
     {
@@ -245,6 +245,7 @@ class BookingController
         }
 
         $bookingId = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
+        $lyDoHuy   = trim($_POST['ly_do_huy'] ?? '');
         $userId    = $_SESSION['user']['id'];
 
         if ($bookingId <= 0) {
@@ -252,24 +253,33 @@ class BookingController
             $this->redirectBack();
         }
 
-        // Kiểm tra xem đơn có đúng là của khách và đang ở trạng thái 'cho_duyet' không
+        // Kiểm tra xem đơn có đúng là của khách không
         $booking = $this->bookingModel->getBookingDetail($bookingId, $userId);
         if (!$booking) {
-            $_SESSION['error'] = 'Không tìm thấy đơn đặt bàn hoặc bạn không có quyền hủy đơn này.';
+            $_SESSION['error'] = 'Không tìm thấy đơn đặt bàn hoặc bạn không có quyền gửi yêu cầu hủy đơn này.';
             $this->redirectBack();
         }
 
-        if ($booking['trang_thai'] !== 'cho_duyet') {
-            $_SESSION['error'] = 'Chỉ có thể hủy đơn đặt bàn khi đang ở trạng thái Chờ duyệt.';
+        if ($booking['trang_thai'] === 'yeu_cau_huy') {
+            $_SESSION['error'] = 'Đơn đặt bàn này đã gửi yêu cầu hủy rồi. Quản trị viên đang xử lý.';
             $this->redirectBack();
         }
 
-        $result = $this->bookingModel->cancelBooking($bookingId, $userId);
+        if (!in_array($booking['trang_thai'], ['cho_duyet', 'da_duyet'])) {
+            $_SESSION['error'] = 'Chỉ có thể gửi yêu cầu hủy đối với đơn đang ở trạng thái Chờ duyệt hoặc Đã duyệt.';
+            $this->redirectBack();
+        }
+
+        if (empty($lyDoHuy)) {
+            $lyDoHuy = 'Khách gửi yêu cầu hủy qua website';
+        }
+
+        $result = $this->bookingModel->requestCancelBooking($bookingId, $userId, $lyDoHuy);
 
         if ($result) {
-            $_SESSION['success'] = "Đã hủy đơn đặt bàn #{$bookingId} thành công!";
+            $_SESSION['success'] = "Đã gửi yêu cầu hủy đơn đặt bàn #{$bookingId} thành công! Quản trị viên sẽ xem xét và phản hồi sớm.";
         } else {
-            $_SESSION['error'] = 'Không thể hủy đơn đặt bàn. Vui lòng liên hệ nhà hàng để được hỗ trợ.';
+            $_SESSION['error'] = 'Không thể gửi yêu cầu hủy đơn đặt bàn. Vui lòng liên hệ nhà hàng để được hỗ trợ.';
         }
 
         $this->redirectBack();

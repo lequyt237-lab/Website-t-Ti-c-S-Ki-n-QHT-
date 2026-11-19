@@ -153,24 +153,35 @@
 
 <!-- Modal Xác Nhận Hủy Đặt Bàn -->
 <div class="modal fade" id="confirmCancelBookingModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
-      <div class="modal-body text-center p-4">
-        <div class="text-danger mb-3">
-          <i class="bi bi-exclamation-triangle-fill" style="font-size: 3rem;"></i>
-        </div>
-        <h5 class="fw-bold mb-2">Xác nhận hủy đặt bàn?</h5>
-        <p class="text-muted small mb-4">
-          Bạn có chắc chắn muốn hủy đơn đặt bàn <strong id="cancelModalBookingCode">#...</strong> không? Thao tác này không thể hoàn tác.
-        </p>
-        <form action="<?= BASE_URL ?>?action=huy-dat-ban" method="POST" id="formCancelBooking">
-          <input type="hidden" name="id" id="cancelBookingInputId" value="">
-          <div class="d-flex gap-2 justify-content-center">
-            <button type="button" class="btn btn-light px-3 fw-semibold border" data-bs-dismiss="modal">Không hủy</button>
-            <button type="submit" class="btn btn-danger px-3 fw-semibold">Xác nhận hủy</button>
-          </div>
-        </form>
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold text-danger">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Gửi yêu cầu hủy đơn
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+      <form action="<?= BASE_URL ?>?action=huy-dat-ban" method="POST" id="formCancelBooking">
+        <div class="modal-body p-4 pt-3">
+          <p class="text-muted small mb-3">
+            Bạn đang gửi yêu cầu hủy đơn đặt bàn <strong id="cancelModalBookingCode" class="text-dark">#...</strong>. Yêu cầu sẽ được gửi tới Quản trị viên để kiểm tra và xác nhận đồng ý hủy.
+          </p>
+          <input type="hidden" name="id" id="cancelBookingInputId" value="">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Lý do hủy đơn <span class="text-danger">*</span></label>
+            <textarea name="ly_do_huy" class="form-control" rows="3" placeholder="Ví dụ: Gia đình bận việc đột xuất, muốn dời lịch hẹn sang tuần sau..." required></textarea>
+          </div>
+          <div class="alert alert-light border small text-muted mb-0 py-2">
+            <i class="bi bi-info-circle me-1 text-primary"></i> Miễn phí hủy bàn trước 4 tiếng. Mọi thắc mắc xin gọi hotline 0123 456 789.
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-light px-3 fw-semibold border" data-bs-dismiss="modal">Đóng</button>
+          <button type="submit" class="btn btn-danger px-4 fw-semibold">
+            <i class="bi bi-send-fill me-1"></i>Gửi yêu cầu hủy
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -206,10 +217,11 @@ function viewBookingDetail(bookingId) {
             document.getElementById('modalBookingCode').textContent = '#DB' + String(b.id).padStart(4, '0');
             
             const statusMap = {
-                'cho_duyet': { text: 'Chờ duyệt', cls: 'bg-warning text-dark', icon: 'bi-hourglass-split' },
-                'da_duyet':  { text: 'Đã duyệt', cls: 'bg-success text-white', icon: 'bi-check-circle-fill' },
-                'tu_choi':   { text: 'Từ chối', cls: 'bg-danger text-white', icon: 'bi-x-circle-fill' },
-                'da_huy':    { text: 'Đã hủy', cls: 'bg-secondary text-white', icon: 'bi-slash-circle' },
+                'cho_duyet':   { text: 'Chờ duyệt', cls: 'bg-warning text-dark', icon: 'bi-hourglass-split' },
+                'da_duyet':    { text: 'Đã duyệt', cls: 'bg-success text-white', icon: 'bi-check-circle-fill' },
+                'yeu_cau_huy': { text: 'Chờ duyệt hủy', cls: 'bg-danger text-white', icon: 'bi-exclamation-octagon-fill' },
+                'tu_choi':     { text: 'Từ chối', cls: 'bg-danger text-white', icon: 'bi-x-circle-fill' },
+                'da_huy':      { text: 'Đã hủy', cls: 'bg-secondary text-white', icon: 'bi-slash-circle' },
             };
             const st = statusMap[b.trang_thai] || { text: b.trang_thai, cls: 'bg-secondary text-white', icon: 'bi-info-circle' };
             const statusBadge = document.getElementById('modalBookingStatusBadge');
@@ -304,14 +316,20 @@ function viewBookingDetail(bookingId) {
             // Nút tác vụ (Hủy đơn & Đặt món)
             const cancelBtnWrapper = document.getElementById('modalCancelButtonWrapper');
             let actionButtonsHtml = '';
-            if (b.trang_thai === 'cho_duyet') {
+            if (b.trang_thai === 'yeu_cau_huy') {
+                actionButtonsHtml += `
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 me-2">
+                        <i class="bi bi-hourglass-split me-1"></i>Đang chờ duyệt hủy
+                    </span>
+                `;
+            } else if (b.trang_thai === 'cho_duyet' || b.trang_thai === 'da_duyet') {
                 actionButtonsHtml += `
                     <button type="button" class="btn btn-outline-danger btn-sm fw-semibold me-2" onclick="promptCancelBooking(${b.id})">
-                        <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                        <i class="bi bi-x-circle me-1"></i>Yêu cầu hủy đơn
                     </button>
                 `;
             }
-            if (b.trang_thai !== 'da_huy' && b.trang_thai !== 'tu_choi') {
+            if (b.trang_thai !== 'da_huy' && b.trang_thai !== 'tu_choi' && b.trang_thai !== 'yeu_cau_huy') {
                 actionButtonsHtml += `
                     <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=${b.id}" class="btn btn-warning text-dark btn-sm fw-bold shadow-sm">
                         <i class="bi bi-cart-plus-fill me-1"></i>${dishes.length > 0 || b.ten_set ? 'Cập nhật món ăn' : 'Đặt món cho bàn này'}

@@ -66,6 +66,11 @@
     color: #383D41;
     border: 1px solid #D6D8DB;
 }
+.badge-status-yeu_cau_huy {
+    background: #F8D7DA;
+    color: #842029;
+    border: 1px solid #f5c2c7;
+}
 </style>
 
 <!-- HERO BANNER -->
@@ -179,6 +184,11 @@
                     <i class="bi bi-check-circle-fill text-success"></i> Đã duyệt 
                     <span class="badge bg-success rounded-pill"><?= $stats['da_duyet'] ?></span>
                 </a>
+                <a href="<?= BASE_URL ?>?action=lich-su-dat-ban&status=yeu_cau_huy" 
+                   class="filter-tab-pill <?= $statusFilter === 'yeu_cau_huy' ? 'active' : '' ?>">
+                    <i class="bi bi-exclamation-octagon-fill text-danger"></i> Chờ duyệt hủy 
+                    <span class="badge bg-danger rounded-pill"><?= $stats['yeu_cau_huy'] ?? 0 ?></span>
+                </a>
                 <a href="<?= BASE_URL ?>?action=lich-su-dat-ban&status=da_huy" 
                    class="filter-tab-pill <?= $statusFilter === 'da_huy' ? 'active' : '' ?>">
                     <i class="bi bi-slash-circle text-secondary"></i> Đã hủy 
@@ -216,10 +226,11 @@
                 <?php foreach ($bookings as $b): ?>
                     <?php
                     $statusMap = [
-                        'cho_duyet' => ['badge' => 'badge-status-cho_duyet', 'text' => 'Chờ duyệt', 'icon' => 'bi-hourglass-split'],
-                        'da_duyet'  => ['badge' => 'badge-status-da_duyet',  'text' => 'Đã duyệt',  'icon' => 'bi-check-circle-fill'],
-                        'tu_choi'   => ['badge' => 'badge-status-tu_choi',   'text' => 'Từ chối',   'icon' => 'bi-x-circle-fill'],
-                        'da_huy'    => ['badge' => 'badge-status-da_huy',    'text' => 'Đã hủy',    'icon' => 'bi-slash-circle'],
+                        'cho_duyet'   => ['badge' => 'badge-status-cho_duyet',   'text' => 'Chờ duyệt',     'icon' => 'bi-hourglass-split'],
+                        'da_duyet'    => ['badge' => 'badge-status-da_duyet',    'text' => 'Đã duyệt',      'icon' => 'bi-check-circle-fill'],
+                        'yeu_cau_huy' => ['badge' => 'badge-status-yeu_cau_huy', 'text' => 'Chờ duyệt hủy', 'icon' => 'bi-exclamation-octagon-fill'],
+                        'tu_choi'     => ['badge' => 'badge-status-tu_choi',     'text' => 'Từ chối',       'icon' => 'bi-x-circle-fill'],
+                        'da_huy'      => ['badge' => 'badge-status-da_huy',      'text' => 'Đã hủy',        'icon' => 'bi-slash-circle'],
                     ];
                     $st = $statusMap[$b['trang_thai']] ?? ['badge' => 'bg-secondary text-white', 'text' => $b['trang_thai'], 'icon' => 'bi-info-circle'];
                     ?>
@@ -303,12 +314,16 @@
                                     <div class="fw-bold text-danger fs-5"><?= number_format($b['tong_tien'], 0, ',', '.') ?> đ</div>
                                 </div>
                                 <div class="d-flex gap-2">
-                                    <?php if ($b['trang_thai'] === 'cho_duyet'): ?>
+                                    <?php if ($b['trang_thai'] === 'yeu_cau_huy'): ?>
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 align-self-center">
+                                            <i class="bi bi-hourglass-split me-1"></i>Chờ duyệt hủy
+                                        </span>
+                                    <?php elseif (in_array($b['trang_thai'], ['cho_duyet', 'da_duyet'])): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger px-3 fw-semibold" onclick="promptCancelBooking(<?= $b['id'] ?>)">
-                                            <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                                            <i class="bi bi-x-circle me-1"></i>Yêu cầu hủy
                                         </button>
                                     <?php endif; ?>
-                                    <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
+                                    <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi', 'yeu_cau_huy'])): ?>
                                         <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">
                                             <i class="bi bi-cart-plus me-1"></i>Đặt món
                                         </a>
@@ -376,10 +391,11 @@
                             <?php foreach ($bookings as $b): ?>
                                 <?php
                                 $statusMap = [
-                                    'cho_duyet' => ['badge' => 'badge-status-cho_duyet', 'text' => 'Chờ duyệt', 'icon' => 'bi-hourglass-split'],
-                                    'da_duyet'  => ['badge' => 'badge-status-da_duyet',  'text' => 'Đã duyệt',  'icon' => 'bi-check-circle-fill'],
-                                    'tu_choi'   => ['badge' => 'badge-status-tu_choi',   'text' => 'Từ chối',   'icon' => 'bi-x-circle-fill'],
-                                    'da_huy'    => ['badge' => 'badge-status-da_huy',    'text' => 'Đã hủy',    'icon' => 'bi-slash-circle'],
+                                    'cho_duyet'   => ['badge' => 'badge-status-cho_duyet',   'text' => 'Chờ duyệt',     'icon' => 'bi-hourglass-split'],
+                                    'da_duyet'    => ['badge' => 'badge-status-da_duyet',    'text' => 'Đã duyệt',      'icon' => 'bi-check-circle-fill'],
+                                    'yeu_cau_huy' => ['badge' => 'badge-status-yeu_cau_huy', 'text' => 'Chờ duyệt hủy', 'icon' => 'bi-exclamation-octagon-fill'],
+                                    'tu_choi'     => ['badge' => 'badge-status-tu_choi',     'text' => 'Từ chối',       'icon' => 'bi-x-circle-fill'],
+                                    'da_huy'      => ['badge' => 'badge-status-da_huy',      'text' => 'Đã hủy',        'icon' => 'bi-slash-circle'],
                                 ];
                                 $st = $statusMap[$b['trang_thai']] ?? ['badge' => 'bg-secondary text-white', 'text' => $b['trang_thai'], 'icon' => 'bi-info-circle'];
                                 ?>
