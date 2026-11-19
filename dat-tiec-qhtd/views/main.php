@@ -150,12 +150,44 @@
               <i class="bi bi-shield-lock-fill me-1 text-danger"></i> Quản Trị
             </a>
           <?php endif; ?>
-          <span class="small fw-semibold text-secondary me-2">
-            <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user']['ho_ten']) ?>
-          </span>
-          <a href="<?= BASE_URL ?>?action=dang-xuat" class="nav-link-q text-danger" title="Đăng xuất" style="padding: 4px 8px !important;">
-            <i class="bi bi-box-arrow-right"></i>
-          </a>
+
+          <!-- User dropdown -->
+          <div class="dropdown d-inline-block">
+            <a href="#" class="nav-link-q dropdown-toggle fw-bold <?= (($_GET['action'] ?? '') === 'tai-khoan') ? 'text-success' : '' ?> d-inline-flex align-items-center gap-1" data-bs-toggle="dropdown" aria-expanded="false" style="padding: 6px 10px !important;">
+              <i class="bi bi-person-circle fs-6"></i>
+              <span><?= htmlspecialchars($_SESSION['user']['ho_ten']) ?></span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" style="border-radius: 12px; min-width: 210px; padding: 10px;">
+              <li class="px-2 py-1 mb-1 border-bottom">
+                <div class="fw-bold small text-dark"><?= htmlspecialchars($_SESSION['user']['ho_ten']) ?></div>
+                <div class="text-muted" style="font-size: 0.72rem;"><?= htmlspecialchars($_SESSION['user']['email']) ?></div>
+              </li>
+              <li>
+                <a class="dropdown-item py-2 d-flex align-items-center gap-2 small rounded-2 <?= (($_GET['action'] ?? '') === 'tai-khoan') ? 'active bg-success text-white' : '' ?>" href="<?= BASE_URL ?>?action=tai-khoan">
+                  <i class="bi bi-person-vcard text-primary"></i> Trang Cá Nhân
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item py-2 d-flex align-items-center gap-2 small rounded-2" href="<?= BASE_URL ?>?action=lich-su-dat-ban">
+                  <i class="bi bi-clock-history text-success"></i> Lịch Sử Đặt Bàn
+                </a>
+              </li>
+              <?php if ($_SESSION['user']['vai_tro'] === 'admin'): ?>
+                <li><hr class="dropdown-divider my-1"></li>
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2 small rounded-2 text-danger fw-semibold" href="<?= BASE_URL ?>?action=admin">
+                    <i class="bi bi-shield-lock-fill"></i> Trang Quản Trị
+                  </a>
+                </li>
+              <?php endif; ?>
+              <li><hr class="dropdown-divider my-1"></li>
+              <li>
+                <a class="dropdown-item py-2 d-flex align-items-center gap-2 small rounded-2 text-danger" href="<?= BASE_URL ?>?action=dang-xuat">
+                  <i class="bi bi-box-arrow-right"></i> Đăng Xuất
+                </a>
+              </li>
+            </ul>
+          </div>
         <?php else: ?>
           <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="nav-link-q" title="Tra cứu đơn đặt bàn">
             <i class="bi bi-search me-1"></i>Tra Cứu
@@ -180,7 +212,10 @@
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
         <?php if (isset($_SESSION['user'])): ?>
-          <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="nav-link-q fw-bold text-success">
+          <a href="<?= BASE_URL ?>?action=tai-khoan" class="nav-link-q fw-bold text-success">
+            <i class="bi bi-person-circle me-1"></i> Trang Cá Nhân (<?= htmlspecialchars($_SESSION['user']['ho_ten']) ?>)
+          </a>
+          <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="nav-link-q">
             <i class="bi bi-clock-history me-1"></i> Lịch Sử Đặt Bàn
           </a>
           <?php if ($_SESSION['user']['vai_tro'] === 'admin'): ?>
@@ -188,8 +223,9 @@
               <i class="bi bi-shield-lock-fill"></i> Trang Quản Trị (Admin)
             </a>
           <?php endif; ?>
-          <span class="nav-link-q text-muted">Xin chào, <?= htmlspecialchars($_SESSION['user']['ho_ten']) ?></span>
-          <a href="<?= BASE_URL ?>?action=dang-xuat" class="nav-link-q text-danger">Đăng Xuất</a>
+          <a href="<?= BASE_URL ?>?action=dang-xuat" class="nav-link-q text-danger">
+            <i class="bi bi-box-arrow-right me-1"></i> Đăng Xuất
+          </a>
         <?php else: ?>
           <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="nav-link-q">
             <i class="bi bi-search me-1"></i> Tra Cứu Đặt Bàn

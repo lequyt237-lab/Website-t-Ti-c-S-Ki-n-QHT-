@@ -37,9 +37,14 @@ match ($action) {
     'admin-set-tiec-detail'   => (new AdminController)->setTiecDetail(),
 
     // Lịch sử đặt bàn & Khách hàng
-    'lich-su-dat-ban'   => (new BookingController)->history(),
-    'chi-tiet-dat-ban'  => (new BookingController)->detail(),
-    'huy-dat-ban'       => (new BookingController)->cancel(),
+    'lich-su-dat-ban'     => (new BookingController)->history(),
+    'chi-tiet-dat-ban'    => (new BookingController)->detail(),
+    'huy-dat-ban'         => (new BookingController)->cancel(),
+
+    // Trang cá nhân khách hàng
+    'tai-khoan'           => (new ProfileController)->index(),
+    'cap-nhat-thong-tin'  => (new ProfileController)->updateInfo(),
+    'doi-mat-khau'        => (new ProfileController)->updatePassword(),
 
     // Đặt món cho bàn tiệc
     'dat-mon'           => (new BookingController)->orderFood(),

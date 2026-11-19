@@ -43,5 +43,30 @@ class UserModel extends BaseModel
         $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM {$this->table}");
         return $stmt->fetch()['total'] ?? 0;
     }
+
+    // Cập nhật thông tin cá nhân (họ tên, số điện thoại)
+    public function updateProfile($id, $data)
+    {
+        $sql = "UPDATE {$this->table} 
+                SET ho_ten = :ho_ten, so_dien_thoai = :so_dien_thoai 
+                WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            ':id'            => $id,
+            ':ho_ten'        => $data['ho_ten'],
+            ':so_dien_thoai' => $data['so_dien_thoai'],
+        ]);
+    }
+
+    // Cập nhật mật khẩu mới
+    public function updatePassword($id, $hashedPassword)
+    {
+        $sql = "UPDATE {$this->table} SET mat_khau = :mat_khau WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            ':id'       => $id,
+            ':mat_khau' => $hashedPassword,
+        ]);
+    }
 }
 
