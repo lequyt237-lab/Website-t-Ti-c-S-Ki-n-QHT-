@@ -188,6 +188,11 @@
                                     <?php if (!empty($b['ten_set'])): ?>
                                         <span class="text-secondary ms-1">| <i class="bi bi-box2-heart text-primary me-1"></i><?= htmlspecialchars($b['ten_set']) ?></span>
                                     <?php endif; ?>
+                                    <?php if (!empty($b['so_mon_ngoai']) && $b['so_mon_ngoai'] > 0): ?>
+                                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle ms-1" style="font-size: 0.7rem;">
+                                            <i class="bi bi-basket2-fill text-warning me-1"></i>+<?= $b['so_mon_ngoai'] ?> món ngoài
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
                             </td>
 

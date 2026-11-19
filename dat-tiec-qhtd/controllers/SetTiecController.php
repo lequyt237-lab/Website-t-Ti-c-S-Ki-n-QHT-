@@ -39,6 +39,14 @@ class SetTiecController
 
         $monTrongSet = $this->model->getMonBySetId($id);
 
+        // Lấy danh sách tất cả món ăn & nhóm món để khách có thể gọi thêm
+        $allDishes   = $this->model->getAllMonAn();
+        $categories  = $this->model->getNhomMon();
+
+        // Lấy danh sách dịp tiệc
+        $bookingModel = new BookingModel();
+        $occasions    = $bookingModel->getAllOccasions();
+
         // Lấy các set khác để gợi ý
         $allSets = $this->model->getAll();
         $otherSets = array_filter($allSets, fn($s) => $s['id'] != $id);

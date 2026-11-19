@@ -47,58 +47,43 @@ class BookingModel extends BaseModel
     // Tạo đơn đặt bàn mới
     public function createBooking($data)
     {
-        // Kiểm tra xem cột gio_den đã có trong DB chưa
-        $hasGioDen = false;
-        try {
-            $check = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'gio_den'")->fetch();
-            $hasGioDen = !empty($check);
-        } catch (Exception $e) {
-            $hasGioDen = false;
+        // Lấy danh sách các cột thực tế đang có trong bảng dat_ban
+        $cols = $this->pdo->query("SHOW COLUMNS FROM {$this->table}")->fetchAll(PDO::FETCH_COLUMN);
+
+        $fields = [
+            'nguoidung_id'    => $data['nguoidung_id'],
+            'banphong_id'     => !empty($data['banphong_id']) ? $data['banphong_id'] : null,
+            'loaidip_id'      => !empty($data['loaidip_id']) ? $data['loaidip_id'] : null,
+            'set_id'          => $data['set_id'] ?? null,
+            'ngay_dat'        => $data['ngay_dat'],
+            'ca'              => $data['ca'],
+            'so_nguoi'        => $data['so_nguoi'],
+            'gia_set_luc_dat' => $data['gia_set_luc_dat'] ?? null,
+            'tong_tien'       => $data['tong_tien'] ?? 0,
+            'trang_thai'      => $data['trang_thai'] ?? 'cho_duyet',
+            'ghi_chu'         => $data['ghi_chu'] ?? '',
+        ];
+
+        if (in_array('gio_den', $cols)) {
+            $fields['gio_den'] = $data['gio_den'] ?? '18:30:00';
+        }
+        if (in_array('yeu_cau_phong_rieng', $cols)) {
+            $fields['yeu_cau_phong_rieng'] = !empty($data['yeu_cau_phong_rieng']) ? 1 : 0;
         }
 
-        if ($hasGioDen) {
-            $sql = "INSERT INTO {$this->table} 
-                    (nguoidung_id, banphong_id, loaidip_id, set_id, ngay_dat, gio_den, ca, so_nguoi, yeu_cau_phong_rieng, gia_set_luc_dat, tong_tien, trang_thai, ghi_chu) 
-                    VALUES 
-                    (:nguoidung_id, :banphong_id, :loaidip_id, :set_id, :ngay_dat, :gio_den, :ca, :so_nguoi, :yeu_cau_phong_rieng, :gia_set_luc_dat, :tong_tien, :trang_thai, :ghi_chu)";
-            $params = [
-                ':nguoidung_id'        => $data['nguoidung_id'],
-                ':banphong_id'         => !empty($data['banphong_id']) ? $data['banphong_id'] : null,
-                ':loaidip_id'          => !empty($data['loaidip_id']) ? $data['loaidip_id'] : null,
-                ':set_id'              => $data['set_id'] ?? null,
-                ':ngay_dat'            => $data['ngay_dat'],
-                ':gio_den'             => $data['gio_den'] ?? '18:30:00',
-                ':ca'                  => $data['ca'],
-                ':so_nguoi'            => $data['so_nguoi'],
-                ':yeu_cau_phong_rieng' => !empty($data['yeu_cau_phong_rieng']) ? 1 : 0,
-                ':gia_set_luc_dat'     => $data['gia_set_luc_dat'] ?? null,
-                ':tong_tien'           => $data['tong_tien'] ?? 0,
-                ':trang_thai'          => $data['trang_thai'] ?? 'cho_duyet',
-                ':ghi_chu'             => $data['ghi_chu'] ?? '',
-            ];
-        } else {
-            $sql = "INSERT INTO {$this->table} 
-                    (nguoidung_id, banphong_id, loaidip_id, set_id, ngay_dat, ca, so_nguoi, yeu_cau_phong_rieng, gia_set_luc_dat, tong_tien, trang_thai, ghi_chu) 
-                    VALUES 
-                    (:nguoidung_id, :banphong_id, :loaidip_id, :set_id, :ngay_dat, :ca, :so_nguoi, :yeu_cau_phong_rieng, :gia_set_luc_dat, :tong_tien, :trang_thai, :ghi_chu)";
-            $params = [
-                ':nguoidung_id'        => $data['nguoidung_id'],
-                ':banphong_id'         => !empty($data['banphong_id']) ? $data['banphong_id'] : null,
-                ':loaidip_id'          => !empty($data['loaidip_id']) ? $data['loaidip_id'] : null,
-                ':set_id'              => $data['set_id'] ?? null,
-                ':ngay_dat'            => $data['ngay_dat'],
-                ':ca'                  => $data['ca'],
-                ':so_nguoi'            => $data['so_nguoi'],
-                ':yeu_cau_phong_rieng' => !empty($data['yeu_cau_phong_rieng']) ? 1 : 0,
-                ':gia_set_luc_dat'     => $data['gia_set_luc_dat'] ?? null,
-                ':tong_tien'           => $data['tong_tien'] ?? 0,
-                ':trang_thai'          => $data['trang_thai'] ?? 'cho_duyet',
-                ':ghi_chu'             => $data['ghi_chu'] ?? '',
-            ];
+        // Nếu banphong_id trong DB là NOT NULL mà giá trị là null, gán bàn hợp lệ đầu tiên để không lỗi ràng buộc
+        $banPhongCol = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'banphong_id'")->fetch();
+        if ($banPhongCol && $banPhongCol['Null'] === 'NO' && empty($fields['banphong_id'])) {
+            $defaultTableId = $this->pdo->query("SELECT id FROM ban_phong ORDER BY id ASC LIMIT 1")->fetchColumn();
+            $fields['banphong_id'] = $defaultTableId ?: 1;
         }
+
+        $columnNames = implode(', ', array_keys($fields));
+        $placeholders = ':' . implode(', :', array_keys($fields));
+        $sql = "INSERT INTO {$this->table} ($columnNames) VALUES ($placeholders)";
 
         $stmt = $this->pdo->prepare($sql);
-        $res = $stmt->execute($params);
+        $res = $stmt->execute($fields);
 
         if ($res) {
             return $this->pdo->lastInsertId();

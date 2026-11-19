@@ -263,7 +263,8 @@ class AdminController extends BaseModel
                    nd.ho_ten AS khach_hang, nd.so_dien_thoai, nd.email,
                    bp.ten AS ten_ban, bp.loai AS loai_ban, bp.suc_chua, bp.phu_phi,
                    ld.ten AS ten_dip,
-                   st.ten AS ten_set
+                   st.ten AS ten_set,
+                   (SELECT COUNT(*) FROM chitiet_mon cm WHERE cm.datban_id = db.id) AS so_mon_ngoai
             FROM dat_ban db
             JOIN nguoidung nd ON db.nguoidung_id = nd.id
             LEFT JOIN ban_phong bp ON db.banphong_id = bp.id
@@ -341,14 +342,38 @@ class AdminController extends BaseModel
 
         // Lấy danh sách món ăn gọi thêm trong chi tiết nếu có
         $sqlExtraDishes = "
-            SELECT cm.*, ma.ten AS ten_mon, ma.nhom_mon
+            SELECT cm.*, ma.ten AS ten_mon, ma.nhom_mon, ma.anh AS anh_mon, ma.mo_ta AS mota_mon
             FROM chitiet_mon cm
             JOIN mon_an ma ON cm.mon_id = ma.id
             WHERE cm.datban_id = :datban_id
+            ORDER BY ma.nhom_mon ASC, ma.ten ASC
         ";
         $stmtExtra = $this->pdo->prepare($sqlExtraDishes);
         $stmtExtra->execute([':datban_id' => $id]);
         $extraDishes = $stmtExtra->fetchAll();
+
+        // Lấy danh sách các món ăn trong Set Tiệc nếu khách có đặt Set
+        $setDishes = [];
+        if (!empty($booking['set_id'])) {
+            $sqlSetDishes = "
+                SELECT ma.*, sm.id AS set_mon_id
+                FROM set_mon sm
+                JOIN mon_an ma ON sm.mon_id = ma.id
+                WHERE sm.set_id = :set_id
+                ORDER BY ma.nhom_mon ASC, ma.ten ASC
+            ";
+            $stmtSet = $this->pdo->prepare($sqlSetDishes);
+            $stmtSet->execute([':set_id' => $booking['set_id']]);
+            $setDishes = $stmtSet->fetchAll();
+        }
+
+        // Tính các khoản tiền chi tiết
+        $setPrice = (float)($booking['gia_set_luc_dat'] ?? 0);
+        $vipFee   = (!empty($booking['loai_ban']) && $booking['loai_ban'] === 'phong_rieng') ? (float)($booking['phu_phi'] ?? 0) : 0;
+        $totalExtraPrice = 0;
+        foreach ($extraDishes as $ed) {
+            $totalExtraPrice += ((float)$ed['don_gia'] * (int)$ed['so_luong']);
+        }
 
         // Kiểm tra xem vị trí này vào ngày & ca đó có bị trùng với đơn khác đã duyệt không (nếu đã xếp bàn)
         $conflictBooking = null;

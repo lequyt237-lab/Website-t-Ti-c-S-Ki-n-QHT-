@@ -226,85 +226,231 @@
             </div>
         </div>
 
-        <!-- 2. THỰC ĐƠN & MÓN GỌI THÊM -->
-        <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden;">
-            <div class="card-header bg-white py-3 px-4 border-0 d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0 fw-bold fs-6">
-                    <i class="bi bi-egg-fried text-primary me-2"></i>Thực Đơn &amp; Món Ăn Kèm
-                </h5>
-                <?php if (!empty($booking['ten_set'])): ?>
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                        <i class="bi bi-box2-heart me-1"></i>Set: <?= htmlspecialchars($booking['ten_set']) ?>
-                    </span>
-                <?php endif; ?>
+        <!-- 2. THỰC ĐƠN & MÓN ĂN CHI TIẾT -->
+        <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header bg-white py-3 px-4 border-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h5 class="card-title mb-0 fw-bold fs-6">
+                        <i class="bi bi-egg-fried text-primary me-2"></i>Thực Đơn &amp; Món Ăn Chi Tiết
+                    </h5>
+                    <?php if (!empty($booking['ten_set'])): ?>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-1 px-2">
+                            <i class="bi bi-box2-heart me-1"></i>Set: <?= htmlspecialchars($booking['ten_set']) ?>
+                        </span>
+                    <?php endif; ?>
+                    <?php if (!empty($extraDishes)): ?>
+                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle py-1 px-2 fw-bold">
+                            <i class="bi bi-basket-fill text-warning me-1"></i>Có <?= count($extraDishes) ?> món gọi thêm ngoài
+                        </span>
+                    <?php endif; ?>
+                </div>
+
+                <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $booking['id'] ?>" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 shadow-sm" style="border-radius: 6px; font-size: 0.8rem;">
+                    <i class="bi bi-pencil-square"></i> Thêm / Sửa món cho khách
+                </a>
             </div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead class="table-light small text-muted text-uppercase">
-                        <tr>
-                            <th class="ps-4">Hạng mục</th>
-                            <th>Phân loại</th>
-                            <th class="text-center">Số lượng</th>
-                            <th class="text-end">Đơn giá</th>
-                            <th class="text-end pe-4">Thành tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($booking['ten_set'])): ?>
-                            <tr>
-                                <td class="ps-4">
-                                    <strong class="text-dark"><?= htmlspecialchars($booking['ten_set']) ?></strong>
-                                    <div class="small text-muted">Set tiệc trọn gói theo dịp</div>
-                                </td>
-                                <td><span class="badge bg-primary-subtle text-primary">Set Menu</span></td>
-                                <td class="text-center fw-bold">1 bàn</td>
-                                <td class="text-end"><?= number_format($booking['gia_set_luc_dat'] ?? 0, 0, ',', '.') ?> đ</td>
-                                <td class="text-end pe-4 fw-bold"><?= number_format($booking['gia_set_luc_dat'] ?? 0, 0, ',', '.') ?> đ</td>
-                            </tr>
-                        <?php endif; ?>
 
-                        <?php if (!empty($booking['ten_ban']) && $booking['loai_ban'] === 'phong_rieng' && $booking['phu_phi'] > 0): ?>
-                            <tr>
-                                <td class="ps-4">
-                                    <strong class="text-dark">Phụ phí phòng VIP (<?= htmlspecialchars($booking['ten_ban']) ?>)</strong>
-                                    <div class="small text-muted">Phí không gian riêng tư</div>
-                                </td>
-                                <td><span class="badge bg-warning-subtle text-warning">Phụ phí</span></td>
-                                <td class="text-center fw-bold">1</td>
-                                <td class="text-end"><?= number_format($booking['phu_phi'], 0, ',', '.') ?> đ</td>
-                                <td class="text-end pe-4 fw-bold"><?= number_format($booking['phu_phi'], 0, ',', '.') ?> đ</td>
-                            </tr>
-                        <?php endif; ?>
+            <div class="card-body p-4 pt-2">
 
+                <!-- ── PHẦN A: SET TIỆC (NẾU CÓ) ── -->
+                <?php if (!empty($booking['ten_set'])): ?>
+                    <div class="p-3 mb-4 rounded-3 border" style="background: #F8FAFC; border-color: #E2E8F0 !important;">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary text-white px-2 py-1" style="font-size: 0.78rem;">
+                                    <i class="bi bi-box2-heart-fill me-1"></i>SET MENU
+                                </span>
+                                <h6 class="mb-0 fw-bold text-dark fs-6"><?= htmlspecialchars($booking['ten_set']) ?></h6>
+                                <span class="badge bg-light text-secondary border small">1 bàn (<?= $booking['so_nguoi'] ?> khách)</span>
+                            </div>
+                            <div class="fw-bold fs-6 text-primary">
+                                <?= number_format($setPrice, 0, ',', '.') ?> đ
+                            </div>
+                        </div>
+
+                        <!-- Danh sách món chi tiết trong Set Tiệc -->
+                        <div class="mt-3 pt-2 border-top">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="small fw-bold text-uppercase text-muted" style="letter-spacing: 0.5px; font-size: 0.75rem;">
+                                    <i class="bi bi-list-check text-primary me-1"></i>Chi tiết các món trong Set này (Bếp chuẩn bị):
+                                </span>
+                                <span class="badge bg-white text-secondary border small">
+                                    <?= count($setDishes) ?> món trong set
+                                </span>
+                            </div>
+
+                            <?php if (!empty($setDishes)): ?>
+                                <?php
+                                $groupedSet = [];
+                                foreach ($setDishes as $sd) {
+                                    $groupedSet[$sd['nhom_mon'] ?? 'Món chính'][] = $sd;
+                                }
+                                ?>
+                                <div class="row g-2">
+                                    <?php foreach ($groupedSet as $nhom => $mons): ?>
+                                        <div class="col-12 col-md-6">
+                                            <div class="p-2 bg-white rounded border small h-100">
+                                                <div class="fw-bold text-success mb-1" style="font-size: 0.78rem;">
+                                                    <i class="bi bi-tag-fill me-1"></i><?= htmlspecialchars($nhom) ?>:
+                                                </div>
+                                                <ul class="mb-0 ps-3 text-secondary" style="line-height: 1.6;">
+                                                    <?php foreach ($mons as $m): ?>
+                                                        <li>
+                                                            <strong class="text-dark"><?= htmlspecialchars($m['ten']) ?></strong>
+                                                            <?php if (!empty($m['mo_ta'])): ?>
+                                                                <span class="text-muted" style="font-size: 0.72rem;">(<?= htmlspecialchars(mb_strimwidth($m['mo_ta'], 0, 45, '...')) ?>)</span>
+                                                            <?php endif; ?>
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="small text-muted py-2 fst-italic">
+                                    <i class="bi bi-info-circle me-1"></i>Chưa cập nhật danh sách món cụ thể cho set tiệc này trong hệ thống.
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="p-3 mb-4 rounded-3 border bg-light text-muted small">
+                        <i class="bi bi-info-circle me-1 text-primary"></i><strong>Hình thức gọi món:</strong> Khách không chọn Set tiệc trọn gói mà chọn món theo yêu cầu.
+                    </div>
+                <?php endif; ?>
+
+                <!-- ── PHẦN B: MÓN ĂN GỌI THÊM NGOÀI SET (MÓN LẺ) ── -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.92rem;">
+                            <i class="bi bi-basket2-fill text-warning me-2"></i>Món Gọi Thêm Ngoài Set (Món lẻ)
+                        </h6>
                         <?php if (!empty($extraDishes)): ?>
-                            <?php foreach ($extraDishes as $dish): ?>
-                                <tr>
-                                    <td class="ps-4"><strong class="text-dark"><?= htmlspecialchars($dish['ten_mon']) ?></strong></td>
-                                    <td><span class="badge bg-light text-secondary border"><?= htmlspecialchars($dish['nhom_mon'] ?? 'Món lẻ') ?></span></td>
-                                    <td class="text-center fw-bold"><?= $dish['so_luong'] ?></td>
-                                    <td class="text-end"><?= number_format($dish['don_gia'], 0, ',', '.') ?> đ</td>
-                                    <td class="text-end pe-4 fw-bold"><?= number_format($dish['don_gia'] * $dish['so_luong'], 0, ',', '.') ?> đ</td>
-                                </tr>
-                            <?php endforeach; ?>
+                            <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.78rem;">
+                                <?= count($extraDishes) ?> món gọi thêm • <?= number_format($totalExtraPrice, 0, ',', '.') ?> đ
+                            </span>
                         <?php endif; ?>
+                    </div>
 
-                        <?php if (empty($booking['ten_set']) && empty($extraDishes) && (empty($booking['ten_ban']) || $booking['loai_ban'] !== 'phong_rieng' || $booking['phu_phi'] <= 0)): ?>
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-4 small">
-                                    <i class="bi bi-info-circle me-1"></i>Khách chỉ đặt chỗ, gọi món trực tiếp tại nhà hàng.
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <td colspan="4" class="text-end fw-bold ps-4 text-uppercase">Tổng Cộng Tạm Tính:</td>
-                            <td class="text-end pe-4 fw-bold fs-5" style="color: #C4603C;">
+                    <?php if (!empty($extraDishes)): ?>
+                        <div class="table-responsive rounded-3 border">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light small text-muted text-uppercase" style="font-size: 0.75rem;">
+                                    <tr>
+                                        <th class="ps-3" style="width: 45px;">#</th>
+                                        <th>Tên món ăn gọi thêm</th>
+                                        <th>Phân loại</th>
+                                        <th class="text-center" style="width: 100px;">Số lượng</th>
+                                        <th class="text-end" style="width: 130px;">Đơn giá</th>
+                                        <th class="text-end pe-3" style="width: 140px;">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php $stt = 1; foreach ($extraDishes as $dish): ?>
+                                        <tr>
+                                            <td class="ps-3 text-muted fw-bold"><?= $stt++ ?></td>
+                                            <td>
+                                                <div class="fw-bold text-dark"><?= htmlspecialchars($dish['ten_mon']) ?></div>
+                                                <?php if (!empty($dish['mota_mon'])): ?>
+                                                    <div class="text-muted" style="font-size: 0.75rem;">
+                                                        <?= htmlspecialchars(mb_strimwidth($dish['mota_mon'], 0, 60, '...')) ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-light text-secondary border">
+                                                    <?= htmlspecialchars($dish['nhom_mon'] ?? 'Món lẻ') ?>
+                                                </span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-warning-subtle text-dark border border-warning-subtle fw-bold px-2 py-1">
+                                                    x<?= $dish['so_luong'] ?>
+                                                </span>
+                                            </td>
+                                            <td class="text-end text-muted small">
+                                                <?= number_format($dish['don_gia'], 0, ',', '.') ?> đ
+                                            </td>
+                                            <td class="text-end pe-3 fw-bold text-danger">
+                                                <?= number_format($dish['don_gia'] * $dish['so_luong'], 0, ',', '.') ?> đ
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="5" class="text-end fw-bold ps-3 text-uppercase small text-secondary">
+                                            Tổng tiền các món gọi thêm:
+                                        </td>
+                                        <td class="text-end pe-3 fw-bold text-danger">
+                                            <?= number_format($totalExtraPrice, 0, ',', '.') ?> đ
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="p-3 rounded-3 border bg-light text-muted small d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="bi bi-dash-circle me-1 text-secondary"></i>
+                                <span>Khách <strong>không gọi thêm món ngoài</strong> set tiệc.</span>
+                            </div>
+                            <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $booking['id'] ?>" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size: 0.75rem;">
+                                <i class="bi bi-plus-lg me-1"></i>Thêm món lẻ nếu khách yêu cầu
+                            </a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- ── PHẦN C: BẢNG TỔNG KẾT CHI PHÍ ĐƠN ĐẶT ── -->
+                <div class="p-3 rounded-3 border" style="background: #FFFDF9; border-color: #FEE2E2 !important;">
+                    <h6 class="fw-bold mb-3 text-dark" style="font-size: 0.88rem;">
+                        <i class="bi bi-receipt-cutoff text-danger me-2"></i>Bảng Tổng Hợp Chi Phí Đơn Đặt
+                    </h6>
+                    <div class="d-flex justify-content-between py-1 small border-bottom">
+                        <span class="text-secondary">
+                            <i class="bi bi-box2 me-1"></i>Tiền Set Tiệc:
+                            <?php if (!empty($booking['ten_set'])): ?>
+                                <span class="fw-semibold text-dark">(<?= htmlspecialchars($booking['ten_set']) ?>)</span>
+                            <?php endif; ?>
+                        </span>
+                        <strong class="text-dark"><?= number_format($setPrice, 0, ',', '.') ?> đ</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between py-1 small border-bottom">
+                        <span class="text-secondary">
+                            <i class="bi bi-cart-plus me-1 text-warning"></i>Tiền Món Gọi Thêm Ngoài:
+                            <?php if (!empty($extraDishes)): ?>
+                                <span class="fw-semibold text-dark">(<?= count($extraDishes) ?> món)</span>
+                            <?php endif; ?>
+                        </span>
+                        <strong class="<?= $totalExtraPrice > 0 ? 'text-danger' : 'text-dark' ?>">
+                            <?= number_format($totalExtraPrice, 0, ',', '.') ?> đ
+                        </strong>
+                    </div>
+
+                    <?php if (!empty($booking['ten_ban']) && $booking['loai_ban'] === 'phong_rieng' && $vipFee > 0): ?>
+                        <div class="d-flex justify-content-between py-1 small border-bottom">
+                            <span class="text-secondary">
+                                <i class="bi bi-door-open me-1 text-primary"></i>Phụ phí phòng VIP (<?= htmlspecialchars($booking['ten_ban']) ?>):
+                            </span>
+                            <strong class="text-dark"><?= number_format($vipFee, 0, ',', '.') ?> đ</strong>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 mt-1">
+                        <div>
+                            <span class="fw-bold text-uppercase fs-6 text-dark">Tổng Cộng Tạm Tính:</span>
+                            <div class="text-muted" style="font-size: 0.72rem;">Đã bao gồm Set menu + Món gọi thêm + Phụ phí phòng (nếu có)</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="fw-bold fs-4" style="color: #C4603C;">
                                 <?= number_format($booking['tong_tien'], 0, ',', '.') ?> đ
-                            </td>
-                        </tr>
-                    </tfoot>
-                </table>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
