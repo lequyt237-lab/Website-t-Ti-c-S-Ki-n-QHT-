@@ -53,6 +53,43 @@
     </div>
 </div>
 
+<!-- ═══ CẢNH BÁO YÊU CẦU HỦY ĐƠN TỪ KHÁCH ═══ -->
+<?php if ($booking['trang_thai'] === 'yeu_cau_huy'): ?>
+    <div class="alert alert-danger border-danger shadow-sm mb-4 rounded-3 p-3" role="alert">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-exclamation-octagon-fill fs-2 text-danger"></i>
+                <div>
+                    <h6 class="alert-heading fw-bold mb-1 text-danger">Khách hàng gửi yêu cầu HỦY ĐƠN ĐẶT BÀN này!</h6>
+                    <p class="mb-0 small text-dark">
+                        <strong>Lý do xin hủy:</strong> <em>"<?= htmlspecialchars($booking['ly_do_huy'] ?? 'Khách không cung cấp lý do cụ thể') ?>"</em>
+                    </p>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <form method="POST" action="<?= BASE_URL ?>?action=admin-dat-ban-cap-nhat" onsubmit="return confirm('Bạn có chắc chắn muốn ĐỒNG Ý HỦY đơn đặt bàn này?');">
+                    <input type="hidden" name="id" value="<?= $booking['id'] ?>">
+                    <input type="hidden" name="trang_thai" value="huy">
+                    <input type="hidden" name="redirect" value="detail">
+                    <input type="hidden" name="ghi_chu" value="<?= htmlspecialchars($booking['ghi_chu'] ?? '') ?>">
+                    <button type="submit" class="btn btn-danger fw-bold shadow-sm">
+                        <i class="bi bi-check-lg me-1"></i>Đồng ý duyệt hủy
+                    </button>
+                </form>
+                <form method="POST" action="<?= BASE_URL ?>?action=admin-dat-ban-cap-nhat" onsubmit="return confirm('Từ chối yêu cầu hủy và giữ nguyên đơn?');">
+                    <input type="hidden" name="id" value="<?= $booking['id'] ?>">
+                    <input type="hidden" name="trang_thai" value="<?= !empty($booking['banphong_id']) ? 'da_duyet' : 'cho_duyet' ?>">
+                    <input type="hidden" name="redirect" value="detail">
+                    <input type="hidden" name="ghi_chu" value="<?= htmlspecialchars($booking['ghi_chu'] ?? '') ?>">
+                    <button type="submit" class="btn btn-outline-secondary fw-semibold">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Bác bỏ yêu cầu
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
 <!-- ═══ CẢNH BÁO TRÙNG LỊCH BÀN (NẾU CÓ) ═══ -->
 <?php if ($conflictBooking): ?>
     <div class="alert alert-warning border-warning shadow-sm mb-4" role="alert">
@@ -337,6 +374,17 @@
                     <!-- TRẠNG THÁI XỬ LÝ -->
                     <label class="form-label fw-semibold small text-muted text-uppercase mb-2">Chọn trạng thái xử lý</label>
                     <div class="d-flex flex-column gap-2 mb-3">
+
+                        <?php if ($booking['trang_thai'] === 'yeu_cau_huy'): ?>
+                            <label class="form-check p-3 border rounded-3 d-flex align-items-center justify-content-between border-danger bg-danger-subtle" style="cursor: pointer;">
+                                <div>
+                                    <input class="form-check-input me-2" type="radio" name="trang_thai" value="yeu_cau_huy" checked>
+                                    <span class="fw-semibold text-danger">Đang yêu cầu hủy</span>
+                                    <div class="text-danger small ps-4">Lý do: "<?= htmlspecialchars($booking['ly_do_huy'] ?? 'Khách xin hủy') ?>"</div>
+                                </div>
+                                <i class="bi bi-exclamation-octagon-fill text-danger fs-5"></i>
+                            </label>
+                        <?php endif; ?>
 
                         <label class="form-check p-3 border rounded-3 d-flex align-items-center justify-content-between <?= $booking['trang_thai'] === 'cho_duyet' ? 'border-warning bg-warning-subtle' : '' ?>" style="cursor: pointer;">
                             <div>

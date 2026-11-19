@@ -36,12 +36,13 @@
         <div class="d-flex flex-wrap gap-2">
             <?php
             $tabItems = [
-                'all'        => ['label' => 'Tất cả',     'icon' => 'bi-collection-fill',     'class' => 'secondary'],
-                'cho_duyet'  => ['label' => 'Chờ duyệt',  'icon' => 'bi-hourglass-split',     'class' => 'warning'],
-                'da_duyet'   => ['label' => 'Đã duyệt',   'icon' => 'bi-check-circle-fill',   'class' => 'success'],
-                'hoan_thanh' => ['label' => 'Hoàn thành', 'icon' => 'bi-patch-check-fill',    'class' => 'primary'],
-                'tu_choi'    => ['label' => 'Từ chối',    'icon' => 'bi-x-circle-fill',       'class' => 'danger'],
-                'huy'        => ['label' => 'Đã hủy',     'icon' => 'bi-slash-circle-fill',   'class' => 'dark'],
+                'all'         => ['label' => 'Tất cả',       'icon' => 'bi-collection-fill',         'class' => 'secondary'],
+                'cho_duyet'   => ['label' => 'Chờ duyệt',    'icon' => 'bi-hourglass-split',         'class' => 'warning'],
+                'da_duyet'    => ['label' => 'Đã duyệt',     'icon' => 'bi-check-circle-fill',       'class' => 'success'],
+                'yeu_cau_huy' => ['label' => 'Yêu cầu hủy',  'icon' => 'bi-exclamation-octagon-fill', 'class' => 'danger'],
+                'hoan_thanh'  => ['label' => 'Hoàn thành',   'icon' => 'bi-patch-check-fill',        'class' => 'primary'],
+                'tu_choi'     => ['label' => 'Từ chối',      'icon' => 'bi-x-circle-fill',           'class' => 'secondary'],
+                'huy'         => ['label' => 'Đã hủy',       'icon' => 'bi-slash-circle-fill',       'class' => 'dark'],
             ];
             foreach ($tabItems as $key => $tab):
                 $isActive = ($status === $key);
@@ -235,16 +236,25 @@
                                     <span class="badge bg-success px-3 py-2" style="font-size: 0.8rem;">
                                         <i class="bi bi-check-circle me-1"></i> Đã duyệt
                                     </span>
+                                <?php elseif ($b['trang_thai'] === 'yeu_cau_huy'): ?>
+                                    <span class="badge bg-danger px-3 py-2" style="font-size: 0.8rem;">
+                                        <i class="bi bi-exclamation-octagon-fill me-1"></i> Yêu cầu hủy
+                                    </span>
+                                    <?php if (!empty($b['ly_do_huy'])): ?>
+                                        <div class="text-danger small mt-1 text-wrap text-start mx-auto" style="max-width: 170px; font-size: 0.72rem;">
+                                            <i class="bi bi-chat-quote-fill me-1"></i>"<?= htmlspecialchars($b['ly_do_huy']) ?>"
+                                        </div>
+                                    <?php endif; ?>
                                 <?php elseif ($b['trang_thai'] === 'hoan_thanh'): ?>
                                     <span class="badge bg-primary px-3 py-2" style="font-size: 0.8rem;">
                                         <i class="bi bi-patch-check me-1"></i> Hoàn thành
                                     </span>
                                 <?php elseif ($b['trang_thai'] === 'tu_choi'): ?>
-                                    <span class="badge bg-danger px-3 py-2" style="font-size: 0.8rem;">
+                                    <span class="badge bg-secondary px-3 py-2" style="font-size: 0.8rem;">
                                         <i class="bi bi-x-circle me-1"></i> Từ chối
                                     </span>
                                 <?php else: ?>
-                                    <span class="badge bg-secondary px-3 py-2" style="font-size: 0.8rem;">
+                                    <span class="badge bg-dark px-3 py-2" style="font-size: 0.8rem;">
                                         <i class="bi bi-slash-circle me-1"></i> Đã hủy
                                     </span>
                                 <?php endif; ?>
@@ -252,13 +262,37 @@
 
                             <!-- Thao tác -->
                             <td class="text-end pe-4">
-                                <div class="d-inline-flex gap-1">
+                                <div class="d-inline-flex gap-1 align-items-center">
                                     <!-- Xem chi tiết -->
                                     <a href="<?= BASE_URL ?>?action=admin-dat-ban-chi-tiet&id=<?= $b['id'] ?>" 
                                        class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
                                        title="Xem chi tiết & Quản lý">
                                         <i class="bi bi-eye"></i> Chi tiết
                                     </a>
+
+                                    <!-- Nút duyệt hủy cho đơn yêu cầu hủy -->
+                                    <?php if ($b['trang_thai'] === 'yeu_cau_huy'): ?>
+                                        <form method="POST" action="<?= BASE_URL ?>?action=admin-dat-ban-cap-nhat" class="d-inline"
+                                              onsubmit="return confirm('Xác nhận ĐỒNG Ý HỦY đơn đặt bàn #<?= $b['id'] ?> của khách <?= htmlspecialchars($b['khach_hang']) ?>?');">
+                                            <input type="hidden" name="id" value="<?= $b['id'] ?>">
+                                            <input type="hidden" name="trang_thai" value="huy">
+                                            <input type="hidden" name="redirect" value="list">
+                                            <input type="hidden" name="ghi_chu" value="<?= htmlspecialchars($b['ghi_chu'] ?? '') ?>">
+                                            <button type="submit" class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1" title="Đồng ý hủy đơn">
+                                                <i class="bi bi-check-lg"></i> Duyệt hủy
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="<?= BASE_URL ?>?action=admin-dat-ban-cap-nhat" class="d-inline"
+                                              onsubmit="return confirm('Từ chối yêu cầu hủy và giữ nguyên đơn đặt bàn #<?= $b['id'] ?>?');">
+                                            <input type="hidden" name="id" value="<?= $b['id'] ?>">
+                                            <input type="hidden" name="trang_thai" value="<?= !empty($b['banphong_id']) ? 'da_duyet' : 'cho_duyet' ?>">
+                                            <input type="hidden" name="redirect" value="list">
+                                            <input type="hidden" name="ghi_chu" value="<?= htmlspecialchars($b['ghi_chu'] ?? '') ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Bác bỏ yêu cầu hủy">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Giữ đơn
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
 
                                     <!-- Nút xếp bàn & duyệt → đến trang chi tiết -->
                                     <?php if ($b['trang_thai'] === 'cho_duyet'): ?>

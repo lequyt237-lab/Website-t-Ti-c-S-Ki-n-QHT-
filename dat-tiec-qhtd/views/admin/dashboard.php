@@ -149,11 +149,12 @@
                                     <td>
                                         <?php
                                         $badgeMap = [
-                                            'cho_duyet' => ['warning', 'Chờ duyệt'],
-                                            'da_duyet'  => ['success', 'Đã duyệt'],
-                                            'tu_choi'   => ['danger', 'Từ chối'],
-                                            'hoan_thanh'=> ['primary', 'Hoàn thành'],
-                                            'huy'       => ['secondary', 'Đã hủy'],
+                                            'cho_duyet'   => ['warning', 'Chờ duyệt'],
+                                            'da_duyet'    => ['success', 'Đã duyệt'],
+                                            'yeu_cau_huy' => ['danger', 'Yêu cầu hủy'],
+                                            'tu_choi'     => ['danger', 'Từ chối'],
+                                            'hoan_thanh'  => ['primary', 'Hoàn thành'],
+                                            'huy'         => ['secondary', 'Đã hủy'],
                                         ];
                                         $st = $badgeMap[$b['trang_thai']] ?? ['secondary', $b['trang_thai']];
                                         ?>

@@ -248,12 +248,13 @@ class AdminController extends BaseModel
 
         // Đếm số lượng theo từng trạng thái để làm badge tab
         $counts = [
-            'all'        => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban")->fetchColumn(),
-            'cho_duyet'  => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'cho_duyet'")->fetchColumn(),
-            'da_duyet'   => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'da_duyet'")->fetchColumn(),
-            'hoan_thanh' => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'hoan_thanh'")->fetchColumn(),
-            'tu_choi'    => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'tu_choi'")->fetchColumn(),
-            'huy'        => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'huy'")->fetchColumn(),
+            'all'         => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban")->fetchColumn(),
+            'cho_duyet'   => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'cho_duyet'")->fetchColumn(),
+            'da_duyet'    => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'da_duyet'")->fetchColumn(),
+            'yeu_cau_huy' => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'yeu_cau_huy'")->fetchColumn(),
+            'hoan_thanh'  => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'hoan_thanh'")->fetchColumn(),
+            'tu_choi'     => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'tu_choi'")->fetchColumn(),
+            'huy'         => (int)$this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'huy'")->fetchColumn(),
         ];
 
         // Xây dựng câu truy vấn có lọc
@@ -479,11 +480,12 @@ class AdminController extends BaseModel
         ]);
 
         $statusLabels = [
-            'cho_duyet'  => 'Chờ duyệt',
-            'da_duyet'   => 'Đã duyệt',
-            'tu_choi'    => 'Từ chối',
-            'hoan_thanh' => 'Hoàn thành',
-            'huy'        => 'Đã hủy',
+            'cho_duyet'   => 'Chờ duyệt',
+            'da_duyet'    => 'Đã duyệt',
+            'yeu_cau_huy' => 'Yêu cầu hủy',
+            'tu_choi'     => 'Từ chối',
+            'hoan_thanh'  => 'Hoàn thành',
+            'huy'         => 'Đã hủy',
         ];
 
         $_SESSION['success'] = "Cập nhật đơn đặt bàn #$id sang trạng thái [{$statusLabels[$newStatus]}] thành công!";
