@@ -319,10 +319,10 @@
                             <!-- FOOTER: Buttons -->
                             <div class="set-card-footer">
                                 <a href="<?= BASE_URL ?>?action=chi-tiet-set-tiec&id=<?= $s['id'] ?>" class="btn-set-detail">
-                                    <i class="bi bi-eye"></i> Xem Chi Tiết
+                                    <i class="bi bi-eye"></i> Chi Tiết
                                 </a>
-                                <a href="<?= BASE_URL ?>#dat-ban" class="btn-set-book">
-                                    <i class="bi bi-calendar2-check"></i> Đặt Bàn
+                                <a href="<?= BASE_URL ?>?action=chi-tiet-set-tiec&id=<?= $s['id'] ?>#dat-set-ngay" class="btn-set-book">
+                                    <i class="bi bi-cart-plus"></i> Đặt Set &amp; Gọi Món
                                 </a>
                             </div>
                         </div>

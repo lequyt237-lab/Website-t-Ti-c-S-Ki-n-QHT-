@@ -109,19 +109,33 @@ class BookingController
             }
         }
 
-        // 7. Tạo đơn đặt bàn (Bàn phòng do Quản trị viên sắp xếp sau khi kiểm tra)
+        // 7. Xử lý Set tiệc nếu có
+        $setId = !empty($_POST['set_id']) ? (int)$_POST['set_id'] : null;
+        $giaSetLucDat = null;
+        $setName = null;
+        if (!empty($setId)) {
+            $setRow = (new SetTiecModel())->getById($setId);
+            if ($setRow) {
+                $giaSetLucDat = (float)$setRow['gia'];
+                $setName = $setRow['ten'];
+            } else {
+                $setId = null;
+            }
+        }
+
+        // Tạo đơn đặt bàn (Bàn phòng do Quản trị viên sắp xếp sau khi kiểm tra)
         $bookingId = $this->bookingModel->createBooking([
             'nguoidung_id'        => $nguoidungId,
             'banphong_id'         => null,
             'loaidip_id'          => $loaidipId,
-            'set_id'              => null,
+            'set_id'              => $setId,
             'ngay_dat'            => $ngayDat,
             'gio_den'             => $gioDen,
             'ca'                  => $ca,
             'so_nguoi'            => $soNguoi,
             'yeu_cau_phong_rieng' => $yeuCauPhongRieng,
-            'gia_set_luc_dat'     => null,
-            'tong_tien'           => 0,
+            'gia_set_luc_dat'     => $giaSetLucDat,
+            'tong_tien'           => $giaSetLucDat ?? 0,
             'trang_thai'          => 'cho_duyet',
             'ghi_chu'             => $ghiChu,
         ]);
@@ -129,18 +143,38 @@ class BookingController
         if ($bookingId) {
             unset($_SESSION['booking_old']);
             $_SESSION['last_booking_id'] = $bookingId;
+
+            // 8. Lưu các món gọi thêm ngoài set (nếu khách có chọn món lẻ kèm theo)
+            $rawDishes = $_POST['dishes'] ?? [];
+            $extraDishes = [];
+            if (is_array($rawDishes)) {
+                foreach ($rawDishes as $monId => $qty) {
+                    $qty = (int)$qty;
+                    if ($qty > 0) {
+                        $extraDishes[(int)$monId] = $qty;
+                    }
+                }
+            }
+
+            if (!empty($extraDishes) || !empty($setId)) {
+                $this->bookingModel->saveBookingDishes($bookingId, $extraDishes, $setId, $ghiChu);
+            }
+
             $caText = $ca === 'trua' ? 'Ca trưa' : 'Ca tối';
             $roomPrefText = $yeuCauPhongRieng ? '<span class="badge bg-warning text-dark">Có yêu cầu phòng riêng VIP</span>' : 'Bàn sảnh chung';
+            $setInfoText = $setName ? " | Thực đơn: <b>{$setName}</b>" : '';
+            $extraCountText = !empty($extraDishes) ? ' (kèm ' . count($extraDishes) . ' món gọi thêm)' : '';
+
             $_SESSION['booking_success'] = sprintf(
                 '<b>Gửi yêu cầu đặt bàn thành công! (Mã đơn: #%d)</b><br>
-                 Ngày đến: <b>%s</b> lúc <b>%s (%s)</b> | Số khách: <b>%d người</b> | Nhu cầu: %s.<br>
+                 Ngày đến: <b>%s</b> lúc <b>%s (%s)</b> | Số khách: <b>%d người</b> | Nhu cầu: %s%s%s.<br>
                  Yêu cầu của bạn đã được tiếp nhận. Quản trị viên sẽ tiến hành xếp bàn phù hợp và liên hệ qua SĐT <b>%s</b> trong vòng 15 phút để xác nhận.<br>
                  <div class="mt-3 d-flex flex-wrap gap-2">
-                     <a href="%s?action=dat-mon&booking_id=%d" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm">
-                         <i class="bi bi-cart-plus-fill me-1"></i> Đặt món ngay cho bàn này
+                     <a href="%s?action=lich-su-dat-ban" class="btn btn-success fw-bold btn-sm shadow-sm">
+                         <i class="bi bi-clock-history me-1"></i> Xem lịch sử đặt bàn của bạn
                      </a>
-                     <a href="%s?action=lich-su-dat-ban" class="btn btn-outline-success btn-sm">
-                         <i class="bi bi-receipt me-1"></i> Xem lịch sử đặt bàn
+                     <a href="%s?action=dat-mon&booking_id=%d" class="btn btn-outline-warning text-dark btn-sm">
+                         <i class="bi bi-cart-plus me-1"></i> Thay đổi / thêm món khác
                      </a>
                  </div>',
                 $bookingId,
@@ -149,11 +183,21 @@ class BookingController
                 $caText,
                 $soNguoi,
                 $roomPrefText,
+                $setInfoText,
+                $extraCountText,
                 htmlspecialchars($soDienThoai),
                 BASE_URL,
-                $bookingId,
-                BASE_URL
+                BASE_URL,
+                $bookingId
             );
+
+            // Nếu đặt từ trang Set Tiệc thì có thể chuyển thẳng đến lịch sử đặt bàn để xem ngay
+            $fromPage = $_POST['from_page'] ?? '';
+            if ($fromPage === 'set_tiec') {
+                $_SESSION['success'] = "Đặt Set tiệc thành công! Đơn hàng #{$bookingId} của bạn đã được ghi nhận kèm danh sách món ăn.";
+                header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+                exit;
+            }
         } else {
             $_SESSION['error'] = 'Có lỗi xảy ra khi lưu thông tin đặt bàn. Vui lòng thử lại hoặc gọi Hotline hỗ trợ.';
         }
