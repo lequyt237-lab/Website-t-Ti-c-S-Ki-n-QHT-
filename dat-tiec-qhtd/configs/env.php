@@ -4,9 +4,6 @@ $isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1']);
 if ($isLocal) {
     $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
     $baseFolder = rtrim($scriptDir, '/') . '/';
-    if ($baseFolder === '/' || empty($baseFolder)) {
-        $baseFolder = '/nhom1/dat-tiec-qhtd/';
-    }
     $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($baseFolder === '//' ? '/' : $baseFolder);
 } else {
     $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/';
