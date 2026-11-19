@@ -128,13 +128,12 @@ class BookingController
 
         if ($bookingId) {
             unset($_SESSION['booking_old']);
-feat-dat-mon
             $_SESSION['last_booking_id'] = $bookingId;
-            $caText = $ca === 'trua' ? 'Ca trưa (11:00 - 14:00)' : 'Ca tối (17:00 - 21:30)';
+            $caText = $ca === 'trua' ? 'Ca trưa' : 'Ca tối';
             $roomPrefText = $yeuCauPhongRieng ? '<span class="badge bg-warning text-dark">Có yêu cầu phòng riêng VIP</span>' : 'Bàn sảnh chung';
             $_SESSION['booking_success'] = sprintf(
                 '<b>Gửi yêu cầu đặt bàn thành công! (Mã đơn: #%d)</b><br>
-                 Ngày: <b>%s</b> (%s) | Số khách: <b>%d người</b> | Nhu cầu: %s.<br>
+                 Ngày đến: <b>%s</b> lúc <b>%s (%s)</b> | Số khách: <b>%d người</b> | Nhu cầu: %s.<br>
                  Yêu cầu của bạn đã được tiếp nhận. Quản trị viên sẽ tiến hành xếp bàn phù hợp và liên hệ qua SĐT <b>%s</b> trong vòng 15 phút để xác nhận.<br>
                  <div class="mt-3 d-flex flex-wrap gap-2">
                      <a href="%s?action=dat-mon&booking_id=%d" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm">
@@ -144,14 +143,6 @@ feat-dat-mon
                          <i class="bi bi-receipt me-1"></i> Xem lịch sử đặt bàn
                      </a>
                  </div>',
-
-            $caText = $ca === 'trua' ? 'Ca trưa' : 'Ca tối';
-            $roomPrefText = $yeuCauPhongRieng ? '<span class="badge bg-warning text-dark">Có yêu cầu phòng riêng VIP</span>' : 'Bàn sảnh chung';
-            $_SESSION['booking_success'] = sprintf(
-                '<b>Gửi yêu cầu đặt bàn thành công! (Mã đơn: #%d)</b><br>
-                 Ngày đến: <b>%s</b> lúc <b>%s (%s)</b> | Số khách: <b>%d người</b> | Nhu cầu: %s.<br>
-                 Yêu cầu của bạn đã được tiếp nhận. Quản trị viên sẽ tiến hành xếp bàn phù hợp và liên hệ qua SĐT <b>%s</b> trong vòng 15 phút để xác nhận.',
- main
                 $bookingId,
                 date('d/m/Y', strtotime($ngayDat)),
                 date('H:i', strtotime($gioDen)),
