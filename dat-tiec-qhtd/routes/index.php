@@ -15,6 +15,10 @@ match ($action) {
     // Thực đơn & Ẩm thực
     'thuc-don'          => (new MenuController)->index(),
 
+    // Set Tiệc (Trang người dùng)
+    'set-tiec'          => (new SetTiecController)->index(),
+    'chi-tiet-set-tiec' => (new SetTiecController)->detail(),
+
     // Đặt bàn / Đặt phòng
     'dat-ban'           => header('Location: ' . BASE_URL . '#dat-ban') ?: exit,
     'xu-ly-dat-ban'     => (new BookingController)->submit(),
