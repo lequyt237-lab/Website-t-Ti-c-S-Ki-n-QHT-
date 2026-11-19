@@ -8,16 +8,16 @@ spl_autoload_register(function ($class) {
     $fileModel              = PATH_MODEL . $fileName;
     $fileController         = PATH_CONTROLLER . $fileName;
 
-    if (is_readable($fileModel)) {
+    if (is_file($fileModel)) {
         require_once $fileModel;
     } 
-    else if (is_readable($fileController)) {
+    else if (is_file($fileController)) {
         require_once $fileController;
     }
 });
 
-require_once './configs/env.php';
-require_once './configs/helper.php';
+require_once __DIR__ . '/configs/env.php';
+require_once __DIR__ . '/configs/helper.php';
 
 // Điều hướng
-require_once './routes/index.php';
+require_once __DIR__ . '/routes/index.php';
