@@ -226,9 +226,22 @@
                                 </span>
                             </td>
 
-                            <!-- Tổng tiền -->
-                            <td class="text-end fw-bold" style="color: #C4603C;">
-                                <?= number_format($b['tong_tien'], 0, ',', '.') ?> đ
+                            <!-- Tổng tiền & Thanh toán -->
+                            <td class="text-end">
+                                <div class="fw-bold fs-6" style="color: #C4603C;"><?= number_format($b['tong_tien'], 0, ',', '.') ?> đ</div>
+                                <?php if (($b['trang_thai_thanh_toan'] ?? '') === 'da_thanh_toan'): ?>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.7rem;">
+                                        <i class="bi bi-check-circle me-1"></i>Đã thanh toán đủ
+                                    </span>
+                                <?php elseif (($b['trang_thai_thanh_toan'] ?? '') === 'da_dat_coc'): ?>
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size:0.7rem;" title="Đã cọc: <?= number_format($b['so_tien_da_coc'] ?? 0, 0, ',', '.') ?> đ">
+                                        <i class="bi bi-credit-card me-1"></i>Đã cọc <?= number_format($b['so_tien_da_coc'] ?? 0, 0, ',', '.') ?>đ
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary-subtle text-secondary" style="font-size:0.7rem;">
+                                        Chưa thanh toán
+                                    </span>
+                                <?php endif; ?>
                             </td>
 
                             <!-- Trạng thái -->

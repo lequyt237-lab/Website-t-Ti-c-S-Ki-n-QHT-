@@ -301,11 +301,17 @@
                 </a>
             </li>
 
-            <li class="menu-header">Nghiệp Vụ Đặt Bàn</li>
+            <li class="menu-header">Nghiệp Vụ Đặt Bàn & Thanh Toán</li>
             <li class="menu-item">
                 <a href="<?= BASE_URL ?>?action=admin-dat-ban" class="menu-link <?= ($activeMenu ?? '') === 'dat-ban' ? 'active' : '' ?>">
                     <i class="bi bi-calendar2-check-fill"></i>
                     <span>Duyệt Đặt Bàn</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="<?= BASE_URL ?>?action=admin-thanh-toan" class="menu-link <?= ($activeMenu ?? '') === 'thanh-toan' ? 'active' : '' ?>">
+                    <i class="bi bi-cash-coin"></i>
+                    <span>Quản Lý Thanh Toán</span>
                 </a>
             </li>
             <li class="menu-item">

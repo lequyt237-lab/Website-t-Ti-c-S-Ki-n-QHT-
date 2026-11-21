@@ -451,6 +451,164 @@
                     </div>
                 </div>
 
+                <!-- ── PHẦN D: QUẢN LÝ THANH TOÁN & THU TIỀN TRỰC TIẾP ── -->
+                <div class="mt-4 p-4 rounded-3 border bg-white shadow-sm" style="border-top: 3px solid #16a34a !important;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h6 class="fw-bold text-dark mb-0 fs-6">
+                            <i class="bi bi-cash-stack text-success me-2"></i>Tình Trạng Thanh Toán &amp; Quản Lý Thu Tiền
+                        </h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <?php if (($booking['trang_thai_thanh_toan'] ?? '') === 'da_thanh_toan'): ?>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 fw-bold">
+                                    <i class="bi bi-check-circle me-1"></i>Đã thanh toán đủ (100%)
+                                </span>
+                            <?php elseif (($booking['trang_thai_thanh_toan'] ?? '') === 'da_dat_coc'): ?>
+                                <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-1 fw-bold">
+                                    <i class="bi bi-credit-card me-1"></i>Đã đặt cọc tiệc
+                                </span>
+                            <?php else: ?>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 fw-bold">
+                                    <i class="bi bi-clock-history me-1"></i>Chưa thanh toán
+                                </span>
+                            <?php endif; ?>
+
+                            <a href="<?= BASE_URL ?>?action=hoa-don&booking_id=<?= $booking['id'] ?>" target="_blank" class="btn btn-outline-secondary btn-sm fw-semibold">
+                                <i class="bi bi-printer me-1"></i>In Hóa Đơn
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- 3 thẻ thống kê tiền đơn này -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <div class="p-2 rounded bg-light border text-center">
+                                <div class="text-muted" style="font-size:0.75rem;">Tổng tiền tiệc:</div>
+                                <div class="fw-bold text-dark"><?= number_format($booking['tong_tien'], 0, ',', '.') ?> đ</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 rounded bg-success-subtle border border-success-subtle text-center">
+                                <div class="text-success small fw-semibold" style="font-size:0.75rem;">Đã thực thu:</div>
+                                <div class="fw-bold text-success"><?= number_format($daTra, 0, ',', '.') ?> đ</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 rounded bg-danger-subtle border border-danger-subtle text-center">
+                                <div class="text-danger small fw-semibold" style="font-size:0.75rem;">Còn lại phải thu:</div>
+                                <div class="fw-bold text-danger"><?= number_format($conLai, 0, ',', '.') ?> đ</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lịch sử các lần khách thanh toán -->
+                    <div class="mb-3">
+                        <div class="fw-bold text-secondary small text-uppercase mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                            Lịch sử các giao dịch ghi nhận (<?= count($payments) ?>):
+                        </div>
+                        <?php if (empty($payments)): ?>
+                            <div class="text-muted small fst-italic p-2 bg-light rounded text-center">
+                                Chưa có giao dịch nào được ghi nhận cho đơn này.
+                            </div>
+                        <?php else: ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle mb-0 small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Mã GD</th>
+                                            <th>Phương thức</th>
+                                            <th class="text-end">Số tiền</th>
+                                            <th>Thời gian</th>
+                                            <th class="text-center">Trạng thái</th>
+                                            <th class="text-end">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($payments as $p): ?>
+                                            <tr>
+                                                <td class="font-monospace fw-bold text-primary">
+                                                    <?= htmlspecialchars($p['ma_giao_dich']) ?>
+                                                    <?php if (!empty($p['anh_bien_lai'])): ?>
+                                                        <a href="<?= BASE_ASSETS_UPLOADS . htmlspecialchars($p['anh_bien_lai']) ?>" target="_blank" class="badge bg-info text-white text-decoration-none">Bill</a>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <span class="text-capitalize"><?= str_replace('_', ' ', $p['phuong_thuc']) ?></span>
+                                                    <span class="badge bg-light text-muted border"><?= $p['loai_thanh_toan'] === 'dat_coc' ? 'Cọc' : 'Toàn bộ' ?></span>
+                                                </td>
+                                                <td class="text-end fw-bold text-success">+<?= number_format($p['so_tien'], 0, ',', '.') ?> đ</td>
+                                                <td class="text-muted"><?= date('d/m/Y H:i', strtotime($p['ngay_thanh_toan'])) ?></td>
+                                                <td class="text-center">
+                                                    <span class="badge <?= $p['trang_thai'] === 'thanh_cong' ? 'bg-success' : 'bg-warning text-dark' ?>">
+                                                        <?= $p['trang_thai'] === 'thanh_cong' ? 'Thành công' : 'Chờ xác nhận' ?>
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">
+                                                    <?php if ($p['trang_thai'] === 'cho_xac_nhan'): ?>
+                                                        <form method="POST" action="<?= BASE_URL ?>?action=admin-thanh-toan-cap-nhat" style="display:inline;">
+                                                            <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                                                            <input type="hidden" name="trang_thai" value="thanh_cong">
+                                                            <input type="hidden" name="redirect" value="detail">
+                                                            <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                            <button type="submit" class="btn btn-xs btn-success py-0 px-2 fw-semibold" title="Xác nhận đã nhận tiền">
+                                                                <i class="bi bi-check-lg"></i> Duyệt
+                                                            </button>
+                                                        </form>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Form thu tiền trực tiếp tại quầy dành cho thu ngân -->
+                    <?php if ($conLai > 0): ?>
+                        <div class="p-3 rounded-3 bg-light border">
+                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-plus-circle me-1 text-primary"></i>Thu ngân ghi nhận thu tiền tại quầy / chuyển khoản:</h6>
+                            <form method="POST" action="<?= BASE_URL ?>?action=admin-thu-tien" class="row g-2 align-items-end">
+                                <input type="hidden" name="datban_id" value="<?= $booking['id'] ?>">
+
+                                <div class="col-md-3">
+                                    <label class="form-label small text-muted mb-1">Số tiền thu (VNĐ):</label>
+                                    <input type="number" name="so_tien" class="form-control form-control-sm fw-bold text-danger" 
+                                           value="<?= $conLai ?>" min="1000" max="<?= $conLai ?>" required>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label small text-muted mb-1">Phương thức:</label>
+                                    <select name="phuong_thuc" class="form-select form-select-sm">
+                                        <option value="tien_mat">Tiền mặt tại quầy</option>
+                                        <option value="chuyen_khoan">Chuyển khoản VietQR</option>
+                                        <option value="vnpay">Quẹt thẻ POS / VNPAY</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label small text-muted mb-1">Loại thu:</label>
+                                    <select name="loai_thanh_toan" class="form-select form-select-sm">
+                                        <option value="<?= $daTra > 0 ? 'toan_bo' : 'dat_coc' ?>"><?= $daTra > 0 ? 'Thanh toán còn lại' : 'Thu tiền cọc' ?></option>
+                                        <option value="toan_bo">Thanh toán toàn bộ</option>
+                                        <option value="thanh_toan_them">Thu tiền thêm</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+                                        <i class="bi bi-check2-circle me-1"></i>Xác nhận thu
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    <?php else: ?>
+                        <div class="alert alert-success py-2 px-3 small mb-0 border-0">
+                            <i class="bi bi-check-circle-fill me-1"></i> Đơn đặt bàn này đã được thanh toán đủ 100% chi phí.
+                        </div>
+                    <?php endif; ?>
+
+                </div>
+
             </div>
         </div>
     </div>

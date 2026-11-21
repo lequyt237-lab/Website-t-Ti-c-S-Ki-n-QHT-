@@ -35,6 +35,10 @@ class AdminController extends BaseModel
         $totalBookings   = $this->pdo->query("SELECT COUNT(*) FROM dat_ban")->fetchColumn();
         $pendingBookings = $this->pdo->query("SELECT COUNT(*) FROM dat_ban WHERE trang_thai = 'cho_duyet'")->fetchColumn();
 
+        // Thống kê thanh toán & doanh thu
+        $paymentModel = new PaymentModel();
+        $paymentStats = $paymentModel->getPaymentStats();
+
         // Danh sách đơn đặt bàn gần đây
         $sqlRecentBookings = "
             SELECT db.*, nd.ho_ten AS khach_hang, nd.so_dien_thoai, bp.ten AS ten_ban, ld.ten AS ten_dip, st.ten AS ten_set
@@ -52,12 +56,15 @@ class AdminController extends BaseModel
         $tables = $this->pdo->query("SELECT * FROM ban_phong ORDER BY id ASC")->fetchAll();
 
         $stats = [
-            'users'    => $totalUsers,
-            'tables'   => $totalTables,
-            'dishes'   => $totalDishes,
-            'sets'     => $totalSets,
-            'bookings' => $totalBookings,
-            'pending'  => $pendingBookings,
+            'users'            => $totalUsers,
+            'tables'           => $totalTables,
+            'dishes'           => $totalDishes,
+            'sets'             => $totalSets,
+            'bookings'         => $totalBookings,
+            'pending'          => $pendingBookings,
+            'revenue'          => $paymentStats['total_revenue'] ?? 0,
+            'today_revenue'    => $paymentStats['today_revenue'] ?? 0,
+            'pending_payments' => $paymentStats['pending_confirm'] ?? 0,
         ];
 
         $title      = 'Bảng điều khiển Quản trị - QHT Banquet';
@@ -397,6 +404,12 @@ class AdminController extends BaseModel
             $conflictBooking = $stmtConflict->fetch();
         }
 
+        // Lấy lịch sử giao dịch thanh toán của đơn này
+        $paymentModel = new PaymentModel();
+        $payments = $paymentModel->getPaymentsByBookingId($id);
+        $daTra = (float)($booking['so_tien_da_tra'] ?? 0);
+        $conLai = max(0, (float)$booking['tong_tien'] - $daTra);
+
         $title      = "Chi tiết Đơn Đặt Bàn #$id - QHT Banquet";
         $activeMenu = 'dat-ban';
         $adminView  = 'bookings/detail';
@@ -522,6 +535,130 @@ class AdminController extends BaseModel
         } else {
             header('Location: ' . BASE_URL . '?action=admin-dat-ban');
         }
+        exit;
+    }
+
+    /* ═══════════════════════════════════════════
+       QUẢN LÝ THANH TOÁN & THU TIỀN (ADMIN)
+    ═══════════════════════════════════════════ */
+
+    // 5. Trang danh sách quản lý giao dịch thanh toán
+    public function payments()
+    {
+        $status = trim($_GET['status'] ?? 'all');
+        $method = trim($_GET['method'] ?? 'all');
+        $search = trim($_GET['q'] ?? '');
+        $date   = trim($_GET['date'] ?? '');
+
+        $paymentModel = new PaymentModel();
+        $filters = [
+            'status' => $status,
+            'method' => $method,
+            'q'      => $search,
+            'date'   => $date,
+        ];
+
+        $payments = $paymentModel->getAllPayments($filters);
+        $stats    = $paymentModel->getPaymentStats();
+
+        $title      = 'Quản Lý Giao Dịch Thanh Toán - QHT Banquet';
+        $activeMenu = 'thanh-toan';
+        $adminView  = 'payments/index';
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    // 6. Cập nhật trạng thái giao dịch thanh toán (Duyệt cọc, Xác nhận chuyển khoản...)
+    public function updatePaymentStatus()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '?action=admin-thanh-toan');
+            exit;
+        }
+
+        $id        = (int)($_POST['id'] ?? 0);
+        $newStatus = trim($_POST['trang_thai'] ?? '');
+        $adminNote = trim($_POST['ghi_chu_admin'] ?? '');
+        $redirect  = $_POST['redirect'] ?? 'list';
+        $bookingId = (int)($_POST['booking_id'] ?? 0);
+
+        $validStatuses = ['cho_xac_nhan', 'thanh_cong', 'that_bai', 'da_huy'];
+        if ($id <= 0 || !in_array($newStatus, $validStatuses)) {
+            $_SESSION['error'] = 'Trạng thái giao dịch không hợp lệ.';
+            header('Location: ' . BASE_URL . '?action=admin-thanh-toan');
+            exit;
+        }
+
+        $paymentModel = new PaymentModel();
+        $res = $paymentModel->updatePaymentStatus($id, $newStatus, $adminNote);
+
+        if ($res) {
+            $_SESSION['success'] = "Cập nhật trạng thái giao dịch #$id thành công!";
+        } else {
+            $_SESSION['error'] = 'Không thể cập nhật trạng thái giao dịch này.';
+        }
+
+        if ($redirect === 'detail' && $bookingId > 0) {
+            header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$bookingId");
+        } else {
+            header('Location: ' . BASE_URL . '?action=admin-thanh-toan');
+        }
+        exit;
+    }
+
+    // 7. Admin thu tiền trực tiếp tại quầy / ghi nhận tiền cọc cho đơn đặt bàn
+    public function adminRecordPayment()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '?action=admin-dat-ban');
+            exit;
+        }
+
+        $bookingId = (int)($_POST['datban_id'] ?? 0);
+        $amount    = (float)($_POST['so_tien'] ?? 0);
+        $type      = trim($_POST['loai_thanh_toan'] ?? 'dat_coc');
+        $method    = trim($_POST['phuong_thuc'] ?? 'tien_mat');
+        $note      = trim($_POST['noi_dung'] ?? 'Thu ngân nhận tiền tại quầy');
+
+        if ($bookingId <= 0 || $amount <= 0) {
+            $_SESSION['error'] = 'Vui lòng nhập số tiền thu hợp lệ lớn hơn 0.';
+            header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$bookingId");
+            exit;
+        }
+
+        // Lấy thông tin đơn đặt bàn
+        $stmtBooking = $this->pdo->prepare("SELECT * FROM dat_ban WHERE id = :id LIMIT 1");
+        $stmtBooking->execute([':id' => $bookingId]);
+        $booking = $stmtBooking->fetch();
+
+        if (!$booking) {
+            $_SESSION['error'] = 'Đơn đặt bàn không tồn tại.';
+            header('Location: ' . BASE_URL . '?action=admin-dat-ban');
+            exit;
+        }
+
+        $paymentModel = new PaymentModel();
+        $maGiaoDich = $paymentModel->generateTransactionCode($bookingId);
+
+        $res = $paymentModel->recordPayment([
+            'datban_id'       => $bookingId,
+            'nguoidung_id'    => $booking['nguoidung_id'],
+            'ma_giao_dich'    => $maGiaoDich,
+            'so_tien'         => $amount,
+            'loai_thanh_toan' => $type,
+            'phuong_thuc'     => $method,
+            'trang_thai'      => 'thanh_cong',
+            'noi_dung'        => $note,
+            'ghi_chu_admin'   => 'Admin ' . ($_SESSION['user']['ho_ten'] ?? 'Quản trị viên') . ' trực tiếp thu tiền',
+        ]);
+
+        if ($res) {
+            $_SESSION['success'] = "Đã thu thành công " . number_format($amount, 0, ',', '.') . " đ cho đơn #DB$bookingId! (Mã GD: $maGiaoDich)";
+        } else {
+            $_SESSION['error'] = 'Lỗi ghi nhận khoản thu. Vui lòng thử lại.';
+        }
+
+        header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$bookingId");
         exit;
     }
 }

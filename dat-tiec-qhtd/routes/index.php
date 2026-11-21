@@ -23,6 +23,14 @@ match ($action) {
     'dat-ban'           => header('Location: ' . BASE_URL . '#dat-ban') ?: exit,
     'xu-ly-dat-ban'     => (new BookingController)->submit(),
 
+    // Thanh toán & Hóa đơn (Phía khách hàng)
+    'thanh-toan'            => (new PaymentController)->checkout(),
+    'xu-ly-thanh-toan'      => (new PaymentController)->process(),
+    'vnpay-gateway'         => (new PaymentController)->vnpayGateway(),
+    'vnpay-callback'        => (new PaymentController)->vnpayCallback(),
+    'thanh-toan-thanh-cong' => (new PaymentController)->success(),
+    'hoa-don'               => (new PaymentController)->invoice(),
+
     // Quản trị viên (Admin)
     'admin'                   => (new AdminController)->index(),
     'admin-dat-ban'           => (new AdminController)->bookings(),
@@ -35,6 +43,11 @@ match ($action) {
     'admin-set-tiec-update'   => (new AdminController)->setTiecUpdate(),
     'admin-set-tiec-delete'   => (new AdminController)->setTiecDelete(),
     'admin-set-tiec-detail'   => (new AdminController)->setTiecDetail(),
+
+    // Quản trị Thanh toán & Thu tiền (Admin)
+    'admin-thanh-toan'          => (new AdminController)->payments(),
+    'admin-thanh-toan-cap-nhat' => (new AdminController)->updatePaymentStatus(),
+    'admin-thu-tien'            => (new AdminController)->adminRecordPayment(),
 
     // Lịch sử đặt bàn & Khách hàng
     'lich-su-dat-ban'     => (new BookingController)->history(),
