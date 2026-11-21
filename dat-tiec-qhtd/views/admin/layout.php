@@ -309,17 +309,23 @@
                 </a>
             </li>
             <li class="menu-item">
-                <a href="<?= BASE_URL ?>?action=admin" class="menu-link">
+                <a href="<?= BASE_URL ?>?action=admin-ban-phong" class="menu-link <?= ($activeMenu ?? '') === 'ban-phong' ? 'active' : '' ?>">
                     <i class="bi bi-door-open-fill"></i>
-                    <span>Bàn & Phòng</span>
+                    <span>Bàn &amp; Phòng</span>
                 </a>
             </li>
 
             <li class="menu-header">Ẩm Thực & Sự Kiện</li>
             <li class="menu-item">
+                <a href="<?= BASE_URL ?>?action=admin-mon-an" class="menu-link <?= str_starts_with($currentAction, 'admin-mon-an') ? 'active' : '' ?>">
+                    <i class="bi bi-basket2-fill"></i>
+                    <span>Món Ăn</span>
+                </a>
+            </li>
+            <li class="menu-item">
                 <a href="<?= BASE_URL ?>?action=admin-set-tiec" class="menu-link <?= str_starts_with($currentAction, 'admin-set-tiec') ? 'active' : '' ?>">
                     <i class="bi bi-egg-fried"></i>
-                    <span>Thực Đơn & Set Tiệc</span>
+                    <span>Set Tiệc</span>
                 </a>
             </li>
             <li class="menu-item">

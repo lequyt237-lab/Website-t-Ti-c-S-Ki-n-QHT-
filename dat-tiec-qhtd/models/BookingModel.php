@@ -113,7 +113,17 @@ class BookingModel extends BaseModel
     {
         $sql = "
             SELECT db.*,
-                   bp.ten AS ten_ban, bp.loai AS loai_ban, bp.suc_chua, bp.phu_phi, bp.anh AS anh_ban,
+                   COALESCE((SELECT GROUP_CONCAT(bp_sub.ten SEPARATOR ' + ') 
+                             FROM datban_banphong dbp 
+                             JOIN ban_phong bp_sub ON dbp.banphong_id = bp_sub.id 
+                             WHERE dbp.datban_id = db.id), bp.ten) AS ten_ban,
+                   bp.loai AS loai_ban,
+                   COALESCE((SELECT SUM(bp_sub.suc_chua) 
+                             FROM datban_banphong dbp 
+                             JOIN ban_phong bp_sub ON dbp.banphong_id = bp_sub.id 
+                             WHERE dbp.datban_id = db.id), bp.suc_chua) AS suc_chua,
+                   (SELECT COUNT(*) FROM datban_banphong dbp WHERE dbp.datban_id = db.id) AS so_luong_ban_ghep,
+                   bp.phu_phi, bp.anh AS anh_ban,
                    ld.ten AS ten_dip,
                    st.ten AS ten_set, st.gia AS gia_set, st.so_nguoi_phu_hop AS set_so_nguoi
             FROM {$this->table} db
@@ -144,7 +154,17 @@ class BookingModel extends BaseModel
     {
         $sql = "
             SELECT db.*,
-                   bp.ten AS ten_ban, bp.loai AS loai_ban, bp.suc_chua, bp.phu_phi, bp.anh AS anh_ban,
+                   COALESCE((SELECT GROUP_CONCAT(bp_sub.ten SEPARATOR ' + ') 
+                             FROM datban_banphong dbp 
+                             JOIN ban_phong bp_sub ON dbp.banphong_id = bp_sub.id 
+                             WHERE dbp.datban_id = db.id), bp.ten) AS ten_ban,
+                   bp.loai AS loai_ban,
+                   COALESCE((SELECT SUM(bp_sub.suc_chua) 
+                             FROM datban_banphong dbp 
+                             JOIN ban_phong bp_sub ON dbp.banphong_id = bp_sub.id 
+                             WHERE dbp.datban_id = db.id), bp.suc_chua) AS suc_chua,
+                   (SELECT COUNT(*) FROM datban_banphong dbp WHERE dbp.datban_id = db.id) AS so_luong_ban_ghep,
+                   bp.phu_phi, bp.anh AS anh_ban,
                    ld.ten AS ten_dip,
                    st.ten AS ten_set, st.gia AS gia_set
             FROM {$this->table} db
@@ -202,7 +222,17 @@ class BookingModel extends BaseModel
         $sql = "
             SELECT db.*,
                    nd.ho_ten AS ten_khach, nd.email AS email_khach, nd.so_dien_thoai AS sdt_khach,
-                   bp.ten AS ten_ban, bp.loai AS loai_ban, bp.suc_chua, bp.phu_phi, bp.mo_ta AS mota_ban, bp.anh AS anh_ban,
+                   COALESCE((SELECT GROUP_CONCAT(bp_sub.ten SEPARATOR ' + ') 
+                             FROM datban_banphong dbp 
+                             JOIN ban_phong bp_sub ON dbp.banphong_id = bp_sub.id 
+                             WHERE dbp.datban_id = db.id), bp.ten) AS ten_ban,
+                   bp.loai AS loai_ban,
+                   COALESCE((SELECT SUM(bp_sub.suc_chua) 
+                             FROM datban_banphong dbp 
+                             JOIN ban_phong bp_sub ON dbp.banphong_id = bp_sub.id 
+                             WHERE dbp.datban_id = db.id), bp.suc_chua) AS suc_chua,
+                   (SELECT COUNT(*) FROM datban_banphong dbp WHERE dbp.datban_id = db.id) AS so_luong_ban_ghep,
+                   bp.phu_phi, bp.mo_ta AS mota_ban, bp.anh AS anh_ban,
                    ld.ten AS ten_dip, ld.mo_ta AS mota_dip,
                    st.ten AS ten_set, st.gia AS gia_set, st.mo_ta AS mota_set, st.so_nguoi_phu_hop AS set_so_nguoi
             FROM {$this->table} db

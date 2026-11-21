@@ -268,9 +268,15 @@
                                                 <i class="bi bi-door-open me-1"></i>Có yêu cầu phòng VIP
                                             </span>
                                         <?php elseif (!empty($b['ten_ban'])): ?>
-                                            <span class="badge bg-light text-secondary border small">
-                                                <?= ($b['loai_ban'] ?? '') === 'phong_rieng' ? 'Phòng VIP riêng tư' : 'Bàn sảnh chung' ?>
-                                            </span>
+                                            <?php if (!empty($b['so_luong_ban_ghep']) && $b['so_luong_ban_ghep'] > 1): ?>
+                                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">
+                                                    <i class="bi bi-intersect me-1"></i>Ghép <?= $b['so_luong_ban_ghep'] ?> bàn sảnh
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge bg-light text-secondary border small">
+                                                    <?= in_array(($b['loai_ban'] ?? ''), ['phong_rieng', 'phong_vip']) ? 'Phòng VIP riêng tư' : 'Bàn sảnh chung' ?>
+                                                </span>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </div>
                                     <div class="text-end">
