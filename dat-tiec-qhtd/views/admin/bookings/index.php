@@ -170,7 +170,11 @@
                                         </span>
                                     <?php else: ?>
                                         <span class="fw-semibold text-dark"><?= htmlspecialchars($b['ten_ban']) ?></span>
-                                        <?php if ($b['loai_ban'] === 'phong_rieng'): ?>
+                                        <?php if (!empty($b['so_luong_ban_ghep']) && $b['so_luong_ban_ghep'] > 1): ?>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle small py-0 px-2" style="font-size: 0.7rem;">
+                                                <i class="bi bi-intersect me-1"></i>Ghép <?= $b['so_luong_ban_ghep'] ?> bàn
+                                            </span>
+                                        <?php elseif ($b['loai_ban'] === 'phong_rieng' || $b['loai_ban'] === 'phong_vip'): ?>
                                             <span class="badge bg-warning-subtle text-warning border border-warning-subtle small py-0 px-2" style="font-size: 0.7rem;">VIP</span>
                                         <?php else: ?>
                                             <span class="badge bg-light text-secondary border small py-0 px-2" style="font-size: 0.7rem;">Thường</span>

@@ -36,6 +36,19 @@ match ($action) {
     'admin-dat-ban'           => (new AdminController)->bookings(),
     'admin-dat-ban-chi-tiet'  => (new AdminController)->bookingDetail(),
     'admin-dat-ban-cap-nhat'  => (new AdminController)->updateBookingStatus(),
+    // Quản lý Bàn & Phòng
+    'admin-ban-phong'         => (new AdminController)->banPhong(),
+    'admin-ban-phong-store'   => (new AdminController)->banPhongStore(),
+    'admin-ban-phong-delete'  => (new AdminController)->banPhongDelete(),
+
+    // Quản lý Món Ăn
+    'admin-mon-an'            => (new AdminController)->monAn(),
+    'admin-mon-an-store'      => (new AdminController)->monAnStore(),
+    'admin-mon-an-edit'       => (new AdminController)->monAnEdit(),
+    'admin-mon-an-update'     => (new AdminController)->monAnUpdate(),
+    'admin-mon-an-quick-price'=> (new AdminController)->monAnQuickPrice(),
+    'admin-mon-an-delete'     => (new AdminController)->monAnDelete(),
+
     'admin-set-tiec'          => (new AdminController)->setTiec(),
     'admin-set-tiec-create'   => (new AdminController)->setTiecCreate(),
     'admin-set-tiec-store'    => (new AdminController)->setTiecStore(),

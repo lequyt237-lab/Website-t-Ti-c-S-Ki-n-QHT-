@@ -173,19 +173,30 @@
                     <div class="col-sm-6">
                         <div class="text-muted small text-uppercase fw-semibold mb-1">Bàn / Phòng được xếp</div>
                         <?php if (!empty($booking['ten_ban'])): ?>
-                            <div class="fw-bold fs-6 text-dark d-flex align-items-center gap-2">
+                            <div class="fw-bold fs-6 text-dark d-flex align-items-center gap-2 flex-wrap">
                                 <?= htmlspecialchars($booking['ten_ban']) ?>
-                                <?php if ($booking['loai_ban'] === 'phong_rieng'): ?>
+                                <?php if (!empty($booking['so_luong_ban_ghep']) && $booking['so_luong_ban_ghep'] > 1): ?>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                        <i class="bi bi-intersect me-1"></i>Ghép <?= $booking['so_luong_ban_ghep'] ?> bàn sảnh
+                                    </span>
+                                <?php elseif ($booking['loai_ban'] === 'phong_rieng' || $booking['loai_ban'] === 'phong_vip'): ?>
                                     <span class="badge bg-warning-subtle text-warning border border-warning-subtle">VIP <?= $booking['phu_phi'] > 0 ? '(+' . number_format($booking['phu_phi'], 0, ',', '.') . ' đ)' : '' ?></span>
                                 <?php else: ?>
                                     <span class="badge bg-light text-secondary border">Bàn thường</span>
                                 <?php endif; ?>
                             </div>
-                            <div class="small text-muted">Sức chứa: <?= $booking['suc_chua'] ?> người</div>
+                            <div class="small text-muted mt-1">
+                                <i class="bi bi-people-fill text-secondary me-1"></i>Tổng sức chứa: <strong><?= $booking['suc_chua'] ?> người</strong>
+                                <?php if ($booking['so_nguoi'] > $booking['suc_chua']): ?>
+                                    <span class="text-danger fw-semibold ms-1">(Thiếu <?= $booking['so_nguoi'] - $booking['suc_chua'] ?> chỗ - hãy ghép thêm bàn)</span>
+                                <?php else: ?>
+                                    <span class="text-success fw-semibold ms-1">(Đủ chỗ đón <?= $booking['so_nguoi'] ?> khách)</span>
+                                <?php endif; ?>
+                            </div>
                         <?php else: ?>
                             <div class="p-2 rounded border border-dashed border-warning bg-warning-subtle">
                                 <span class="text-warning fw-semibold small">
-                                    <i class="bi bi-clock-history me-1"></i>Chưa được xếp bàn — Admin cần xếp bàn ở form bên phải
+                                    <i class="bi bi-clock-history me-1"></i>Chưa được xếp bàn — Admin cần xếp bàn hoặc ghép bàn ở form bên phải
                                 </span>
                             </div>
                         <?php endif; ?>
@@ -626,50 +637,106 @@
                     <input type="hidden" name="id" value="<?= $booking['id'] ?>">
                     <input type="hidden" name="redirect" value="detail">
 
-                    <!-- XẾP BÀN / PHÒNG (Admin chọn) -->
+                    <!-- XẾP BÀN & GHÉP BÀN (Admin chọn) -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small text-muted text-uppercase">
-                            <i class="bi bi-door-open me-1 text-primary"></i>Xếp Bàn / Phòng Cho Khách
+                        <label class="form-label fw-semibold small text-muted text-uppercase d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="bi bi-door-open-fill me-1 text-primary"></i>Xếp Bàn / Ghép Bàn</span>
                             <?php if (!empty($booking['yeu_cau_phong_rieng'])): ?>
-                                <span class="badge bg-warning text-dark ms-1">⚠ Yêu cầu phòng VIP</span>
+                                <span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i>Khách yêu cầu VIP</span>
                             <?php endif; ?>
                         </label>
-                        <select name="banphong_id" class="form-select">
-                            <option value="">— Chưa xếp bàn / Chưa chọn —</option>
-                            <?php if (!empty($allTables)): ?>
-                                <?php
-                                // Nhóm: Phòng riêng trước, bàn sảnh sau
-                                $phongRieng = array_filter($allTables, fn($t) => $t['loai'] === 'phong_rieng');
-                                $banSanh    = array_filter($allTables, fn($t) => $t['loai'] !== 'phong_rieng');
+
+                        <!-- Chọn chế độ: Ghép bàn sảnh hoặc Chọn phòng VIP -->
+                        <?php
+                        $isVipCurrent = in_array($booking['loai_ban'] ?? '', ['phong_vip', 'phong_rieng']);
+                        $initialMode = (!empty($booking['yeu_cau_phong_rieng']) || $isVipCurrent) ? 'vip' : 'sanh';
+                        ?>
+                        <div class="btn-group w-100 mb-3 shadow-xs" role="group">
+                            <input type="radio" class="btn-check" name="ban_mode_radio" id="modeSanh" value="sanh" <?= $initialMode === 'sanh' ? 'checked' : '' ?> onchange="toggleBanMode('sanh')">
+                            <label class="btn btn-outline-primary btn-sm py-2 fw-semibold" for="modeSanh">
+                                <i class="bi bi-grid-3x3-gap-fill me-1"></i> Ghép Bàn Sảnh
+                            </label>
+
+                            <input type="radio" class="btn-check" name="ban_mode_radio" id="modeVip" value="vip" <?= $initialMode === 'vip' ? 'checked' : '' ?> onchange="toggleBanMode('vip')">
+                            <label class="btn btn-outline-warning btn-sm py-2 fw-semibold text-dark" for="modeVip">
+                                <i class="bi bi-door-closed-fill me-1 text-warning"></i> Phòng VIP
+                            </label>
+                        </div>
+                        <input type="hidden" name="ban_option" id="banOptionInput" value="<?= $initialMode === 'vip' ? 'phong_vip' : 'ghep_ban' ?>">
+
+                        <!-- KHU VỰC 1: GHÉP BÀN SẢNH (CHECKBOXES) -->
+                        <div id="wrapperGhepBan" style="<?= $initialMode === 'sanh' ? '' : 'display:none;' ?>">
+                            <div class="small fw-semibold text-secondary mb-2 d-flex justify-content-between align-items-center">
+                                <span>Tích chọn các bàn sảnh để ghép:</span>
+                                <span class="text-muted" style="font-size:0.75rem;">Yêu cầu: <strong><?= $booking['so_nguoi'] ?></strong> khách</span>
+                            </div>
+
+                            <div class="list-group mb-2 border rounded-3 p-2 bg-light" style="max-height: 220px; overflow-y: auto;">
+                                <?php if (empty($banSanhList)): ?>
+                                    <div class="text-muted small py-2 text-center">Không có bàn sảnh nào.</div>
+                                <?php else: ?>
+                                    <?php foreach ($banSanhList as $t): 
+                                        $isOccupied = isset($occupiedTableMap[$t['id']]);
+                                        $isChecked  = in_array($t['id'], $assignedTableIds ?? []);
+                                    ?>
+                                        <label class="list-group-item list-group-item-action d-flex align-items-center justify-content-between p-2 rounded mb-1 border-0 <?= $isOccupied ? 'opacity-50 bg-light' : 'bg-white shadow-xs' ?>" style="cursor: <?= $isOccupied ? 'not-allowed' : 'pointer' ?>;">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <input class="form-check-input ban-sanh-checkbox m-0" type="checkbox" name="ban_ids[]" value="<?= $t['id'] ?>"
+                                                       data-capacity="<?= $t['suc_chua'] ?>"
+                                                       data-name="<?= htmlspecialchars($t['ten']) ?>"
+                                                       <?= $isChecked ? 'checked' : '' ?>
+                                                       <?= $isOccupied ? 'disabled' : '' ?>
+                                                       onchange="recalculateCombinedTables()">
+                                                <span class="fw-semibold text-dark small <?= $isChecked ? 'text-primary' : '' ?>"><?= htmlspecialchars($t['ten']) ?></span>
+                                            </div>
+                                            <div>
+                                                <?php if ($isOccupied): ?>
+                                                    <span class="badge bg-danger-subtle text-danger" style="font-size: 0.7rem;">🔒 Bận (Đơn #<?= $occupiedTableMap[$t['id']] ?>)</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.72rem;"><?= $t['suc_chua'] ?> người</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </label>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Thống kê ghép bàn theo thời gian thực -->
+                            <div class="p-2 rounded border bg-white small mb-2 shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted">Đã chọn ghép:</span>
+                                    <strong id="selectedTableNamesText" class="text-primary text-end text-truncate ms-2" style="max-width: 170px;">Chưa chọn</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Tổng sức chứa:</span>
+                                    <div>
+                                        <strong id="combinedCapacityText" class="fs-6 text-dark">0</strong> / <?= $booking['so_nguoi'] ?> khách
+                                        <span id="capacityIndicatorBadge" class="badge bg-secondary ms-1">Chưa chọn</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KHU VỰC 2: CHỌN PHÒNG VIP (SELECT) -->
+                        <div id="wrapperPhongVIP" style="<?= $initialMode === 'vip' ? '' : 'display:none;' ?>">
+                            <div class="small fw-semibold text-secondary mb-2">Chọn phòng riêng VIP cho khách:</div>
+                            <select name="banphong_vip_id" id="banphongVipSelect" class="form-select">
+                                <option value="">— Chưa chọn phòng VIP —</option>
+                                <?php foreach ($phongVIPList as $t): 
+                                    $isOccupied = isset($occupiedTableMap[$t['id']]);
+                                    $isSel      = in_array($t['id'], $assignedTableIds ?? []);
+                                    $feeText    = $t['phu_phi'] > 0 ? ' (+'.number_format($t['phu_phi'],0,',','.').'đ)' : '';
                                 ?>
-                                <?php if (!empty($phongRieng)): ?>
-                                    <optgroup label="🏠 Phòng Riêng (VIP)">
-                                        <?php foreach ($phongRieng as $t): ?>
-                                            <?php
-                                            $sel  = ($booking['banphong_id'] == $t['id']) ? 'selected' : '';
-                                            $fee  = $t['phu_phi'] > 0 ? ' — Phụ phí: ' . number_format($t['phu_phi'], 0, ',', '.') . 'đ' : '';
-                                            ?>
-                                            <option value="<?= $t['id'] ?>" <?= $sel ?>>
-                                                <?= htmlspecialchars($t['ten']) ?> (<?= $t['suc_chua'] ?> người<?= $fee ?>)
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </optgroup>
-                                <?php endif; ?>
-                                <?php if (!empty($banSanh)): ?>
-                                    <optgroup label="🪑 Bàn Sảnh Chung">
-                                        <?php foreach ($banSanh as $t): ?>
-                                            <?php $sel = ($booking['banphong_id'] == $t['id']) ? 'selected' : ''; ?>
-                                            <option value="<?= $t['id'] ?>" <?= $sel ?>>
-                                                <?= htmlspecialchars($t['ten']) ?> (<?= $t['suc_chua'] ?> người)
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </optgroup>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </select>
-                        <div class="form-text small text-muted mt-1">
+                                    <option value="<?= $t['id'] ?>" <?= $isSel ? 'selected' : '' ?> <?= $isOccupied ? 'disabled' : '' ?>>
+                                        🏠 <?= htmlspecialchars($t['ten']) ?> (<?= $t['suc_chua'] ?> người<?= $feeText ?>) <?= $isOccupied ? '— [BẬN ĐƠN #'.$occupiedTableMap[$t['id']].']' : '' ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="form-text small text-muted mt-2">
                             <i class="bi bi-info-circle me-1"></i>
-                            Bắt buộc chọn bàn/phòng trước khi <strong>Duyệt đặt bàn</strong>. Phụ phí phòng VIP sẽ tự cộng vào tổng tiền.
+                            Tích chọn <strong>nhiều bàn sảnh cùng lúc</strong> để ghép bàn đáp ứng đoàn đông khách.
                         </div>
                     </div>
 
@@ -751,3 +818,62 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleBanMode(mode) {
+    const wrapperSanh = document.getElementById('wrapperGhepBan');
+    const wrapperVip  = document.getElementById('wrapperPhongVIP');
+    const optionInput = document.getElementById('banOptionInput');
+
+    if (mode === 'vip') {
+        wrapperSanh.style.display = 'none';
+        wrapperVip.style.display  = 'block';
+        optionInput.value = 'phong_vip';
+    } else {
+        wrapperSanh.style.display = 'block';
+        wrapperVip.style.display  = 'none';
+        optionInput.value = 'ghep_ban';
+        recalculateCombinedTables();
+    }
+}
+
+function recalculateCombinedTables() {
+    const checkboxes = document.querySelectorAll('.ban-sanh-checkbox:checked');
+    const names = [];
+    let totalCapacity = 0;
+    const requiredGuests = <?= (int)($booking['so_nguoi'] ?? 0) ?>;
+
+    checkboxes.forEach(cb => {
+        names.push(cb.dataset.name);
+        totalCapacity += parseInt(cb.dataset.capacity || 0);
+    });
+
+    const namesEl = document.getElementById('selectedTableNamesText');
+    const capEl   = document.getElementById('combinedCapacityText');
+    const badgeEl = document.getElementById('capacityIndicatorBadge');
+
+    if (!namesEl || !capEl || !badgeEl) return;
+
+    if (checkboxes.length === 0) {
+        namesEl.textContent = 'Chưa chọn';
+        capEl.textContent   = '0';
+        badgeEl.className   = 'badge bg-secondary ms-1';
+        badgeEl.textContent = 'Chưa chọn';
+    } else {
+        namesEl.textContent = names.join(' + ');
+        capEl.textContent   = totalCapacity;
+
+        if (totalCapacity >= requiredGuests) {
+            badgeEl.className   = 'badge bg-success ms-1';
+            badgeEl.innerHTML   = '<i class="bi bi-check-lg"></i> Đủ chỗ';
+        } else {
+            badgeEl.className   = 'badge bg-warning text-dark ms-1';
+            badgeEl.innerHTML   = '⚠️ Thiếu chỗ';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    recalculateCombinedTables();
+});
+</script>

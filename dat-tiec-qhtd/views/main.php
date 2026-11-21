@@ -137,7 +137,6 @@
       <div class="d-none d-lg-flex align-items-center gap-1">
         <a href="<?= BASE_URL ?>" class="nav-link-q">Trang Chủ</a>
         <a href="<?= BASE_URL ?>?action=thuc-don" class="nav-link-q">Thực Đơn</a>
-        <a href="<?= BASE_URL ?>?action=ban-phong" class="nav-link-q">Bàn &amp; Phòng</a>
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
         <div class="vr-nav"></div>
@@ -208,7 +207,6 @@
       <div class="container py-3 d-flex flex-column gap-2 border-top" style="border-color:var(--stone)!important">
         <a href="<?= BASE_URL ?>" class="nav-link-q">Trang Chủ</a>
         <a href="<?= BASE_URL ?>?action=thuc-don" class="nav-link-q">Thực Đơn</a>
-        <a href="<?= BASE_URL ?>?action=ban-phong" class="nav-link-q">Bàn &amp; Phòng</a>
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
         <?php if (isset($_SESSION['user'])): ?>
@@ -261,7 +259,6 @@
         <ul>
           <li><a href="<?= BASE_URL ?>">Trang chủ</a></li>
           <li><a href="<?= BASE_URL ?>?action=thuc-don">Thực đơn</a></li>
-          <li><a href="<?= BASE_URL ?>?action=ban-phong">Bàn &amp; Phòng</a></li>
           <li><a href="<?= BASE_URL ?>?action=set-tiec">Set tiệc</a></li>
         </ul>
       </div>

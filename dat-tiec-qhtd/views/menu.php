@@ -109,11 +109,12 @@
         <div class="row g-4" id="dishesGrid">
             <?php foreach ($dishes as $d): ?>
                 <?php
-                // Phân loại nhóm badge
+                // Phân loại nhóm badge thông minh
                 $badgeClass = 'badge-other';
-                if ($d['nhom_mon'] === 'Món ăn gia đình Việt') $badgeClass = 'badge-viet';
-                elseif ($d['nhom_mon'] === 'Bánh tiệc & Sinh nhật') $badgeClass = 'badge-cake';
-                elseif ($d['nhom_mon'] === 'Món chính') $badgeClass = 'badge-main';
+                $catLower = mb_strtolower($d['nhom_mon'] ?? '');
+                if (str_contains($catLower, 'gia đình')) $badgeClass = 'badge-viet';
+                elseif (str_contains($catLower, 'sinh nhật') || str_contains($catLower, 'bánh')) $badgeClass = 'badge-cake';
+                elseif (str_contains($catLower, 'món chính') || str_contains($catLower, 'lẩu')) $badgeClass = 'badge-main';
                 ?>
                 <div class="col-lg-4 col-md-6 dish-item" data-category="<?= htmlspecialchars($d['nhom_mon']) ?>">
                     <div class="dish-card p-4">
@@ -177,11 +178,30 @@
                 filterBtns.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
 
-                const selectedFilter = this.getAttribute('data-filter');
+                const selectedFilter = (this.getAttribute('data-filter') || '').toLowerCase().trim();
 
                 dishItems.forEach(item => {
-                    const itemCategory = item.getAttribute('data-category');
-                    if (selectedFilter === 'all' || itemCategory.includes(selectedFilter)) {
+                    const itemCategory = (item.getAttribute('data-category') || '').toLowerCase().trim();
+                    let isMatch = (selectedFilter === 'all') 
+                        || itemCategory.includes(selectedFilter) 
+                        || selectedFilter.includes(itemCategory);
+
+                    // Khớp linh hoạt theo từ khóa
+                    if (!isMatch) {
+                        if (selectedFilter.includes('sinh nhật') && (itemCategory.includes('sinh nhật') || itemCategory.includes('bánh'))) {
+                            isMatch = true;
+                        } else if (selectedFilter.includes('gia đình') && itemCategory.includes('gia đình')) {
+                            isMatch = true;
+                        } else if (selectedFilter.includes('khai vị') && itemCategory.includes('khai vị')) {
+                            isMatch = true;
+                        } else if (selectedFilter.includes('lẩu') && itemCategory.includes('lẩu')) {
+                            isMatch = true;
+                        } else if (selectedFilter.includes('tráng miệng') && itemCategory.includes('tráng miệng')) {
+                            isMatch = true;
+                        }
+                    }
+
+                    if (isMatch) {
                         item.style.display = 'block';
                     } else {
                         item.style.display = 'none';
