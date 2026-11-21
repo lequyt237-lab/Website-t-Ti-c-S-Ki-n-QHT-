@@ -9,6 +9,25 @@
 
 <!-- ═══ METRIC STATS CARDS ═══ -->
 <div class="row g-3 mb-4">
+    <!-- Card Doanh thu thực thu -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #f0fdf4, #ffffff); border-left: 4px solid #16a34a !important;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="text-success small fw-bold text-uppercase">Doanh thu thực thu</span>
+                    <div class="p-2 rounded-3 bg-success-subtle text-success">
+                        <i class="bi bi-cash-coin fs-5"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-1 text-success"><?= number_format($stats['revenue'] ?? 0, 0, ',', '.') ?> đ</h3>
+                <div class="small text-muted d-flex justify-content-between">
+                    <span>Hôm nay: <strong><?= number_format($stats['today_revenue'] ?? 0, 0, ',', '.') ?> đ</strong></span>
+                    <a href="<?= BASE_URL ?>?action=admin-thanh-toan" class="text-success text-decoration-none fw-semibold">Chi tiết &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Card 1: Đơn đặt bàn -->
     <div class="col-xl-3 col-md-6">
         <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
@@ -20,8 +39,11 @@
                     </div>
                 </div>
                 <h3 class="fw-bold mb-1"><?= $stats['bookings'] ?></h3>
-                <div class="small text-muted">
+                <div class="small text-muted d-flex justify-content-between">
                     <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> <?= $stats['pending'] ?> chờ duyệt</span>
+                    <?php if (!empty($stats['pending_payments'])): ?>
+                        <span class="badge bg-danger"><i class="bi bi-credit-card"></i> <?= $stats['pending_payments'] ?> cọc chờ</span>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -55,22 +77,6 @@
                 </div>
                 <h3 class="fw-bold mb-1"><?= $stats['dishes'] ?> món</h3>
                 <div class="small text-muted"><?= $stats['sets'] ?> set tiệc có sẵn</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card 4: Người dùng -->
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="text-muted small fw-semibold text-uppercase">Khách hàng</span>
-                    <div class="p-2 rounded-3 bg-info-subtle text-info">
-                        <i class="bi bi-people fs-5"></i>
-                    </div>
-                </div>
-                <h3 class="fw-bold mb-1"><?= $stats['users'] ?></h3>
-                <div class="small text-muted">Tài khoản trong hệ thống</div>
             </div>
         </div>
     </div>

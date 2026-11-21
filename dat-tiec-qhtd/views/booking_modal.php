@@ -124,11 +124,19 @@
             <p class="mb-0 small text-dark fst-italic" id="modalCustomerNote">Không có ghi chú đặc biệt.</p>
           </div>
 
-          <!-- Tổng kết tiền thanh toán -->
+          <!-- Tổng kết tiền & thanh toán -->
           <div class="p-3 rounded-3" style="background: linear-gradient(135deg, #FFF9F3, #FFF0E5); border: 1.5px dashed var(--terra);">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="text-muted small">Thời gian gửi yêu cầu:</span>
               <span class="small fw-semibold text-secondary" id="modalCreatedAt"></span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-muted small">Tình trạng thanh toán:</span>
+              <span id="modalPaymentStatusBadge" class="badge"></span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-muted small">Đã thanh toán / cọc:</span>
+              <span class="fw-semibold text-success" id="modalPaidAmount">0 đ</span>
             </div>
             <div class="d-flex justify-content-between align-items-center pt-2 border-top">
               <span class="fw-bold text-dark fs-6">Tổng chi phí ước tính:</span>

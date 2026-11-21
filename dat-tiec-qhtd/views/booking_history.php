@@ -240,11 +240,24 @@
                             <!-- Card Header -->
                             <div>
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <span class="fw-bold text-secondary fs-6">#DB<?= str_pad($b['id'], 4, '0', STR_PAD_LEFT) ?></span>
                                         <span class="badge <?= $st['badge'] ?> px-2 py-1 fw-semibold">
                                             <i class="bi <?= $st['icon'] ?> me-1"></i><?= $st['text'] ?>
                                         </span>
+                                        <?php if (($b['trang_thai_thanh_toan'] ?? '') === 'da_thanh_toan'): ?>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                                <i class="bi bi-check2-circle me-1"></i>Đã thanh toán đủ
+                                            </span>
+                                        <?php elseif (($b['trang_thai_thanh_toan'] ?? '') === 'da_dat_coc'): ?>
+                                            <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1" title="Đã cọc: <?= number_format($b['so_tien_da_coc'] ?? 0, 0, ',', '.') ?> đ">
+                                                <i class="bi bi-credit-card me-1"></i>Đã cọc <?= number_format($b['so_tien_da_coc'] ?? 0, 0, ',', '.') ?>đ
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary-subtle text-secondary border px-2 py-1">
+                                                Chưa thanh toán
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
                                     <span class="text-muted small">
                                         <i class="bi bi-clock me-1"></i><?= date('d/m/Y H:i', strtotime($b['ngay_tao'])) ?>
@@ -328,6 +341,17 @@
                                             <i class="bi bi-cart-plus me-1"></i>Đặt món
                                         </a>
                                     <?php endif; ?>
+                                    <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
+                                        <?php if (($b['trang_thai_thanh_toan'] ?? '') !== 'da_thanh_toan'): ?>
+                                            <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $b['id'] ?>" class="btn btn-sm btn-success text-white px-3 fw-bold shadow-sm">
+                                                <i class="bi bi-credit-card-2-front me-1"></i>Thanh toán
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="<?= BASE_URL ?>?action=hoa-don&booking_id=<?= $b['id'] ?>" target="_blank" class="btn btn-sm btn-outline-success px-2 fw-semibold" title="Xem hóa đơn">
+                                                <i class="bi bi-receipt me-1"></i>Hóa đơn
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
                                     <button type="button" class="btn btn-sm btn-dark px-3 fw-semibold" onclick="viewBookingDetail(<?= $b['id'] ?>)">
                                         <i class="bi bi-eye me-1"></i>Chi tiết
                                     </button>
@@ -404,7 +428,14 @@
                                         <div>
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <span class="fw-bold fs-6 text-secondary">#DB<?= str_pad($b['id'], 4, '0', STR_PAD_LEFT) ?></span>
-                                                <span class="badge <?= $st['badge'] ?> px-2 py-1"><i class="bi <?= $st['icon'] ?> me-1"></i><?= $st['text'] ?></span>
+                                                <div class="d-flex align-items-center gap-1 flex-wrap">
+                                                    <span class="badge <?= $st['badge'] ?> px-2 py-1"><i class="bi <?= $st['icon'] ?> me-1"></i><?= $st['text'] ?></span>
+                                                    <?php if (($b['trang_thai_thanh_toan'] ?? '') === 'da_thanh_toan'): ?>
+                                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Đã trả đủ</span>
+                                                    <?php elseif (($b['trang_thai_thanh_toan'] ?? '') === 'da_dat_coc'): ?>
+                                                        <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">Đã cọc</span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </div>
                                             <h6 class="fw-bold text-dark mb-1">
                                                 <?= !empty($b['ten_ban']) ? htmlspecialchars($b['ten_ban']) : '<span class="text-secondary fst-italic">Đang chờ xếp bàn</span>' ?>
@@ -427,6 +458,15 @@
                                             <div class="fw-bold text-danger"><?= number_format($b['tong_tien'], 0, ',', '.') ?> đ</div>
                                             <div class="d-flex gap-2">
                                                 <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
+                                                    <?php if (($b['trang_thai_thanh_toan'] ?? '') !== 'da_thanh_toan'): ?>
+                                                        <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $b['id'] ?>" class="btn btn-sm btn-success text-white px-3 fw-bold shadow-sm">
+                                                            <i class="bi bi-credit-card-2-front me-1"></i>Thanh toán
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <a href="<?= BASE_URL ?>?action=hoa-don&booking_id=<?= $b['id'] ?>" target="_blank" class="btn btn-sm btn-outline-success px-2 fw-semibold" title="Xem hóa đơn">
+                                                            <i class="bi bi-receipt me-1"></i>Hóa đơn
+                                                        </a>
+                                                    <?php endif; ?>
                                                     <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">
                                                         <i class="bi bi-cart-plus me-1"></i>Đặt món
                                                     </a>
