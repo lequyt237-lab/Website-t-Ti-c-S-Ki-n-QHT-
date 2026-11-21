@@ -703,7 +703,9 @@ class AdminController extends BaseModel
             header('Location: ' . BASE_URL . '?action=admin-dat-ban');
         }
         exit;
-    }    /* ═══════════════════════════════════════════
+    }
+
+    /* ═══════════════════════════════════════════
        QUẢN LÝ THANH TOÁN & THU TIỀN (ADMIN)
     ═══════════════════════════════════════════ */
 
