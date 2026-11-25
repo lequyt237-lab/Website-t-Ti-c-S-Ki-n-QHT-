@@ -47,6 +47,27 @@ class PaymentController
             exit;
         }
 
+        if ($booking['trang_thai'] !== 'da_duyet') {
+            $_SESSION['error'] = 'Đơn đặt bàn chưa được quản trị viên duyệt bàn. Vui lòng chờ nhà hàng xác nhận duyệt đơn trước khi thanh toán.';
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        if ((float)$booking['tong_tien'] <= 0) {
+            $_SESSION['error'] = 'Đơn đặt bàn chưa có thông tin chi phí / món ăn. Vui lòng đặt món trước khi thanh toán.';
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        // Chặn nếu đơn đang có 1 giao dịch chờ xác nhận duyệt để tránh khách bị spam gửi trùng
+        $pendingPayment = $this->paymentModel->getPendingPaymentByBookingId($bookingId);
+        if ($pendingPayment) {
+            $loaiTxt = $pendingPayment['loai_thanh_toan'] === 'dat_coc' ? 'tiền cọc' : 'thanh toán';
+            $_SESSION['error'] = "Đơn đặt bàn này đang có giao dịch {$pendingPayment['ma_giao_dich']} ($loaiTxt) đang chờ nhà hàng xác nhận duyệt.";
+            header('Location: ' . BASE_URL . '?action=thanh-toan-thanh-cong&code=' . urlencode($pendingPayment['ma_giao_dich']));
+            exit;
+        }
+
         // Danh sách món ăn kèm theo đơn
         $dishes = $this->bookingModel->getOrderDishes($bookingId);
 
@@ -58,12 +79,17 @@ class PaymentController
         $daTra    = (float)($booking['so_tien_da_tra'] ?? 0);
         $conLai   = max(0, $tongTien - $daTra);
 
-        // Gợi ý số tiền đặt cọc (30% tổng tiền, làm tròn đến chục nghìn)
-        $suggestedDeposit = ceil(($tongTien * 0.3) / 10000) * 10000;
-        if ($suggestedDeposit < 200000 && $tongTien >= 200000) {
-            $suggestedDeposit = 200000;
-        } elseif ($suggestedDeposit > $conLai) {
-            $suggestedDeposit = $conLai;
+        // Số tiền đặt cọc: Ưu tiên mức tiền cọc do Admin yêu cầu ($booking['tien_coc'])
+        if (!empty($booking['tien_coc']) && (float)$booking['tien_coc'] > 0) {
+            $suggestedDeposit = min((float)$booking['tien_coc'], $conLai);
+        } else {
+            // Mặc định 30% tổng tiền (tối thiểu 200.000đ)
+            $suggestedDeposit = ceil(($tongTien * 0.3) / 10000) * 10000;
+            if ($suggestedDeposit < 200000 && $tongTien >= 200000) {
+                $suggestedDeposit = 200000;
+            } elseif ($suggestedDeposit > $conLai) {
+                $suggestedDeposit = $conLai;
+            }
         }
 
         // Cấu hình thanh toán ngân hàng
@@ -76,7 +102,8 @@ class PaymentController
         ];
 
         // Cú pháp nội dung chuyển khoản chuẩn
-        $transferContent = 'QHT DB' . $booking['id'] . ' ' . preg_replace('/[^0-9]/', '', $booking['so_dien_thoai']);
+        $sdt = $booking['sdt_khach'] ?? $booking['so_dien_thoai'] ?? '';
+        $transferContent = 'QHT DB' . $booking['id'] . ($sdt ? ' ' . preg_replace('/[^0-9]/', '', $sdt) : '');
 
         $title = "Thanh Toán Đơn Tiệc #DB" . str_pad($booking['id'], 4, '0', STR_PAD_LEFT) . " - QHT Banquet";
         $view  = 'payment/checkout';
@@ -107,12 +134,27 @@ class PaymentController
             exit;
         }
 
+        if ($booking['trang_thai'] !== 'da_duyet' || (float)$booking['tong_tien'] <= 0) {
+            $_SESSION['error'] = 'Đơn đặt bàn chưa đủ điều kiện thanh toán (chưa được duyệt hoặc tổng tiền bằng 0).';
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        // Chặn nếu đơn đang có 1 giao dịch chờ xác nhận duyệt
+        $pendingPayment = $this->paymentModel->getPendingPaymentByBookingId($bookingId);
+        if ($pendingPayment) {
+            $_SESSION['error'] = 'Đơn đặt bàn đang có giao dịch chờ xác nhận duyệt, vui lòng không gửi lại nhiều lần.';
+            header('Location: ' . BASE_URL . '?action=thanh-toan-thanh-cong&code=' . urlencode($pendingPayment['ma_giao_dich']));
+            exit;
+        }
+
         $tongTien = (float)$booking['tong_tien'];
         $daTra    = (float)($booking['so_tien_da_tra'] ?? 0);
         $conLai   = max(0, $tongTien - $daTra);
 
         $paymentType   = trim($_POST['loai_thanh_toan'] ?? 'dat_coc');
         $paymentMethod = trim($_POST['phuong_thuc'] ?? 'chuyen_khoan');
+        // so_tien_input là field ẩn được JS cập nhật cho cả dat_coc / toan_bo / tuy_chon
         $customAmount  = (float)($_POST['so_tien'] ?? 0);
 
         // Xác định số tiền thanh toán thực tế
@@ -120,18 +162,27 @@ class PaymentController
         if ($paymentType === 'toan_bo') {
             $amount = $conLai;
         } elseif ($paymentType === 'dat_coc') {
-            $suggestedDeposit = ceil(($tongTien * 0.3) / 10000) * 10000;
-            if ($suggestedDeposit < 200000 && $tongTien >= 200000) {
-                $suggestedDeposit = 200000;
+            if (!empty($booking['tien_coc']) && (float)$booking['tien_coc'] > 0) {
+                $suggestedDeposit = (float)$booking['tien_coc'];
+            } else {
+                $suggestedDeposit = ceil(($tongTien * 0.3) / 10000) * 10000;
+                if ($suggestedDeposit < 200000 && $tongTien >= 200000) {
+                    $suggestedDeposit = 200000;
+                }
             }
             $amount = min($suggestedDeposit, $conLai);
         } else {
-            // Tùy chọn số tiền
+            // tuy_chon: lấy từ hidden field so_tien_input (được JS set)
+            $amount = $customAmount;
+        }
+
+        // Fallback: nếu amount vẫn 0 nhưng có so_tien trong POST thì dùng
+        if ($amount <= 0 && $customAmount > 0) {
             $amount = $customAmount;
         }
 
         if ($amount <= 0) {
-            $_SESSION['error'] = 'Số tiền thanh toán phải lớn hơn 0.';
+            $_SESSION['error'] = 'Số tiền thanh toán phải lớn hơn 0. Vui lòng nhập số tiền tùy chọn hoặc chọn hình thức khác.';
             header("Location: " . BASE_URL . "?action=thanh-toan&id=$bookingId");
             exit;
         }
@@ -144,9 +195,33 @@ class PaymentController
         $maGiaoDich = $this->paymentModel->generateTransactionCode($bookingId);
 
         // Xử lý theo từng phương thức thanh toán:
-        // 1. CỔNG VNPAY (Chuyển sang màn hình Cổng thanh toán VNPAY sandbox)
+        // 1. CỔNG VNPAY → chuyển sang màn hình sandbox
         if ($paymentMethod === 'vnpay') {
             header("Location: " . BASE_URL . "?action=vnpay-gateway&booking_id=$bookingId&amount=$amount&type=$paymentType&code=$maGiaoDich");
+            exit;
+        }
+
+        // 2. VÍ MOMO → xử lý ghi nhận ngay (mô phỏng), trạng thái cho_xac_nhan
+        if ($paymentMethod === 'momo') {
+            $userId = isset($_SESSION['user']) ? (int)$_SESSION['user']['id'] : ($booking['nguoidung_id'] ?? null);
+            $res = $this->paymentModel->recordPayment([
+                'datban_id'       => $bookingId,
+                'nguoidung_id'    => $userId,
+                'ma_giao_dich'    => $maGiaoDich,
+                'so_tien'         => $amount,
+                'loai_thanh_toan' => $paymentType,
+                'phuong_thuc'     => 'momo',
+                'trang_thai'      => 'cho_xac_nhan',
+                'noi_dung'        => trim($_POST['noi_dung'] ?? ("Thanh toan MoMo don #DB$bookingId")),
+                'ghi_chu_admin'   => 'Khách xác nhận đã chuyển qua ví MoMo - chờ đối soát',
+            ]);
+            if ($res) {
+                $_SESSION['success'] = 'Yêu cầu thanh toán MoMo đã được ghi nhận. Vui lòng chờ nhà hàng xác nhận!';
+                header("Location: " . BASE_URL . "?action=thanh-toan-thanh-cong&code=$maGiaoDich");
+            } else {
+                $_SESSION['error'] = 'Có lỗi xảy ra khi ghi nhận thanh toán MoMo. Vui lòng thử lại.';
+                header("Location: " . BASE_URL . "?action=thanh-toan&id=$bookingId");
+            }
             exit;
         }
 
@@ -169,8 +244,11 @@ class PaymentController
         $noiDung = trim($_POST['noi_dung'] ?? ("Thanh toan don tiec #DB" . $bookingId));
         $userId = isset($_SESSION['user']) ? (int)$_SESSION['user']['id'] : ($booking['nguoidung_id'] ?? null);
 
-        // Trạng thái: Chuyển khoản hoặc Tiền mặt
-        $trangThai = ($paymentMethod === 'tien_mat') ? 'cho_xac_nhan' : 'thanh_cong';
+        // Trạng thái:
+        // - Chuyển khoản → chờ admin đối soát bill
+        // - Tiền mặt     → chờ admin xác nhận tại quầy
+        // - VNPAY/MoMo   → đã xử lý riêng bên trên, không rơi vào đây
+        $trangThai = in_array($paymentMethod, ['tien_mat', 'chuyen_khoan']) ? 'cho_xac_nhan' : 'thanh_cong';
 
         $res = $this->paymentModel->recordPayment([
             'datban_id'       => $bookingId,
@@ -219,6 +297,20 @@ class PaymentController
             exit;
         }
 
+        if ($booking['trang_thai'] !== 'da_duyet' || (float)$booking['tong_tien'] <= 0) {
+            $_SESSION['error'] = 'Đơn đặt bàn chưa đủ điều kiện thanh toán (chưa được duyệt hoặc tổng tiền bằng 0).';
+            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+            exit;
+        }
+
+        // Chặn nếu đơn đang có 1 giao dịch chờ xác nhận duyệt
+        $pendingPayment = $this->paymentModel->getPendingPaymentByBookingId($bookingId);
+        if ($pendingPayment) {
+            $_SESSION['error'] = 'Đơn đặt bàn đang có giao dịch chờ xác nhận duyệt, vui lòng không gửi lại nhiều lần.';
+            header('Location: ' . BASE_URL . '?action=thanh-toan-thanh-cong&code=' . urlencode($pendingPayment['ma_giao_dich']));
+            exit;
+        }
+
         if (empty($code)) {
             $code = $this->paymentModel->generateTransactionCode($bookingId);
         }
@@ -230,15 +322,18 @@ class PaymentController
 
     /**
      * Xử lý Callback khi thanh toán qua VNPAY thành công
+     * Form gửi bằng POST, nhưng action URL có ?action=vnpay-callback
+     * nên nhận từ $_POST trước, fallback về $_GET
      */
     public function vnpayCallback()
     {
-        $bookingId  = (int)($_GET['booking_id'] ?? 0);
-        $amount     = (float)($_GET['amount'] ?? 0);
-        $code       = trim($_GET['code'] ?? '');
-        $type       = trim($_GET['type'] ?? 'dat_coc');
-        $bankCode   = trim($_GET['bank_code'] ?? 'NCB');
-        $responseCode = trim($_GET['response_code'] ?? '00'); // '00' là thành công
+        $data         = !empty($_POST) ? $_POST : $_GET;
+        $bookingId    = (int)($data['booking_id'] ?? 0);
+        $amount       = (float)($data['amount'] ?? 0);
+        $code         = trim($data['code'] ?? '');
+        $type         = trim($data['type'] ?? 'dat_coc');
+        $bankCode     = trim($data['bank_code'] ?? 'NCB');
+        $responseCode = trim($data['response_code'] ?? '00'); // '00' là thành công
 
         if ($bookingId <= 0 || $amount <= 0 || empty($code)) {
             $_SESSION['error'] = 'Dữ liệu phản hồi từ cổng thanh toán không hợp lệ.';

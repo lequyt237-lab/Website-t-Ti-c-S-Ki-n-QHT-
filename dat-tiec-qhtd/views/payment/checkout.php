@@ -302,6 +302,7 @@
                     <form action="<?= BASE_URL ?>?action=xu-ly-thanh-toan" method="POST" enctype="multipart/form-data" id="checkoutForm">
                         <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
                         <input type="hidden" name="loai_thanh_toan" id="loai_thanh_toan" value="<?= $daTra > 0 ? 'toan_bo' : 'dat_coc' ?>">
+                        <!-- so_tien được JS cập nhật liên tục theo lựa chọn, controller đọc $_POST['so_tien'] -->
                         <input type="hidden" name="so_tien" id="so_tien_input" value="<?= $daTra > 0 ? $conLai : $suggestedDeposit ?>">
 
                         <!-- 1. CHỌN SỐ TIỀN THANH TOÁN -->
@@ -484,6 +485,47 @@
                             </div>
                         </div>
 
+                        <!-- KHỐI MOMO QR (Cho method momo) -->
+                        <div id="section_momo" class="bank-qr-box mb-4" style="display: none;">
+                            <h6 class="fw-bold text-dark mb-3">
+                                <i class="bi bi-wallet2 text-danger me-1"></i>Quét Mã QR Ví MoMo Thanh Toán
+                            </h6>
+                            <div class="row align-items-center g-3">
+                                <div class="col-sm-5 text-center">
+                                    <div class="bg-white p-2 rounded-3 shadow-sm d-inline-block border">
+                                        <!-- MoMo QR tạo bằng api.qrserver.com hoặc dùng ảnh tĩnh mô phỏng -->
+                                        <img id="momoQrImage" src="" alt="MoMo QR" class="img-fluid rounded" style="max-width: 190px;">
+                                    </div>
+                                    <div class="text-muted small mt-2" style="font-size: 0.72rem;">
+                                        <i class="bi bi-camera me-1"></i>Mở app MoMo để quét mã
+                                    </div>
+                                </div>
+                                <div class="col-sm-7 text-start">
+                                    <div class="p-3 bg-white rounded-3 border small">
+                                        <div class="mb-2">
+                                            <div class="text-muted">Số điện thoại MoMo:</div>
+                                            <div class="fw-bold text-danger fs-6">0988 888 888</div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <div class="text-muted">Tên tài khoản:</div>
+                                            <div class="fw-bold text-dark">NHA HANG QHT BANQUET</div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <div class="text-muted">Số tiền:</div>
+                                            <div class="fw-bold text-danger fs-6" id="momoDisplayAmount">0 đ</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-muted">Nội dung (bắt buộc):</div>
+                                            <div class="fw-bold text-primary font-monospace"><?= $transferContent ?></div>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-warning small p-2 mt-2 mb-0">
+                                        <i class="bi bi-info-circle me-1"></i>Sau khi chuyển, nhấn <strong>Xác nhận</strong> để hệ thống ghi nhận. Nhà hàng sẽ đối soát và duyệt trong 15 phút.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Ghi chú thanh toán -->
                         <div class="mb-4">
                             <label class="form-label small fw-semibold text-dark">Lời nhắn hoặc ghi chú thanh toán (nếu có):</label>
@@ -535,6 +577,20 @@ function updateQR(amount) {
     const encodedName = encodeURIComponent(bankName);
     const qrUrl = `https://img.vietqr.io/image/${bankId}-${bankAcc}-compact2.png?amount=${amount}&addInfo=${encodedContent}&accountName=${encodedName}`;
     document.getElementById('qrImage').src = qrUrl;
+
+    // Sync MoMo display nếu section đang hiển thị
+    updateMomoQR(amount);
+}
+
+function updateMomoQR(amount) {
+    const momoAmt = document.getElementById('momoDisplayAmount');
+    if (momoAmt) momoAmt.innerText = formatCurrency(amount);
+    const momoQr = document.getElementById('momoQrImage');
+    if (momoQr) {
+        // Dùng api.qrserver tạo QR text đơn giản mô phỏng MoMo
+        const momoContent = encodeURIComponent('MoMo 0988888888 ' + transferContent);
+        momoQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=${momoContent}&bgcolor=ffffff&color=a50064`;
+    }
 }
 
 function selectPaymentType(type, amount) {
@@ -578,24 +634,26 @@ function selectMethod(method) {
         activeCard.classList.add('active');
     }
 
-    const qrSection = document.getElementById('section_chuyen_khoan');
+    const qrSection   = document.getElementById('section_chuyen_khoan');
     const cashSection = document.getElementById('section_tien_mat');
-    const btnSubmit = document.getElementById('btnSubmitPayment');
+    const momoSection = document.getElementById('section_momo');
+    const btnSubmit   = document.getElementById('btnSubmitPayment');
+
+    // Ẩn tất cả sections trước
+    qrSection.style.display   = 'none';
+    cashSection.style.display = 'none';
+    momoSection.style.display = 'none';
 
     if (method === 'chuyen_khoan') {
         qrSection.style.display = 'block';
-        cashSection.style.display = 'none';
         btnSubmit.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Tôi Đã Chuyển Khoản <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
     } else if (method === 'vnpay') {
-        qrSection.style.display = 'none';
-        cashSection.style.display = 'none';
         btnSubmit.innerHTML = `<i class="bi bi-credit-card-2-front-fill me-2"></i>Tiếp Tục Đến Cổng VNPAY <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
     } else if (method === 'momo') {
-        qrSection.style.display = 'none';
-        cashSection.style.display = 'none';
-        btnSubmit.innerHTML = `<i class="bi bi-wallet2 me-2"></i>Thanh Toán Qua MoMo <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
+        momoSection.style.display = 'block';
+        updateMomoQR(currentAmount);
+        btnSubmit.innerHTML = `<i class="bi bi-wallet2 me-2"></i>Xác Nhận Đã Chuyển Qua MoMo <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
     } else if (method === 'tien_mat') {
-        qrSection.style.display = 'none';
         cashSection.style.display = 'block';
         btnSubmit.innerHTML = `<i class="bi bi-geo-alt-fill me-2"></i>Xác Nhận Hẹn Thanh Toán Tại Quầy`;
     }

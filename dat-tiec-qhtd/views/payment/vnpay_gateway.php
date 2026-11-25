@@ -178,7 +178,7 @@
                 </div>
 
                 <!-- Form thông tin thẻ -->
-                <form action="<?= BASE_URL ?>?action=vnpay-callback" method="GET" id="vnpayForm">
+                <form action="<?= BASE_URL ?>?action=vnpay-callback" method="POST" id="vnpayForm">
                     <input type="hidden" name="action" value="vnpay-callback">
                     <input type="hidden" name="booking_id" value="<?= $bookingId ?>">
                     <input type="hidden" name="amount" value="<?= $amount ?>">

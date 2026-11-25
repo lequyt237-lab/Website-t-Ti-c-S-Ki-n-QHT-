@@ -98,6 +98,8 @@ class BookingModel extends BaseModel
     {
         $sql = "
             SELECT db.*,
+                   (SELECT loai_thanh_toan FROM thanh_toan WHERE datban_id = db.id AND trang_thai = 'cho_xac_nhan' ORDER BY id DESC LIMIT 1) AS gd_cho_duyet_loai,
+                   (SELECT ma_giao_dich FROM thanh_toan WHERE datban_id = db.id AND trang_thai = 'cho_xac_nhan' ORDER BY id DESC LIMIT 1) AS gd_cho_duyet_ma,
                    COALESCE((SELECT GROUP_CONCAT(bp_sub.ten SEPARATOR ' + ') 
                              FROM datban_banphong dbp 
                              JOIN ban_phong bp_sub ON dbp.banphong_id = bp_sub.id 
@@ -139,6 +141,8 @@ class BookingModel extends BaseModel
     {
         $sql = "
             SELECT db.*,
+                   (SELECT loai_thanh_toan FROM thanh_toan WHERE datban_id = db.id AND trang_thai = 'cho_xac_nhan' ORDER BY id DESC LIMIT 1) AS gd_cho_duyet_loai,
+                   (SELECT ma_giao_dich FROM thanh_toan WHERE datban_id = db.id AND trang_thai = 'cho_xac_nhan' ORDER BY id DESC LIMIT 1) AS gd_cho_duyet_ma,
                    COALESCE((SELECT GROUP_CONCAT(bp_sub.ten SEPARATOR ' + ') 
                              FROM datban_banphong dbp 
                              JOIN ban_phong bp_sub ON dbp.banphong_id = bp_sub.id 
@@ -206,6 +210,8 @@ class BookingModel extends BaseModel
     {
         $sql = "
             SELECT db.*,
+                   (SELECT loai_thanh_toan FROM thanh_toan WHERE datban_id = db.id AND trang_thai = 'cho_xac_nhan' ORDER BY id DESC LIMIT 1) AS gd_cho_duyet_loai,
+                   (SELECT ma_giao_dich FROM thanh_toan WHERE datban_id = db.id AND trang_thai = 'cho_xac_nhan' ORDER BY id DESC LIMIT 1) AS gd_cho_duyet_ma,
                    nd.ho_ten AS ten_khach, nd.email AS email_khach, nd.so_dien_thoai AS sdt_khach,
                    COALESCE((SELECT GROUP_CONCAT(bp_sub.ten SEPARATOR ' + ') 
                              FROM datban_banphong dbp 
@@ -329,6 +335,8 @@ class BookingModel extends BaseModel
 
         $sql = "
             SELECT db.*,
+                   (SELECT loai_thanh_toan FROM thanh_toan WHERE datban_id = db.id AND trang_thai = 'cho_xac_nhan' ORDER BY id DESC LIMIT 1) AS gd_cho_duyet_loai,
+                   (SELECT ma_giao_dich FROM thanh_toan WHERE datban_id = db.id AND trang_thai = 'cho_xac_nhan' ORDER BY id DESC LIMIT 1) AS gd_cho_duyet_ma,
                    nd.ho_ten AS ten_khach, nd.so_dien_thoai AS sdt_khach,
                    bp.ten AS ten_ban, bp.loai AS loai_ban, bp.suc_chua, bp.phu_phi,
                    ld.ten AS ten_dip,

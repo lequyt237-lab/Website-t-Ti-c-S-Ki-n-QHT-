@@ -61,6 +61,7 @@ match ($action) {
     'admin-thanh-toan'          => (new AdminController)->payments(),
     'admin-thanh-toan-cap-nhat' => (new AdminController)->updatePaymentStatus(),
     'admin-thu-tien'            => (new AdminController)->adminRecordPayment(),
+    'admin-dat-coc-yeu-cau'     => (new AdminController)->setDepositRequirement(),
 
     // Lịch sử đặt bàn & Khách hàng
     'lich-su-dat-ban'     => (new BookingController)->history(),

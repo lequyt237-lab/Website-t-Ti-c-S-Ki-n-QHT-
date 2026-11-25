@@ -331,6 +331,9 @@
                                 <div>
                                     <div class="text-muted small">Tổng tiền:</div>
                                     <div class="fw-bold text-danger fs-5"><?= number_format($b['tong_tien'], 0, ',', '.') ?> đ</div>
+                                    <?php if (!empty($b['tien_coc']) && (float)$b['tien_coc'] > 0 && ($b['trang_thai_thanh_toan'] ?? '') === 'chua_thanh_toan'): ?>
+                                        <div class="small text-warning fw-semibold" style="font-size:0.75rem;"><i class="bi bi-shield-lock me-1"></i>Cọc yêu cầu: <?= number_format($b['tien_coc'], 0, ',', '.') ?> đ</div>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <?php if ($b['trang_thai'] === 'yeu_cau_huy'): ?>
@@ -348,13 +351,24 @@
                                         </a>
                                     <?php endif; ?>
                                     <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
-                                        <?php if (($b['trang_thai_thanh_toan'] ?? '') !== 'da_thanh_toan'): ?>
-                                            <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $b['id'] ?>" class="btn btn-sm btn-success text-white px-3 fw-bold shadow-sm">
-                                                <i class="bi bi-credit-card-2-front me-1"></i>Thanh toán
-                                            </a>
-                                        <?php else: ?>
+                                        <?php if (($b['trang_thai_thanh_toan'] ?? '') === 'da_thanh_toan'): ?>
                                             <a href="<?= BASE_URL ?>?action=hoa-don&booking_id=<?= $b['id'] ?>" target="_blank" class="btn btn-sm btn-outline-success px-2 fw-semibold" title="Xem hóa đơn">
                                                 <i class="bi bi-receipt me-1"></i>Hóa đơn
+                                            </a>
+                                        <?php elseif (!empty($b['gd_cho_duyet_loai'])): ?>
+                                            <?php if ($b['gd_cho_duyet_loai'] === 'dat_coc'): ?>
+                                                <a href="<?= BASE_URL ?>?action=thanh-toan-thanh-cong&code=<?= urlencode($b['gd_cho_duyet_ma']) ?>" class="btn btn-sm btn-warning text-dark px-3 fw-bold shadow-sm" title="Bấm để xem thông tin giao dịch">
+                                                    <i class="bi bi-hourglass-split me-1"></i>Chờ xác nhận tiền cọc
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="<?= BASE_URL ?>?action=thanh-toan-thanh-cong&code=<?= urlencode($b['gd_cho_duyet_ma']) ?>" class="btn btn-sm btn-warning text-dark px-3 fw-bold shadow-sm" title="Bấm để xem thông tin giao dịch">
+                                                    <i class="bi bi-hourglass-split me-1"></i>Chờ xác nhận thanh toán
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php elseif ($b['trang_thai'] === 'da_duyet' && (float)($b['tong_tien'] ?? 0) > 0): ?>
+                                            <?php $isDepositNeed = !empty($b['tien_coc']) && (float)$b['tien_coc'] > 0 && ($b['trang_thai_thanh_toan'] ?? '') === 'chua_thanh_toan'; ?>
+                                            <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $b['id'] ?>" class="btn btn-sm btn-success text-white px-3 fw-bold shadow-sm">
+                                                <i class="bi bi-credit-card-2-front me-1"></i><?= $isDepositNeed ? 'Thanh toán cọc' : 'Thanh toán' ?>
                                             </a>
                                         <?php endif; ?>
                                     <?php endif; ?>
@@ -464,13 +478,24 @@
                                             <div class="fw-bold text-danger"><?= number_format($b['tong_tien'], 0, ',', '.') ?> đ</div>
                                             <div class="d-flex gap-2">
                                                 <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
-                                                    <?php if (($b['trang_thai_thanh_toan'] ?? '') !== 'da_thanh_toan'): ?>
-                                                        <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $b['id'] ?>" class="btn btn-sm btn-success text-white px-3 fw-bold shadow-sm">
-                                                            <i class="bi bi-credit-card-2-front me-1"></i>Thanh toán
-                                                        </a>
-                                                    <?php else: ?>
+                                                    <?php if (($b['trang_thai_thanh_toan'] ?? '') === 'da_thanh_toan'): ?>
                                                         <a href="<?= BASE_URL ?>?action=hoa-don&booking_id=<?= $b['id'] ?>" target="_blank" class="btn btn-sm btn-outline-success px-2 fw-semibold" title="Xem hóa đơn">
                                                             <i class="bi bi-receipt me-1"></i>Hóa đơn
+                                                        </a>
+                                                    <?php elseif (!empty($b['gd_cho_duyet_loai'])): ?>
+                                                        <?php if ($b['gd_cho_duyet_loai'] === 'dat_coc'): ?>
+                                                            <a href="<?= BASE_URL ?>?action=thanh-toan-thanh-cong&code=<?= urlencode($b['gd_cho_duyet_ma']) ?>" class="btn btn-sm btn-warning text-dark px-3 fw-bold shadow-sm" title="Bấm để xem thông tin giao dịch">
+                                                                <i class="bi bi-hourglass-split me-1"></i>Chờ xác nhận tiền cọc
+                                                            </a>
+                                                        <?php else: ?>
+                                                            <a href="<?= BASE_URL ?>?action=thanh-toan-thanh-cong&code=<?= urlencode($b['gd_cho_duyet_ma']) ?>" class="btn btn-sm btn-warning text-dark px-3 fw-bold shadow-sm" title="Bấm để xem thông tin giao dịch">
+                                                                <i class="bi bi-hourglass-split me-1"></i>Chờ xác nhận thanh toán
+                                                            </a>
+                                                        <?php endif; ?>
+                                                    <?php elseif ($b['trang_thai'] === 'da_duyet' && (float)($b['tong_tien'] ?? 0) > 0): ?>
+                                                        <?php $isDepositNeed = !empty($b['tien_coc']) && (float)$b['tien_coc'] > 0 && ($b['trang_thai_thanh_toan'] ?? '') === 'chua_thanh_toan'; ?>
+                                                        <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $b['id'] ?>" class="btn btn-sm btn-success text-white px-3 fw-bold shadow-sm">
+                                                            <i class="bi bi-credit-card-2-front me-1"></i><?= $isDepositNeed ? 'Thanh toán cọc' : 'Thanh toán' ?>
                                                         </a>
                                                     <?php endif; ?>
                                                     <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">
