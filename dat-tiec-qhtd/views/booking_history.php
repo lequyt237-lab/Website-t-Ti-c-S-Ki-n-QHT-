@@ -365,10 +365,10 @@
                                                     <i class="bi bi-hourglass-split me-1"></i>Chờ xác nhận thanh toán
                                                 </a>
                                             <?php endif; ?>
-                                        <?php elseif ($b['trang_thai'] === 'da_duyet' && (float)($b['tong_tien'] ?? 0) > 0): ?>
-                                            <?php $isDepositNeed = !empty($b['tien_coc']) && (float)$b['tien_coc'] > 0 && ($b['trang_thai_thanh_toan'] ?? '') === 'chua_thanh_toan'; ?>
+                                        <?php elseif (!in_array($b['trang_thai'], ['da_huy', 'tu_choi', 'hoan_thanh']) && ($b['trang_thai_thanh_toan'] ?? '') !== 'da_thanh_toan'): ?>
+                                            <?php $isDepositNeed = ($b['trang_thai_thanh_toan'] ?? '') === 'chua_thanh_toan'; ?>
                                             <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $b['id'] ?>" class="btn btn-sm btn-success text-white px-3 fw-bold shadow-sm">
-                                                <i class="bi bi-credit-card-2-front me-1"></i><?= $isDepositNeed ? 'Thanh toán cọc' : 'Thanh toán' ?>
+                                                <i class="bi bi-qr-code me-1"></i><?= $isDepositNeed ? 'Đặt cọc VNPAY' : 'Thanh toán VNPAY' ?>
                                             </a>
                                         <?php endif; ?>
                                     <?php endif; ?>
@@ -492,10 +492,10 @@
                                                                 <i class="bi bi-hourglass-split me-1"></i>Chờ xác nhận thanh toán
                                                             </a>
                                                         <?php endif; ?>
-                                                    <?php elseif ($b['trang_thai'] === 'da_duyet' && (float)($b['tong_tien'] ?? 0) > 0): ?>
-                                                        <?php $isDepositNeed = !empty($b['tien_coc']) && (float)$b['tien_coc'] > 0 && ($b['trang_thai_thanh_toan'] ?? '') === 'chua_thanh_toan'; ?>
+                                                    <?php elseif (!in_array($b['trang_thai'], ['da_huy', 'tu_choi', 'hoan_thanh']) && ($b['trang_thai_thanh_toan'] ?? '') !== 'da_thanh_toan'): ?>
+                                                        <?php $isDepositNeed = ($b['trang_thai_thanh_toan'] ?? '') === 'chua_thanh_toan'; ?>
                                                         <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $b['id'] ?>" class="btn btn-sm btn-success text-white px-3 fw-bold shadow-sm">
-                                                            <i class="bi bi-credit-card-2-front me-1"></i><?= $isDepositNeed ? 'Thanh toán cọc' : 'Thanh toán' ?>
+                                                            <i class="bi bi-qr-code me-1"></i><?= $isDepositNeed ? 'Đặt cọc VNPAY' : 'Thanh toán VNPAY' ?>
                                                         </a>
                                                     <?php endif; ?>
                                                     <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">

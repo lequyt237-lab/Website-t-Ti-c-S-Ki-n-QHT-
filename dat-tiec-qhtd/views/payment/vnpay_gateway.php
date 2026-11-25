@@ -93,13 +93,15 @@
         }
         .qr-frame {
             background: #ffffff;
-            padding: 12px;
+            padding: 14px;
             border-radius: 16px;
             display: inline-block;
             box-shadow: 0 8px 24px rgba(0, 91, 170, 0.12);
             border: 2px solid #e0e7ff;
             position: relative;
             overflow: hidden;
+            min-width: 270px;
+            min-height: 270px;
         }
         /* Scanline animation */
         .qr-frame::after {
@@ -174,6 +176,11 @@
             background: #f1f5f9;
             color: #475569;
             border: 1px solid #e2e8f0;
+        }
+        #localQrContainer canvas, #localQrContainer img {
+            margin: 0 auto;
+            border-radius: 8px;
+            display: block !important;
         }
     </style>
 </head>
@@ -273,11 +280,11 @@
                                 <?= number_format($amount, 0, ',', '.') ?> đ
                             </div>
                             <div class="text-muted small" style="font-size: 0.75rem;">
-                                Miễn phí phí giao dịch chuyển khoản liên ngân hàng 24/7
+                                Miễn phí giao dịch chuyển khoản liên ngân hàng 24/7
                             </div>
                         </div>
 
-                        <!-- THÔNG TIN CHUYỂN KHOẢN ĐỐI SOÁT THỦ CÔNG (NẾU CẦN COPY) -->
+                        <!-- THÔNG TIN CHUYỂN KHOẢN ĐỐI SOÁT THỦ CÔNG -->
                         <div class="p-3 bg-light rounded-3 border small">
                             <div class="fw-bold text-secondary mb-2" style="font-size: 0.72rem; letter-spacing: 0.5px;">
                                 <i class="bi bi-info-circle me-1"></i>THÔNG TIN TÀI KHOẢN THỤ HƯỞNG (ĐỐI SOÁT):
@@ -289,7 +296,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <span class="text-muted">Số tài khoản:</span>
                                 <div class="d-flex align-items-center gap-1">
-                                    <span class="fw-bold text-danger font-monospace fs-6"><?= $bankConfig['account_no'] ?></span>
+                                    <span class="fw-bold text-danger font-monospace fs-6" id="bankAccNo"><?= $bankConfig['account_no'] ?></span>
                                     <span class="copy-pill" onclick="copyText('<?= $bankConfig['account_no'] ?>', 'Số tài khoản')">
                                         <i class="bi bi-copy"></i>
                                     </span>
@@ -298,6 +305,15 @@
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <span class="text-muted">Chủ tài khoản:</span>
                                 <span class="fw-bold text-dark"><?= $bankConfig['account_name'] ?></span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-muted">Số tiền:</span>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="fw-bold text-danger font-monospace"><?= number_format($amount, 0, ',', '.') ?> đ</span>
+                                    <span class="copy-pill" onclick="copyText('<?= (int)$amount ?>', 'Số tiền')">
+                                        <i class="bi bi-copy"></i>
+                                    </span>
+                                </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-muted">Nội dung CK:</span>
@@ -314,7 +330,7 @@
                     <!-- Nút quay lại -->
                     <div class="mt-4 pt-3 border-top text-center">
                         <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $bookingId ?>" class="text-decoration-none text-muted small fw-semibold">
-                            <i class="bi bi-arrow-left me-1"></i>Hủy giao dịch &amp; quay lại chọn phương thức khác
+                            <i class="bi bi-arrow-left me-1"></i>Hủy giao dịch &amp; quay lại đơn đặt tiệc
                         </a>
                     </div>
                 </div>
@@ -332,26 +348,35 @@
                         <p class="text-muted small mb-0">Hỗ trợ 100% ứng dụng Ngân hàng (MB, VCB, BIDV, Techcombank...) &amp; Ví MoMo</p>
                     </div>
 
-                    <!-- KHUNG MÃ QR THẬT ĐỘNG -->
+                    <!-- KHUNG MÃ QR THẬT ĐỘNG (100% LUÔN HIỂN THỊ) -->
                     <div class="qr-stage-wrapper mb-4">
-                        <div class="qr-frame mb-3">
+                        <div class="qr-frame mb-3 position-relative d-inline-flex align-items-center justify-content-center">
+                            <!-- 1. VẼ MÃ QR TRỰC TIẾP BẰNG JAVASCRIPT (ĐẢM BẢO 100% KHÔNG BAO GIỜ BỊ ẢNH GÃY) -->
+                            <div id="localQrContainer"></div>
+
+                            <!-- 2. THẺ ẢNH VIETQR (Nếu mạng tốt thì hiển thị thêm ảnh template chính hãng) -->
                             <img src="<?= $qrUrl ?>" 
                                  id="vnpayQrImg" 
                                  class="img-fluid rounded" 
                                  alt="Mã VNPAY-QR Thật" 
-                                 style="width: 260px; height: 260px; object-fit: contain; display: block;"
-                                 crossorigin="anonymous">
+                                 style="max-width: 250px; max-height: 250px; display: none;"
+                                 onload="onVietQrLoaded()"
+                                 onerror="onVietQrError()">
+                        </div>
+
+                        <div class="small text-muted mb-2">
+                            <i class="bi bi-camera me-1"></i>Mở app Mobile Banking hoặc MoMo trên điện thoại để quét mã
                         </div>
 
                         <div class="d-flex flex-wrap justify-content-center gap-2">
                             <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3 py-1" onclick="downloadQr()">
                                 <i class="bi bi-download me-1"></i>Tải Mã QR Về Máy
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold px-3 py-1" onclick="reloadQr()">
-                                <i class="bi bi-arrow-clockwise me-1"></i>Làm Mới Mã QR
-                            </button>
                             <button type="button" class="btn btn-sm btn-outline-success fw-semibold px-3 py-1" onclick="copyText('<?= $transferContent ?>', 'Nội dung')">
                                 <i class="bi bi-clipboard-check me-1"></i>Sao Chép Nội Dung
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary fw-semibold px-3 py-1" onclick="copyText('<?= $bankConfig['account_no'] ?>', 'Số tài khoản')">
+                                <i class="bi bi-copy me-1"></i>Sao Chép STK
                             </button>
                         </div>
                     </div>
@@ -359,14 +384,14 @@
                     <!-- 3 BƯỚC HƯỚNG DẪN QUÉT THANH TOÁN -->
                     <div class="mb-4 p-3 bg-light rounded-3 border">
                         <div class="fw-bold text-dark small mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                            <i class="bi bi-phone me-1 text-primary"></i>Hướng dẫn thanh toán nhanh 3 bước:
+                            <i class="bi bi-phone me-1 text-primary"></i>Hướng dẫn quét mã thanh toán 3 bước:
                         </div>
                         <div class="row g-2 small">
                             <div class="col-md-4">
                                 <div class="d-flex align-items-start gap-2">
                                     <div class="step-num">1</div>
                                     <div class="text-secondary" style="font-size: 0.8rem;">
-                                        Mở app <strong>Ngân hàng</strong> hoặc <strong>MoMo</strong> trên điện thoại.
+                                        Mở app <strong>Ngân hàng</strong> (MB, VCB, BIDV, TCB...) hoặc <strong>MoMo</strong>.
                                     </div>
                                 </div>
                             </div>
@@ -374,7 +399,7 @@
                                 <div class="d-flex align-items-start gap-2">
                                     <div class="step-num">2</div>
                                     <div class="text-secondary" style="font-size: 0.8rem;">
-                                        Chọn tính năng <strong>Quét QR / QR Pay</strong> và hướng camera vào mã QR.
+                                        Chọn <strong>Quét QR / QR Pay</strong> và hướng camera vào mã QR ở trên.
                                     </div>
                                 </div>
                             </div>
@@ -382,7 +407,7 @@
                                 <div class="d-flex align-items-start gap-2">
                                     <div class="step-num">3</div>
                                     <div class="text-secondary" style="font-size: 0.8rem;">
-                                        Kiểm tra số tiền &amp; nội dung được tự động điền sẵn, nhấn <strong>Xác nhận</strong>.
+                                        Kiểm tra thông tin đã tự động điền sẵn và nhấn <strong>Xác nhận</strong>.
                                     </div>
                                 </div>
                             </div>
@@ -400,11 +425,11 @@
                         <!-- Tải ảnh biên lai đối soát (tùy chọn) -->
                         <div class="mb-3">
                             <label class="form-label small fw-bold text-dark mb-1">
-                                <i class="bi bi-image text-primary me-1"></i>Tải lên ảnh chụp màn hình bill chuyển khoản thành công (nếu có):
+                                <i class="bi bi-image text-primary me-1"></i>Tải lên ảnh chụp màn hình bill chuyển khoản (nếu có):
                             </label>
                             <input type="file" name="anh_bien_lai" class="form-control form-control-sm" accept="image/*">
                             <div class="form-text small" style="font-size: 0.72rem;">
-                                Ảnh bill giúp thu ngân nhà hàng đối soát và duyệt đơn tức thì cho quý khách.
+                                Ảnh bill giúp thu ngân đối soát nhanh chóng và cập nhật hóa đơn ngay cho bạn.
                             </div>
                         </div>
 
@@ -417,7 +442,7 @@
                         </div>
 
                         <div class="text-center text-muted small" style="font-size: 0.75rem;">
-                            <i class="bi bi-shield-lock-fill text-success me-1"></i>Hệ thống tự động bảo vệ giao dịch của bạn theo tiêu chuẩn EMVCo &amp; PCI-DSS.
+                            <i class="bi bi-shield-lock-fill text-success me-1"></i>Giao dịch được bảo mật và mã hóa theo tiêu chuẩn EMVCo &amp; PCI-DSS.
                         </div>
                     </form>
 
@@ -463,7 +488,57 @@
     </div>
 </footer>
 
+<!-- NHÚNG THƯ VIỆN QRCODE JS LOCAL (ĐẢM BẢO 100% RA MÃ OFFLINE) -->
+<script src="<?= BASE_URL ?>assets/qrcode.min.js"></script>
+
 <script>
+// Chuỗi payload EMVCo VietQR chuẩn Napas247 từ Controller
+const emvcoPayload = "<?= addslashes($emvcoPayload) ?>";
+const qrFallbackUrl = "<?= addslashes($qrFallbackUrl) ?>";
+
+// 1. Khởi tạo mã QR Local ngay lập tức bằng QRCode.js
+let qrCodeObj = null;
+try {
+    const container = document.getElementById("localQrContainer");
+    if (typeof QRCode !== 'undefined') {
+        qrCodeObj = new QRCode(container, {
+            text: emvcoPayload,
+            width: 250,
+            height: 250,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    }
+} catch (e) {
+    console.error("Local QRCode error:", e);
+}
+
+// 2. Xử lý ảnh VietQR từ mạng nếu load được
+function onVietQrLoaded() {
+    const img = document.getElementById('vnpayQrImg');
+    const local = document.getElementById('localQrContainer');
+    if (img && local) {
+        img.style.display = 'block';
+        local.style.display = 'none';
+    }
+}
+
+// 3. Nếu ảnh VietQR lỗi mạng thì giữ nguyên mã QR Local
+function onVietQrError() {
+    const img = document.getElementById('vnpayQrImg');
+    const local = document.getElementById('localQrContainer');
+    if (img && local) {
+        // Thử fallback sang QRServer nếu muốn
+        if (img.src !== qrFallbackUrl) {
+            img.src = qrFallbackUrl;
+        } else {
+            img.style.display = 'none';
+            local.style.display = 'block';
+        }
+    }
+}
+
 // Đếm ngược phiên thanh toán 15 phút
 let countdownSeconds = 15 * 60;
 const timerEl = document.getElementById('countdownTimer');
@@ -504,21 +579,27 @@ function copyText(text, label) {
 
 // Tải ảnh mã QR về máy
 function downloadQr() {
-    const qrImg = document.getElementById('vnpayQrImg');
-    const a = document.createElement('a');
-    a.href = qrImg.src;
-    a.download = 'VNPAY-QR-DB<?= $booking['id'] ?>.png';
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
+    const img = document.getElementById('vnpayQrImg');
+    const canvas = document.querySelector('#localQrContainer canvas');
+    let dataUrl = '';
+    
+    if (img && img.style.display !== 'none' && img.src) {
+        dataUrl = img.src;
+    } else if (canvas) {
+        dataUrl = canvas.toDataURL("image/png");
+    }
 
-// Làm mới mã QR
-function reloadQr() {
-    const qrImg = document.getElementById('vnpayQrImg');
-    const currentSrc = qrImg.src.split('&t=')[0];
-    qrImg.src = currentSrc + '&t=' + new Date().getTime();
+    if (dataUrl) {
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = 'VNPAY-QR-DB<?= $booking['id'] ?>.png';
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    } else {
+        alert("Không thể tải mã QR, quý khách vui lòng chụp màn hình.");
+    }
 }
 </script>
 </body>

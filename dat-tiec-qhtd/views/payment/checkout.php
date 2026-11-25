@@ -18,46 +18,15 @@
     border: 1px solid var(--stone, #e2e8f0);
     box-shadow: 0 4px 20px rgba(0,0,0,0.04);
 }
-.method-card {
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 14px 16px;
-    cursor: pointer;
-    transition: all 0.25s ease;
+.vnpay-method-box {
+    border: 2px solid #005baa;
+    background: linear-gradient(135deg, #f0f7ff, #ffffff);
+    border-radius: 14px;
+    padding: 16px 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: #fff;
-    margin-bottom: 12px;
-}
-.method-card:hover {
-    border-color: #2C4A35;
-    background: #fafaf9;
-}
-.method-card.active {
-    border-color: #2C4A35;
-    background: #f0fdf4;
-    box-shadow: 0 4px 12px rgba(44, 74, 53, 0.1);
-}
-.method-card input[type="radio"] {
-    width: 18px;
-    height: 18px;
-    accent-color: #2C4A35;
-}
-.bank-qr-box {
-    background: #f8fafc;
-    border: 1.5px dashed #cbd5e1;
-    border-radius: 14px;
-    padding: 20px;
-    text-align: center;
-}
-.copy-badge {
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.copy-badge:hover {
-    opacity: 0.85;
-    transform: scale(1.03);
+    gap: 16px;
+    box-shadow: 0 4px 14px rgba(0, 91, 170, 0.08);
 }
 .type-pill {
     padding: 12px 16px;
@@ -69,15 +38,15 @@
     background: #fff;
 }
 .type-pill:hover {
-    border-color: #2C4A35;
+    border-color: #005baa;
 }
 .type-pill.active {
-    border-color: #2C4A35;
-    background: #2C4A35;
+    border-color: #005baa;
+    background: #005baa;
     color: #fff;
 }
-.type-pill.active .text-muted {
-    color: rgba(255,255,255,0.8) !important;
+.type-pill.active .text-muted, .type-pill.active .text-danger, .type-pill.active .text-secondary {
+    color: #fff !important;
 }
 </style>
 
@@ -94,10 +63,10 @@
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div>
                 <span class="badge bg-warning text-dark px-3 py-2 fw-bold text-uppercase mb-2" style="letter-spacing: 1.2px; font-size: 0.72rem;">
-                    <i class="bi bi-shield-check me-1"></i>Cổng Thanh Toán Trực Tuyến An Toàn
+                    <i class="bi bi-shield-check me-1"></i>Cổng Thanh Toán VNPAY Trực Tuyến An Toàn
                 </span>
                 <h1 class="h2 fw-bold mb-1">Thanh Toán &amp; Đặt Cọc Tiệc</h1>
-                <p class="text-white-50 small mb-0">Hoàn tất đặt cọc hoặc thanh toán để nhà hàng ưu tiên chuẩn bị không gian &amp; nguyên liệu hảo hạng nhất cho bạn.</p>
+                <p class="text-white-50 small mb-0">Hoàn tất đặt cọc hoặc thanh toán qua Cổng VNPAY-QR để nhà hàng chuẩn bị tiệc hoàn hảo nhất cho bạn.</p>
             </div>
             <div>
                 <a href="<?= BASE_URL ?>?action=lich-su-dat-ban" class="btn btn-outline-light btn-sm fw-semibold px-3 py-2">
@@ -215,10 +184,9 @@
                         </div>
                     <?php endif; ?>
 
-                    <?php if (!empty($booking['loai_ban']) && $booking['loai_ban'] === 'phong_rieng' && !empty($booking['phu_phi'])): ?>
-                        <div class="d-flex justify-content-between py-1 small text-secondary mt-1">
-                            <span><i class="bi bi-star-fill text-warning me-1"></i>Phụ phí phòng VIP riêng tư:</span>
-                            <span class="fw-semibold"><?= number_format($booking['phu_phi'], 0, ',', '.') ?> đ</span>
+                    <?php if (empty($booking['ten_set']) && empty($dishes)): ?>
+                        <div class="alert alert-light border small py-2 text-muted mb-0">
+                            <i class="bi bi-info-circle me-1"></i>Khách chưa chọn món (Đặt cọc giữ bàn trước, gọi món tại nhà hàng).
                         </div>
                     <?php endif; ?>
                 </div>
@@ -227,37 +195,40 @@
                 <div class="p-3 rounded-3" style="background: linear-gradient(135deg, #FFF9F3, #FFF0E5); border: 1.5px dashed var(--terra, #C4603C);">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <span class="text-secondary small">Tổng chi phí tiệc:</span>
-                        <span class="fw-bold text-dark fs-6"><?= number_format($tongTien, 0, ',', '.') ?> đ</span>
+                        <span class="fw-bold text-dark fs-6">
+                            <?= $tongTien > 0 ? number_format($tongTien, 0, ',', '.') . ' đ' : '<span class="text-muted fst-italic">Chưa chốt món</span>' ?>
+                        </span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <span class="text-secondary small">Đã thanh toán / cọc:</span>
                         <span class="fw-bold text-success fs-6">- <?= number_format($daTra, 0, ',', '.') ?> đ</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                        <span class="fw-bold text-dark">Còn lại cần thanh toán:</span>
-                        <span class="fw-bold text-danger fs-4" id="displayRemainingAmount"><?= number_format($conLai, 0, ',', '.') ?> đ</span>
+                        <span class="fw-bold text-dark">
+                            <?= $tongTien > 0 ? 'Còn lại cần thanh toán:' : 'Số tiền cọc đề xuất:' ?>
+                        </span>
+                        <span class="fw-bold text-danger fs-4" id="displayRemainingAmount">
+                            <?= number_format($tongTien > 0 ? $conLai : $suggestedDeposit, 0, ',', '.') ?> đ
+                        </span>
                     </div>
                 </div>
 
                 <!-- Lịch sử các lần thanh toán trước -->
                 <?php if (!empty($payments)): ?>
                     <div class="mt-3 pt-3 border-top">
-                        <div class="small fw-bold text-muted mb-2"><i class="bi bi-clock-history me-1"></i>Lịch sử giao dịch của đơn này:</div>
+                        <div class="small fw-bold text-muted mb-2"><i class="bi bi-clock-history me-1"></i>Lịch sử giao dịch:</div>
                         <div class="list-group list-group-flush small">
                             <?php foreach ($payments as $p): ?>
                                 <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
                                     <div>
                                         <div class="fw-bold text-dark"><?= htmlspecialchars($p['ma_giao_dich']) ?></div>
                                         <div class="text-muted" style="font-size:0.75rem;">
-                                            <?= date('d/m/Y H:i', strtotime($p['ngay_thanh_toan'])) ?> • 
-                                            <span class="text-capitalize"><?= str_replace('_', ' ', $p['phuong_thuc']) ?></span>
+                                            <?= date('d/m/Y H:i', strtotime($p['ngay_thanh_toan'])) ?>
                                         </div>
                                     </div>
                                     <div class="text-end">
                                         <div class="fw-bold text-success">+<?= number_format($p['so_tien'], 0, ',', '.') ?> đ</div>
-                                        <span class="badge <?= $p['trang_thai'] === 'thanh_cong' ? 'bg-success' : 'bg-warning text-dark' ?>" style="font-size:0.65rem;">
-                                            <?= $p['trang_thai'] === 'thanh_cong' ? 'Thành công' : 'Chờ xác nhận' ?>
-                                        </span>
+                                        <span class="badge bg-success" style="font-size:0.65rem;">Thành công</span>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
@@ -268,16 +239,23 @@
             </div>
         </div>
 
-        <!-- ═══ CỘT PHẢI: FORM CHỌN THANH TOÁN ═══ -->
+        <!-- ═══ CỘT PHẢI: FORM THANH TOÁN QUA VNPAY-QR ═══ -->
         <div class="col-lg-7 col-xl-7">
             <div class="payment-card p-4 p-md-5">
                 
-                <h4 class="fw-bold text-dark mb-1">
-                    <i class="bi bi-credit-card-2-front-fill text-success me-2"></i>Chọn Hình Thức &amp; Phương Thức
-                </h4>
-                <p class="text-muted small mb-4">Vui lòng chọn số tiền muốn thanh toán và hình thức tiện lợi nhất cho bạn.</p>
+                <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-1">
+                            <i class="bi bi-qr-code-scan text-primary me-2"></i>Thanh Toán Trực Tuyến VNPAY-QR
+                        </h4>
+                        <p class="text-muted small mb-0">Cổng thanh toán chính thức • Quét mã QR thật bằng mọi App Ngân Hàng &amp; MoMo</p>
+                    </div>
+                    <span class="badge bg-danger text-white px-3 py-2 fw-bold text-uppercase" style="letter-spacing: 0.8px; font-size: 0.72rem;">
+                        VNPAY-QR
+                    </span>
+                </div>
 
-                <?php if ($conLai <= 0): ?>
+                <?php if ($tongTien > 0 && $conLai <= 0): ?>
                     <!-- Đơn đã thanh toán đủ 100% -->
                     <div class="text-center py-5">
                         <div class="p-3 d-inline-block rounded-circle bg-success-subtle text-success mb-3">
@@ -299,41 +277,70 @@
                     </div>
                 <?php else: ?>
 
-                    <form action="<?= BASE_URL ?>?action=xu-ly-thanh-toan" method="POST" enctype="multipart/form-data" id="checkoutForm">
+                    <form action="<?= BASE_URL ?>?action=xu-ly-thanh-toan" method="POST" id="checkoutForm">
                         <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                        <input type="hidden" name="phuong_thuc" value="vnpay">
                         <input type="hidden" name="loai_thanh_toan" id="loai_thanh_toan" value="<?= $daTra > 0 ? 'toan_bo' : 'dat_coc' ?>">
-                        <!-- so_tien được JS cập nhật liên tục theo lựa chọn, controller đọc $_POST['so_tien'] -->
-                        <input type="hidden" name="so_tien" id="so_tien_input" value="<?= $daTra > 0 ? $conLai : $suggestedDeposit ?>">
+                        <input type="hidden" name="so_tien" id="so_tien_input" value="<?= $suggestedDeposit ?>">
+
+                        <?php if ($tongTien <= 0): ?>
+                            <!-- Thông báo đơn chưa chọn món -->
+                            <div class="alert alert-info border-0 shadow-sm small mb-4 d-flex align-items-start gap-2">
+                                <i class="bi bi-info-circle-fill fs-5 mt-1 text-info flex-shrink-0"></i>
+                                <div>
+                                    <strong>Đơn đặt bàn chưa chọn món ăn:</strong> 
+                                    Quý khách vui lòng đặt cọc giữ bàn trước (gợi ý từ <strong>200.000đ</strong>) để nhà hàng ưu tiên sắp xếp bàn tiệc đẹp nhất cho bạn. 
+                                    Khoản tiền cọc này sẽ được trừ trực tiếp vào hóa đơn khi quý khách dùng bữa tại nhà hàng.
+                                </div>
+                            </div>
+                        <?php endif; ?>
 
                         <!-- 1. CHỌN SỐ TIỀN THANH TOÁN -->
                         <div class="mb-4">
                             <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
-                                1. Lựa chọn số tiền thanh toán:
+                                1. Lựa chọn số tiền đặt cọc / thanh toán:
                             </label>
                             
                             <div class="row g-2">
-                                <?php if ($daTra == 0): ?>
-                                    <!-- Option 1: Đặt cọc giữ chỗ 30% -->
+                                <?php if ($tongTien > 0): ?>
+                                    <!-- Khi đơn đã có tổng tiền món -->
+                                    <?php if ($daTra == 0): ?>
+                                        <div class="col-md-4">
+                                            <div class="type-pill active" onclick="selectPaymentType('dat_coc', <?= $suggestedDeposit ?>)" id="pill_dat_coc">
+                                                <div class="fw-bold fs-6">Đặt Cọc (30%)</div>
+                                                <div class="fw-bold text-danger fs-5 my-1"><?= number_format($suggestedDeposit, 0, ',', '.') ?> đ</div>
+                                                <div class="text-muted small" style="font-size:0.75rem;">Giữ chỗ &amp; chuẩn bị tiệc</div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div class="<?= $daTra == 0 ? 'col-md-4' : 'col-md-6' ?>">
+                                        <div class="type-pill <?= $daTra > 0 ? 'active' : '' ?>" onclick="selectPaymentType('toan_bo', <?= $conLai ?>)" id="pill_toan_bo">
+                                            <div class="fw-bold fs-6"><?= $daTra > 0 ? 'Thanh toán còn lại' : 'Toàn bộ 100%' ?></div>
+                                            <div class="fw-bold text-danger fs-5 my-1"><?= number_format($conLai, 0, ',', '.') ?> đ</div>
+                                            <div class="text-muted small" style="font-size:0.75rem;">Thanh toán hết chi phí</div>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <!-- Khi đơn chưa chọn món: Gợi ý các mức cọc giữ bàn -->
                                     <div class="col-md-4">
-                                        <div class="type-pill active" onclick="selectPaymentType('dat_coc', <?= $suggestedDeposit ?>)" id="pill_dat_coc">
-                                            <div class="fw-bold fs-6">Đặt Cọc (30%)</div>
-                                            <div class="fw-bold text-danger fs-5 my-1"><?= number_format($suggestedDeposit, 0, ',', '.') ?> đ</div>
-                                            <div class="text-muted small" style="font-size:0.75rem;">Giữ chỗ &amp; chuẩn bị tiệc</div>
+                                        <div class="type-pill active" onclick="selectPaymentType('dat_coc', 200000)" id="pill_dat_coc">
+                                            <div class="fw-bold fs-6">Cọc Tiêu Chuẩn</div>
+                                            <div class="fw-bold text-danger fs-5 my-1">200.000 đ</div>
+                                            <div class="text-muted small" style="font-size:0.75rem;">Giữ bàn chu đáo</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="type-pill" onclick="selectPaymentType('dat_coc', 500000)" id="pill_dat_coc_vip">
+                                            <div class="fw-bold fs-6">Cọc Ưu Tiên (VIP)</div>
+                                            <div class="fw-bold text-danger fs-5 my-1">500.000 đ</div>
+                                            <div class="text-muted small" style="font-size:0.75rem;">Ưu tiên vị trí đẹp nhất</div>
                                         </div>
                                     </div>
                                 <?php endif; ?>
 
-                                <!-- Option 2: Thanh toán toàn bộ / số tiền còn lại -->
-                                <div class="<?= $daTra == 0 ? 'col-md-4' : 'col-md-6' ?>">
-                                    <div class="type-pill <?= $daTra > 0 ? 'active' : '' ?>" onclick="selectPaymentType('toan_bo', <?= $conLai ?>)" id="pill_toan_bo">
-                                        <div class="fw-bold fs-6"><?= $daTra > 0 ? 'Thanh toán còn lại' : 'Toàn bộ 100%' ?></div>
-                                        <div class="fw-bold text-danger fs-5 my-1"><?= number_format($conLai, 0, ',', '.') ?> đ</div>
-                                        <div class="text-muted small" style="font-size:0.75rem;">Thanh toán hết số tiền</div>
-                                    </div>
-                                </div>
-
-                                <!-- Option 3: Tự nhập số tiền -->
-                                <div class="<?= $daTra == 0 ? 'col-md-4' : 'col-md-6' ?>">
+                                <!-- Option Tự nhập số tiền -->
+                                <div class="<?= ($tongTien > 0 && $daTra > 0) ? 'col-md-6' : 'col-md-4' ?>">
                                     <div class="type-pill" onclick="selectPaymentType('tuy_chon', 0)" id="pill_tuy_chon">
                                         <div class="fw-bold fs-6">Tùy Chọn Khác</div>
                                         <div class="fw-bold text-secondary fs-5 my-1">Tự nhập tiền</div>
@@ -347,219 +354,54 @@
                                 <label class="form-label small fw-semibold text-dark">Nhập số tiền bạn muốn chuyển (VNĐ):</label>
                                 <div class="input-group">
                                     <input type="number" id="customAmountInput" class="form-control fw-bold fs-5 text-danger" 
-                                           placeholder="Ví dụ: 1000000" min="50000" max="<?= $conLai ?>" step="10000">
+                                           placeholder="Ví dụ: 300000" min="50000" step="10000" value="<?= $suggestedDeposit ?>">
                                     <span class="input-group-text bg-white fw-bold">VNĐ</span>
                                 </div>
-                                <div class="form-text small">Số tiền tối thiểu 50.000đ và không vượt quá số tiền còn lại (<?= number_format($conLai, 0, ',', '.') ?> đ).</div>
+                                <div class="form-text small">Số tiền tối thiểu 50.000đ.</div>
                             </div>
                         </div>
 
-                        <!-- 2. CHỌN PHƯƠNG THỨC THANH TOÁN -->
+                        <!-- 2. PHƯƠNG THỨC THANH TOÁN DUY NHẤT: VNPAY-QR -->
                         <div class="mb-4">
                             <label class="form-label fw-bold text-dark small text-uppercase" style="letter-spacing: 0.5px;">
-                                2. Lựa chọn phương thức thanh toán:
+                                2. Phương thức thanh toán:
                             </label>
 
-                            <!-- Method 1: Chuyển khoản QR Napas247 tại chỗ (Mặc định) -->
-                            <label class="method-card active" id="method_chuyen_khoan">
-                                <input type="radio" name="phuong_thuc" value="chuyen_khoan" checked onchange="selectMethod('chuyen_khoan')">
-                                <div class="p-2 rounded bg-success-subtle text-success fs-4">
+                            <div class="vnpay-method-box">
+                                <div class="p-2 rounded bg-white shadow-sm border text-danger fs-3">
                                     <i class="bi bi-qr-code-scan"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold text-dark">Quét Mã VietQR Chuyển Khoản 24/7 (Tại Chỗ)</div>
-                                    <div class="text-muted small">Mã QR thật chuẩn EMVCo Napas247. Mở app ngân hàng bất kỳ (MB, Vietcombank, BIDV, Techcombank...) để quét ngay.</div>
-                                </div>
-                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Khuyên dùng</span>
-                            </label>
-
-                            <!-- Method 2: Cổng thanh toán VNPAY-QR -->
-                            <label class="method-card" id="method_vnpay">
-                                <input type="radio" name="phuong_thuc" value="vnpay" onchange="selectMethod('vnpay')">
-                                <div class="p-2 rounded bg-primary-subtle text-primary fs-4">
-                                    <i class="bi bi-qr-code"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="fw-bold text-dark">Cổng Thanh Toán Trực Tuyến VNPAY-QR (Màn Hình Riêng)</div>
-                                    <div class="text-muted small">Giao diện Cổng VNPAY-QR chuyên dụng, có đồng hồ đếm ngược 15 phút, bảo mật SSL và quét mã thật qua app ngân hàng.</div>
-                                </div>
-                                <span class="badge bg-danger text-white px-2 py-1">VNPAY-QR</span>
-                            </label>
-
-                            <!-- Method 3: Ví MoMo -->
-                            <label class="method-card" id="method_momo">
-                                <input type="radio" name="phuong_thuc" value="momo" onchange="selectMethod('momo')">
-                                <div class="p-2 rounded bg-danger-subtle text-danger fs-4">
-                                    <i class="bi bi-wallet2"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="fw-bold text-dark">Ví điện tử MoMo (Quét Mã QR)</div>
-                                    <div class="text-muted small">Quét mã QR MoMo thanh toán tiện lợi và an toàn bằng ứng dụng MoMo trên điện thoại.</div>
-                                </div>
-                            </label>
-
-                            <!-- Method 4: Tiền mặt tại quầy -->
-                            <label class="method-card" id="method_tien_mat">
-                                <input type="radio" name="phuong_thuc" value="tien_mat" onchange="selectMethod('tien_mat')">
-                                <div class="p-2 rounded bg-secondary-subtle text-secondary fs-4">
-                                    <i class="bi bi-cash-stack"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="fw-bold text-dark">Thanh toán tại quầy nhà hàng (Tiền mặt / Quẹt thẻ POS)</div>
-                                    <div class="text-muted small">Bạn có thể đến trực tiếp nhà hàng QHT Banquet để thanh toán cọc hoặc thanh toán khi dùng tiệc.</div>
-                                </div>
-                            </label>
-                        </div>
-
-                        <!-- 3. KHỐI HIỂN THỊ VIETQR VÀ THÔNG TIN TÀI KHOẢN (Cho method chuyen_khoan) -->
-                        <div id="section_chuyen_khoan" class="bank-qr-box mb-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="fw-bold text-dark mb-0">
-                                    <i class="bi bi-qr-code text-success me-1"></i>Quét Mã VietQR Chuyển Khoản Nhanh 24/7
-                                </h6>
-                                <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                    <i class="bi bi-patch-check-fill me-1"></i>Mã QR Thật
-                                </span>
-                            </div>
-
-                            <div class="row align-items-center g-3">
-                                <div class="col-sm-5 text-center">
-                                    <div class="bg-white p-2 rounded-3 shadow-sm d-inline-block border position-relative">
-                                        <img id="qrImage" src="" alt="VietQR" class="img-fluid rounded" style="max-width: 190px;" crossorigin="anonymous">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="fw-bold text-dark fs-6">Cổng Thanh Toán Trực Tuyến VNPAY-QR</div>
+                                        <span class="badge bg-danger text-white" style="font-size: 0.65rem;">QUÉT MÃ THẬT</span>
                                     </div>
-                                    <div class="text-muted small mt-2" style="font-size: 0.72rem;">
-                                        <i class="bi bi-camera me-1"></i>Mở app ngân hàng bất kỳ để quét
-                                    </div>
-                                    <div class="mt-2 d-flex justify-content-center gap-1">
-                                        <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2" style="font-size:0.7rem;" onclick="downloadCheckoutQr()">
-                                            <i class="bi bi-download me-1"></i>Tải QR
-                                        </button>
-                                        <button type="button" class="btn btn-xs btn-outline-secondary py-1 px-2" style="font-size:0.7rem;" onclick="openVnpayDirect()">
-                                            <i class="bi bi-fullscreen me-1"></i>Mở VNPAY-QR
-                                        </button>
+                                    <div class="text-muted small mt-1">
+                                        Hệ thống sẽ sinh mã QR Napas247 thật. Bạn dùng app Mobile Banking (MB, VCB, BIDV, Techcombank, Agribank...) hoặc ví MoMo để quét thanh toán tức thì.
                                     </div>
                                 </div>
-                                <div class="col-sm-7 text-start">
-                                    <div class="p-3 bg-white rounded-3 border small">
-                                        <div class="mb-2">
-                                            <div class="text-muted">Ngân hàng thụ hưởng:</div>
-                                            <div class="fw-bold text-dark"><?= $bankConfig['bank_name'] ?></div>
-                                        </div>
-                                        <div class="mb-2">
-                                            <div class="text-muted">Số tài khoản:</div>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="fw-bold text-danger fs-6 font-monospace" id="bankAccNo"><?= $bankConfig['account_no'] ?></span>
-                                                <span class="badge bg-light text-dark border copy-badge" onclick="copyText('<?= $bankConfig['account_no'] ?>', 'Số tài khoản')">
-                                                    <i class="bi bi-copy me-1"></i>Copy
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="mb-2">
-                                            <div class="text-muted">Tên chủ tài khoản:</div>
-                                            <div class="fw-bold text-dark"><?= $bankConfig['account_name'] ?></div>
-                                        </div>
-                                        <div class="mb-2">
-                                            <div class="text-muted">Số tiền chuyển:</div>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="fw-bold text-danger fs-6 font-monospace" id="qrDisplayAmount">0 đ</span>
-                                                <span class="badge bg-light text-dark border copy-badge" onclick="copyText(currentAmount, 'Số tiền')">
-                                                    <i class="bi bi-copy me-1"></i>Copy
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div class="text-muted">Nội dung chuyển khoản (Bắt buộc):</div>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="fw-bold text-primary font-monospace" id="transferContentText"><?= $transferContent ?></span>
-                                                <span class="badge bg-light text-dark border copy-badge" onclick="copyText('<?= $transferContent ?>', 'Nội dung')">
-                                                    <i class="bi bi-copy me-1"></i>Copy
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Upload bill xác thực nếu có -->
-                            <div class="mt-3 text-start bg-white p-3 rounded-3 border">
-                                <label class="form-label small fw-semibold text-dark mb-1">
-                                    <i class="bi bi-image text-primary me-1"></i>Tải lên ảnh chụp màn hình hóa đơn / bill chuyển khoản (nếu có):
-                                </label>
-                                <input type="file" name="anh_bien_lai" class="form-control form-control-sm" accept="image/*">
-                                <div class="form-text small" style="font-size:0.75rem;">Giúp lễ tân nhà hàng đối soát và duyệt đơn nhanh hơn cho bạn.</div>
-                            </div>
-                        </div>
-
-                        <!-- KHỐI HƯỚNG DẪN TIỀN MẶT (Cho method tien_mat) -->
-                        <div id="section_tien_mat" class="p-3 bg-light rounded-3 border mb-4" style="display: none;">
-                            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Địa chỉ tiếp nhận thanh toán:</h6>
-                            <p class="small text-secondary mb-2">
-                                <strong>Nhà hàng tiệc gia đình QHT Banquet</strong><br>
-                                Địa chỉ: 123 Đường ABC, Quận 1, TP. Hồ Chí Minh<br>
-                                Hotline lễ tân: <strong>0123 456 789</strong> (Mở cửa 10:00 - 22:00 hàng ngày)
-                            </p>
-                            <div class="small text-muted fst-italic">
-                                Quý khách vui lòng đọc mã đơn <strong>#DB<?= $booking['id'] ?></strong> hoặc SĐT <strong><?= htmlspecialchars($booking['so_dien_thoai'] ?? '') ?></strong> tại quầy thu ngân.
-                            </div>
-                        </div>
-
-                        <!-- KHỐI MOMO QR (Cho method momo) -->
-                        <div id="section_momo" class="bank-qr-box mb-4" style="display: none;">
-                            <h6 class="fw-bold text-dark mb-3">
-                                <i class="bi bi-wallet2 text-danger me-1"></i>Quét Mã QR Ví MoMo Thanh Toán
-                            </h6>
-                            <div class="row align-items-center g-3">
-                                <div class="col-sm-5 text-center">
-                                    <div class="bg-white p-2 rounded-3 shadow-sm d-inline-block border">
-                                        <!-- MoMo QR tạo bằng api.qrserver.com hoặc dùng ảnh tĩnh mô phỏng -->
-                                        <img id="momoQrImage" src="" alt="MoMo QR" class="img-fluid rounded" style="max-width: 190px;">
-                                    </div>
-                                    <div class="text-muted small mt-2" style="font-size: 0.72rem;">
-                                        <i class="bi bi-camera me-1"></i>Mở app MoMo để quét mã
-                                    </div>
-                                </div>
-                                <div class="col-sm-7 text-start">
-                                    <div class="p-3 bg-white rounded-3 border small">
-                                        <div class="mb-2">
-                                            <div class="text-muted">Số điện thoại MoMo:</div>
-                                            <div class="fw-bold text-danger fs-6">0988 888 888</div>
-                                        </div>
-                                        <div class="mb-2">
-                                            <div class="text-muted">Tên tài khoản:</div>
-                                            <div class="fw-bold text-dark">NHA HANG QHT BANQUET</div>
-                                        </div>
-                                        <div class="mb-2">
-                                            <div class="text-muted">Số tiền:</div>
-                                            <div class="fw-bold text-danger fs-6" id="momoDisplayAmount">0 đ</div>
-                                        </div>
-                                        <div>
-                                            <div class="text-muted">Nội dung (bắt buộc):</div>
-                                            <div class="fw-bold text-primary font-monospace"><?= $transferContent ?></div>
-                                        </div>
-                                    </div>
-                                    <div class="alert alert-warning small p-2 mt-2 mb-0">
-                                        <i class="bi bi-info-circle me-1"></i>Sau khi chuyển, nhấn <strong>Xác nhận</strong> để hệ thống ghi nhận. Nhà hàng sẽ đối soát và duyệt trong 15 phút.
-                                    </div>
+                                <div class="text-success fs-4">
+                                    <i class="bi bi-check-circle-fill"></i>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Ghi chú thanh toán -->
+                        <!-- Lời nhắn hoặc ghi chú -->
                         <div class="mb-4">
                             <label class="form-label small fw-semibold text-dark">Lời nhắn hoặc ghi chú thanh toán (nếu có):</label>
                             <input type="text" name="noi_dung" class="form-control" placeholder="Ghi chú thêm cho thu ngân hoặc kế toán..." value="<?= htmlspecialchars($transferContent) ?>">
                         </div>
 
                         <!-- NÚT BẤM HOÀN TẤT THANH TOÁN -->
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary-q py-3 fw-bold fs-6 shadow" id="btnSubmitPayment">
-                                <i class="bi bi-shield-lock-fill me-2"></i>
-                                Xác Nhận Thanh Toán <span id="submitAmountText">0 đ</span>
+                        <div class="d-grid mb-2">
+                            <button type="submit" class="btn btn-primary-q py-3 fw-bold fs-5 shadow" id="btnSubmitPayment">
+                                <i class="bi bi-qr-code-scan me-2"></i>
+                                Tiếp Tục Đến Cổng VNPAY-QR (<span id="submitAmountText"><?= number_format($suggestedDeposit, 0, ',', '.') ?> đ</span>)
                             </button>
                         </div>
 
-                        <div class="text-center mt-3 small text-muted">
-                            <i class="bi bi-lock me-1"></i>Giao dịch được mã hóa và bảo mật an toàn theo tiêu chuẩn bảo mật thanh toán.
+                        <div class="text-center text-muted small mt-2">
+                            <i class="bi bi-shield-lock-fill text-success me-1"></i>Chuyển đến màn hình Cổng VNPAY-QR chuyên dụng có đếm ngược 15 phút và mã QR thật.
                         </div>
 
                     </form>
@@ -573,42 +415,12 @@
 </div>
 
 <script>
-let currentAmount = <?= $daTra > 0 ? $conLai : $suggestedDeposit ?>;
-const bookingId = <?= $booking['id'] ?>;
-const transferContent = "<?= addslashes($transferContent) ?>";
-const bankId = "MB";
-const bankAcc = "0988888888";
-const bankName = "NHA HANG QHT BANQUET";
+let currentAmount = <?= $suggestedDeposit ?>;
+const tongTien = <?= $tongTien ?>;
+const conLai = <?= $conLai ?>;
 
 function formatCurrency(number) {
     return new Intl.NumberFormat('vi-VN').format(number) + ' đ';
-}
-
-function updateQR(amount) {
-    currentAmount = amount;
-    document.getElementById('so_tien_input').value = amount;
-    document.getElementById('qrDisplayAmount').innerText = formatCurrency(amount);
-    document.getElementById('submitAmountText').innerText = formatCurrency(amount);
-
-    // Cập nhật URL ảnh VietQR
-    const encodedContent = encodeURIComponent(transferContent);
-    const encodedName = encodeURIComponent(bankName);
-    const qrUrl = `https://img.vietqr.io/image/${bankId}-${bankAcc}-compact2.png?amount=${amount}&addInfo=${encodedContent}&accountName=${encodedName}`;
-    document.getElementById('qrImage').src = qrUrl;
-
-    // Sync MoMo display nếu section đang hiển thị
-    updateMomoQR(amount);
-}
-
-function updateMomoQR(amount) {
-    const momoAmt = document.getElementById('momoDisplayAmount');
-    if (momoAmt) momoAmt.innerText = formatCurrency(amount);
-    const momoQr = document.getElementById('momoQrImage');
-    if (momoQr) {
-        // Dùng api.qrserver tạo QR text đơn giản mô phỏng MoMo
-        const momoContent = encodeURIComponent('MoMo 0988888888 ' + transferContent);
-        momoQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=${momoContent}&bgcolor=ffffff&color=a50064`;
-    }
 }
 
 function selectPaymentType(type, amount) {
@@ -620,92 +432,31 @@ function selectPaymentType(type, amount) {
     if (type === 'tuy_chon') {
         document.getElementById('pill_tuy_chon').classList.add('active');
         customBox.style.display = 'block';
-        const customVal = parseFloat(document.getElementById('customAmountInput').value) || 0;
-        if (customVal > 0) {
-            updateQR(customVal);
-        }
+        const customVal = parseFloat(document.getElementById('customAmountInput').value) || 200000;
+        updateAmount(customVal);
     } else {
         customBox.style.display = 'none';
-        if (type === 'dat_coc') {
+        if (amount === 500000 && document.getElementById('pill_dat_coc_vip')) {
+            document.getElementById('pill_dat_coc_vip').classList.add('active');
+        } else if (type === 'dat_coc') {
             document.getElementById('pill_dat_coc')?.classList.add('active');
         } else if (type === 'toan_bo') {
             document.getElementById('pill_toan_bo')?.classList.add('active');
         }
-        updateQR(amount);
+        updateAmount(amount);
     }
+}
+
+function updateAmount(amount) {
+    if (amount <= 0) amount = 200000;
+    currentAmount = amount;
+    document.getElementById('so_tien_input').value = amount;
+    document.getElementById('submitAmountText').innerText = formatCurrency(amount);
 }
 
 document.getElementById('customAmountInput')?.addEventListener('input', function(e) {
     let val = parseFloat(e.target.value) || 0;
-    const maxVal = <?= $conLai ?>;
-    if (val > maxVal) {
-        val = maxVal;
-        e.target.value = maxVal;
-    }
-    updateQR(val);
+    if (val < 0) val = 0;
+    updateAmount(val);
 });
-
-function selectMethod(method) {
-    document.querySelectorAll('.method-card').forEach(el => el.classList.remove('active'));
-    const activeCard = document.getElementById('method_' + method);
-    if (activeCard) {
-        activeCard.classList.add('active');
-    }
-
-    const qrSection   = document.getElementById('section_chuyen_khoan');
-    const cashSection = document.getElementById('section_tien_mat');
-    const momoSection = document.getElementById('section_momo');
-    const btnSubmit   = document.getElementById('btnSubmitPayment');
-
-    // Ẩn tất cả sections trước
-    qrSection.style.display   = 'none';
-    cashSection.style.display = 'none';
-    momoSection.style.display = 'none';
-
-    if (method === 'chuyen_khoan') {
-        qrSection.style.display = 'block';
-        btnSubmit.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Tôi Đã Quét Mã &amp; Chuyển Tiền <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
-    } else if (method === 'vnpay') {
-        btnSubmit.innerHTML = `<i class="bi bi-qr-code me-2"></i>Mở Cổng VNPAY-QR Quét Mã Thật <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
-    } else if (method === 'momo') {
-        momoSection.style.display = 'block';
-        updateMomoQR(currentAmount);
-        btnSubmit.innerHTML = `<i class="bi bi-wallet2 me-2"></i>Xác Nhận Đã Chuyển Qua MoMo <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
-    } else if (method === 'tien_mat') {
-        cashSection.style.display = 'block';
-        btnSubmit.innerHTML = `<i class="bi bi-geo-alt-fill me-2"></i>Xác Nhận Hẹn Thanh Toán Tại Quầy`;
-    }
-}
-
-function copyText(text, label) {
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Đã sao chép ' + label + ': ' + text);
-        }).catch(err => {
-            prompt('Sao chép ' + label + ':', text);
-        });
-    } else {
-        prompt('Sao chép ' + label + ':', text);
-    }
-}
-
-function downloadCheckoutQr() {
-    const qrImg = document.getElementById('qrImage');
-    if (!qrImg || !qrImg.src) return;
-    const a = document.createElement('a');
-    a.href = qrImg.src;
-    a.download = 'VietQR-DB<?= $booking['id'] ?>.png';
-    a.target = '_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
-function openVnpayDirect() {
-    const pType = document.getElementById('loai_thanh_toan').value || 'dat_coc';
-    window.location.href = `<?= BASE_URL ?>?action=vnpay-gateway&booking_id=${bookingId}&amount=${currentAmount}&type=${pType}`;
-}
-
-// Khởi tạo QR ban đầu
-updateQR(currentAmount);
 </script>
