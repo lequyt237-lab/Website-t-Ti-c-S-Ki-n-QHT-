@@ -678,7 +678,7 @@ class AdminController extends BaseModel
             }
         } elseif ($trangThaiThanhToan === 'da_dat_coc') {
             $deposit30 = $tongTien > 0
-                ? min($tongTien, max(200000, ceil(($tongTien * 0.3) / 10000) * 10000))
+                ? round($tongTien * 0.3)
                 : 200000;
             if ($soTienDaCoc === null && (float)($booking['so_tien_da_coc'] ?? 0) <= 0) {
                 $soTienDaCoc = $deposit30;

@@ -72,11 +72,9 @@ class PaymentController
         if (!empty($booking['tien_coc']) && (float)$booking['tien_coc'] > 0) {
             $suggestedDeposit = (float)$booking['tien_coc'];
         } elseif ($tongTien > 0) {
-            // Mặc định 30% tổng tiền (tối thiểu 200.000đ)
-            $suggestedDeposit = ceil(($tongTien * 0.3) / 10000) * 10000;
-            if ($suggestedDeposit < 200000) {
-                $suggestedDeposit = 200000;
-            } elseif ($suggestedDeposit > $conLai && $conLai > 0) {
+            // Mặc định 30% tổng tiền
+            $suggestedDeposit = round($tongTien * 0.3);
+            if ($suggestedDeposit > $conLai && $conLai > 0) {
                 $suggestedDeposit = $conLai;
             }
         } else {
@@ -156,8 +154,8 @@ class PaymentController
             if (!empty($booking['tien_coc']) && (float)$booking['tien_coc'] > 0) {
                 $amount = (float)$booking['tien_coc'];
             } elseif ($tongTien > 0) {
-                $suggestedDeposit = ceil(($tongTien * 0.3) / 10000) * 10000;
-                $amount = max(200000, min($suggestedDeposit, $conLai > 0 ? $conLai : $suggestedDeposit));
+                $suggestedDeposit = round($tongTien * 0.3);
+                $amount = ($conLai > 0) ? min($suggestedDeposit, $conLai) : $suggestedDeposit;
             } else {
                 $amount = 200000; // Mặc định cọc giữ bàn 200.000đ khi chưa chốt món
             }
