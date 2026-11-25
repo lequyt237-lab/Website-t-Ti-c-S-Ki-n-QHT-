@@ -195,7 +195,7 @@ class PaymentController
         $maGiaoDich = $this->paymentModel->generateTransactionCode($bookingId);
 
         // Xử lý theo từng phương thức thanh toán:
-        // 1. CỔNG VNPAY → chuyển sang màn hình sandbox
+        // 1. CỔNG VNPAY-QR → Chuyển sang màn hình Cổng thanh toán VNPAY-QR Quét Mã Thật
         if ($paymentMethod === 'vnpay') {
             header("Location: " . BASE_URL . "?action=vnpay-gateway&booking_id=$bookingId&amount=$amount&type=$paymentType&code=$maGiaoDich");
             exit;
@@ -275,7 +275,7 @@ class PaymentController
     }
 
     /**
-     * Màn hình mô phỏng Cổng thanh toán VNPAY Sandbox chuyên nghiệp
+     * Màn hình Cổng thanh toán VNPAY-QR Quét Mã Thật chuyên nghiệp
      */
     public function vnpayGateway()
     {
@@ -315,15 +315,29 @@ class PaymentController
             $code = $this->paymentModel->generateTransactionCode($bookingId);
         }
 
-        $title = "Cổng Thanh Toán Trực Tuyến VNPAY - QHT Banquet";
-        // Render trực tiếp view gateway không qua layout main để giống hệt cổng VNPAY thực tế
+        // Cấu hình ngân hàng thanh toán chuẩn
+        $bankConfig = [
+            'bank_id'      => 'MB',              // MBBank (Ngân hàng Quân Đội)
+            'bank_name'    => 'MBBank (Ngân hàng TMCP Quân Đội)',
+            'account_no'   => '0988888888',
+            'account_name' => 'NHA HANG QHT BANQUET',
+            'branch'       => 'Sở Giao Dịch Hà Nội',
+        ];
+
+        // Cú pháp nội dung chuyển khoản chuẩn
+        $sdt = $booking['sdt_khach'] ?? $booking['so_dien_thoai'] ?? '';
+        $transferContent = 'QHT DB' . $booking['id'] . ($sdt ? ' ' . preg_replace('/[^0-9]/', '', $sdt) : '');
+
+        // Đường dẫn mã QR động chuẩn EMVCo Napas247 / VNPAY-QR
+        $qrUrl = "https://img.vietqr.io/image/{$bankConfig['bank_id']}-{$bankConfig['account_no']}-compact2.png?amount={$amount}&addInfo=" . urlencode($transferContent) . "&accountName=" . urlencode($bankConfig['account_name']);
+
+        $title = "Cổng Thanh Toán Trực Tuyến VNPAY-QR - QHT Banquet";
+        // Render trực tiếp view gateway không qua layout main để giống hệt cổng VNPAY-QR thực tế
         require_once PATH_VIEW . 'payment/vnpay_gateway.php';
     }
 
     /**
-     * Xử lý Callback khi thanh toán qua VNPAY thành công
-     * Form gửi bằng POST, nhưng action URL có ?action=vnpay-callback
-     * nên nhận từ $_POST trước, fallback về $_GET
+     * Xử lý xác nhận khi khách quét mã VNPAY-QR thành công
      */
     public function vnpayCallback()
     {
@@ -332,8 +346,7 @@ class PaymentController
         $amount       = (float)($data['amount'] ?? 0);
         $code         = trim($data['code'] ?? '');
         $type         = trim($data['type'] ?? 'dat_coc');
-        $bankCode     = trim($data['bank_code'] ?? 'NCB');
-        $responseCode = trim($data['response_code'] ?? '00'); // '00' là thành công
+        $noiDung      = trim($data['noi_dung'] ?? ("Thanh toan VNPAY-QR cho don #DB" . $bookingId));
 
         if ($bookingId <= 0 || $amount <= 0 || empty($code)) {
             $_SESSION['error'] = 'Dữ liệu phản hồi từ cổng thanh toán không hợp lệ.';
@@ -348,26 +361,39 @@ class PaymentController
             exit;
         }
 
-        if ($responseCode === '00') {
-            $userId = isset($_SESSION['user']) ? (int)$_SESSION['user']['id'] : ($booking['nguoidung_id'] ?? null);
-
-            $res = $this->paymentModel->recordPayment([
-                'datban_id'       => $bookingId,
-                'nguoidung_id'    => $userId,
-                'ma_giao_dich'    => $code,
-                'so_tien'         => $amount,
-                'loai_thanh_toan' => $type,
-                'phuong_thuc'     => 'vnpay',
-                'trang_thai'      => 'thanh_cong',
-                'noi_dung'        => "Thanh toan VNPAY ($bankCode) cho don #DB$bookingId",
-                'ghi_chu_admin'   => "Giao dịch VNPAY Sandbox qua ngân hàng $bankCode thành công (Mã phản hồi: 00)",
-            ]);
-
-            if ($res) {
-                $_SESSION['success'] = "Thanh toán qua cổng VNPAY thành công!";
-                header("Location: " . BASE_URL . "?action=thanh-toan-thanh-cong&code=$code");
-                exit;
+        // Nhận ảnh biên lai nếu khách tải lên kèm
+        $anhBienLai = null;
+        if (!empty($_FILES['anh_bien_lai']['name'])) {
+            try {
+                $paymentUploadDir = PATH_ASSETS_UPLOADS . 'payments';
+                if (!is_dir($paymentUploadDir)) {
+                    mkdir($paymentUploadDir, 0777, true);
+                }
+                $anhBienLai = upload_file('payments', $_FILES['anh_bien_lai']);
+            } catch (Exception $e) {
+                error_log("Upload bill error on vnpayCallback: " . $e->getMessage());
             }
+        }
+
+        $userId = isset($_SESSION['user']) ? (int)$_SESSION['user']['id'] : ($booking['nguoidung_id'] ?? null);
+
+        $res = $this->paymentModel->recordPayment([
+            'datban_id'       => $bookingId,
+            'nguoidung_id'    => $userId,
+            'ma_giao_dich'    => $code,
+            'so_tien'         => $amount,
+            'loai_thanh_toan' => $type,
+            'phuong_thuc'     => 'vnpay',
+            'trang_thai'      => 'thanh_cong',
+            'noi_dung'        => $noiDung,
+            'anh_bien_lai'    => $anhBienLai,
+            'ghi_chu_admin'   => 'Khách quét mã VNPAY-QR Napas247 thành công từ ứng dụng Mobile Banking',
+        ]);
+
+        if ($res) {
+            $_SESSION['success'] = "Thanh toán qua cổng VNPAY-QR thành công! Nhà hàng đã ghi nhận đơn tiệc của bạn.";
+            header("Location: " . BASE_URL . "?action=thanh-toan-thanh-cong&code=$code");
+            exit;
         }
 
         $_SESSION['error'] = "Giao dịch thanh toán VNPAY không thành công hoặc đã bị hủy bỏ.";

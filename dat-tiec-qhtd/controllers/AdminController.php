@@ -272,9 +272,10 @@ class AdminController extends BaseModel
     // 2. Quản lý danh sách Đặt Bàn (Bộ lọc trạng thái, tìm kiếm, ngày tháng)
     public function bookings()
     {
-        $status = trim($_GET['status'] ?? 'all');
-        $search = trim($_GET['q'] ?? '');
-        $date   = trim($_GET['date'] ?? '');
+        $status    = trim($_GET['status'] ?? 'all');
+        $payStatus = trim($_GET['pay_status'] ?? 'all');
+        $search    = trim($_GET['q'] ?? '');
+        $date      = trim($_GET['date'] ?? '');
 
         // Đếm số lượng theo từng trạng thái để làm badge tab
         $counts = [
@@ -317,6 +318,11 @@ class AdminController extends BaseModel
         if ($status !== 'all' && in_array($status, ['cho_duyet', 'da_duyet', 'yeu_cau_huy', 'hoan_thanh', 'tu_choi', 'huy'])) {
             $sql .= " AND db.trang_thai = :status";
             $params[':status'] = $status;
+        }
+
+        if ($payStatus !== 'all' && in_array($payStatus, ['chua_thanh_toan', 'da_dat_coc', 'da_thanh_toan'])) {
+            $sql .= " AND db.trang_thai_thanh_toan = :pay_status";
+            $params[':pay_status'] = $payStatus;
         }
 
         if (!empty($date)) {
@@ -660,16 +666,48 @@ class AdminController extends BaseModel
 
         $primaryBanphongId = !empty($selectedTableIds) ? reset($selectedTableIds) : null;
 
-        // Cập nhật bảng dat_ban
-        $sqlUpdate = "UPDATE dat_ban SET banphong_id = :banphong_id, trang_thai = :trang_thai, tong_tien = :tong_tien, ghi_chu = :ghi_chu WHERE id = :id";
-        $stmtUp = $this->pdo->prepare($sqlUpdate);
-        $stmtUp->execute([
+        // Cập nhật trạng thái thanh toán & số tiền nếu có trong form
+        $trangThaiThanhToan = trim($_POST['trang_thai_thanh_toan'] ?? '');
+        $soTienDaTra = isset($_POST['so_tien_da_tra']) && $_POST['so_tien_da_tra'] !== '' ? max(0, (float)$_POST['so_tien_da_tra']) : null;
+        $soTienDaCoc = isset($_POST['so_tien_da_coc']) && $_POST['so_tien_da_coc'] !== '' ? max(0, (float)$_POST['so_tien_da_coc']) : null;
+
+        // Nếu admin chọn "Đã thanh toán đủ" mà chưa nhập số tiền đã trả thì tự động gán bằng tổng tiền
+        if ($trangThaiThanhToan === 'da_thanh_toan') {
+            if ($soTienDaTra === null || $soTienDaTra == 0) {
+                $soTienDaTra = $tongTien;
+            }
+        } elseif ($trangThaiThanhToan === 'chua_thanh_toan') {
+            if ($soTienDaTra === null) $soTienDaTra = 0;
+            if ($soTienDaCoc === null) $soTienDaCoc = 0;
+        }
+
+        $fields = [
             ':banphong_id' => $primaryBanphongId,
             ':trang_thai'  => $newStatus,
             ':tong_tien'   => $tongTien,
             ':ghi_chu'     => $note,
             ':id'          => $id,
-        ]);
+        ];
+
+        $updateSet = "banphong_id = :banphong_id, trang_thai = :trang_thai, tong_tien = :tong_tien, ghi_chu = :ghi_chu";
+
+        if (!empty($trangThaiThanhToan)) {
+            $updateSet .= ", trang_thai_thanh_toan = :trang_thai_thanh_toan";
+            $fields[':trang_thai_thanh_toan'] = $trangThaiThanhToan;
+        }
+        if ($soTienDaTra !== null) {
+            $updateSet .= ", so_tien_da_tra = :so_tien_da_tra";
+            $fields[':so_tien_da_tra'] = $soTienDaTra;
+        }
+        if ($soTienDaCoc !== null) {
+            $updateSet .= ", so_tien_da_coc = :so_tien_da_coc";
+            $fields[':so_tien_da_coc'] = $soTienDaCoc;
+        }
+
+        // Cập nhật bảng dat_ban
+        $sqlUpdate = "UPDATE dat_ban SET $updateSet WHERE id = :id";
+        $stmtUp = $this->pdo->prepare($sqlUpdate);
+        $stmtUp->execute($fields);
 
         // Đồng bộ danh sách bàn ghép vào datban_banphong
         if ($hasSubmittedTables) {
