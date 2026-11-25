@@ -564,6 +564,16 @@
                                                                 <i class="bi bi-check-lg"></i> Duyệt
                                                             </button>
                                                         </form>
+                                                    <?php elseif ($p['trang_thai'] === 'thanh_cong'): ?>
+                                                        <form method="POST" action="<?= BASE_URL ?>?action=admin-thanh-toan-cap-nhat" style="display:inline;">
+                                                            <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                                                            <input type="hidden" name="trang_thai" value="cho_xac_nhan">
+                                                            <input type="hidden" name="redirect" value="detail">
+                                                            <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
+                                                            <button type="submit" class="btn btn-xs btn-outline-warning py-0 px-1" title="Chuyển về trạng thái Chờ xác nhận" onclick="return confirm('Chuyển giao dịch này về Chờ xác nhận để khách hoặc thu ngân duyệt lại sau?');">
+                                                                <i class="bi bi-arrow-counterclockwise"></i> Chờ duyệt
+                                                            </button>
+                                                        </form>
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>
@@ -574,10 +584,53 @@
                         <?php endif; ?>
                     </div>
 
-                    <!-- Form thu tiền trực tiếp tại quầy dành cho thu ngân -->
+                    <!-- 1. THIẾT LẬP MỨC TIỀN CỌC YÊU CẦU (CHO KHÁCH CHUYỂN KHOẢN CỌC) -->
+                    <?php if (($booking['trang_thai_thanh_toan'] ?? '') !== 'da_thanh_toan' && (float)$booking['tong_tien'] > 0): ?>
+                        <?php
+                        $suggestedDepositDefault = !empty($booking['tien_coc']) && (float)$booking['tien_coc'] > 0 
+                            ? (float)$booking['tien_coc'] 
+                            : min($conLai, max(200000, ceil(($booking['tong_tien'] * 0.3) / 10000) * 10000));
+                        ?>
+                        <div class="p-3 rounded-3 bg-warning-subtle border border-warning-subtle mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold text-dark small mb-0">
+                                    <i class="bi bi-shield-lock-fill text-warning me-1"></i>Thiết lập mức tiền cọc yêu cầu cho khách:
+                                </h6>
+                                <?php if (!empty($booking['tien_coc']) && (float)$booking['tien_coc'] > 0): ?>
+                                    <span class="badge bg-warning text-dark border border-warning">
+                                        Mức cọc đang yêu cầu: <?= number_format($booking['tien_coc'], 0, ',', '.') ?> đ
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            <p class="text-muted small mb-2" style="font-size:0.75rem;">
+                                Thiết lập số tiền cọc để hiển thị cho khách hàng trên trang Lịch sử &amp; Thanh toán. Khi khách xác nhận đã chuyển, giao dịch sẽ xuất hiện ở bảng trên để Admin bấm <strong>[Duyệt]</strong>.
+                            </p>
+                            <form method="POST" action="<?= BASE_URL ?>?action=admin-dat-coc-yeu-cau" class="row g-2 align-items-center">
+                                <input type="hidden" name="datban_id" value="<?= $booking['id'] ?>">
+                                <div class="col-md-6 col-sm-7">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-white fw-semibold text-muted">Số tiền cọc:</span>
+                                        <input type="number" name="tien_coc" class="form-control fw-bold text-danger" 
+                                               value="<?= (int)$suggestedDepositDefault ?>" min="0" max="<?= (int)$conLai ?>" step="10000" required>
+                                        <span class="input-group-text bg-white fw-bold">đ</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-sm-5">
+                                    <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold shadow-sm">
+                                        <i class="bi bi-check2-circle me-1"></i>Lưu mức cọc yêu cầu
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- 2. THU NGÂN GHI NHẬN THU TIỀN TẠI QUẦY (TIỀN MẶT HOẶC POS) -->
                     <?php if ($conLai > 0): ?>
                         <div class="p-3 rounded-3 bg-light border">
-                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-plus-circle me-1 text-primary"></i>Thu ngân ghi nhận thu tiền tại quầy / chuyển khoản:</h6>
+                            <h6 class="fw-bold text-dark small mb-1"><i class="bi bi-cash-stack me-1 text-primary"></i>Thu ngân ghi nhận thu tiền trực tiếp tại quầy:</h6>
+                            <p class="text-muted small mb-2" style="font-size:0.73rem;">
+                                Dành cho khách nộp tiền mặt hoặc quẹt thẻ POS trực tiếp tại quầy nhà hàng.
+                            </p>
                             <form method="POST" action="<?= BASE_URL ?>?action=admin-thu-tien" class="row g-2 align-items-end">
                                 <input type="hidden" name="datban_id" value="<?= $booking['id'] ?>">
 
@@ -590,9 +643,9 @@
                                 <div class="col-md-3">
                                     <label class="form-label small text-muted mb-1">Phương thức:</label>
                                     <select name="phuong_thuc" class="form-select form-select-sm">
-                                        <option value="tien_mat">Tiền mặt tại quầy</option>
-                                        <option value="chuyen_khoan">Chuyển khoản VietQR</option>
-                                        <option value="vnpay">Quẹt thẻ POS / VNPAY</option>
+                                        <option value="tien_mat">Tiền mặt tại quầy (Đã nhận tiền)</option>
+                                        <option value="chuyen_khoan">Chuyển khoản VietQR (Chờ đối soát)</option>
+                                        <option value="vnpay">Quẹt thẻ POS</option>
                                     </select>
                                 </div>
 

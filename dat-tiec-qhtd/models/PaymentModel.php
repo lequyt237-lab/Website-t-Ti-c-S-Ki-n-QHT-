@@ -51,10 +51,17 @@ class PaymentModel extends BaseModel
                 ");
             }
 
+            if (!in_array('tien_coc', $cols)) {
+                $this->pdo->exec("
+                    ALTER TABLE dat_ban 
+                    ADD COLUMN `tien_coc` DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER `trang_thai_thanh_toan`
+                ");
+            }
+
             if (!in_array('so_tien_da_coc', $cols)) {
                 $this->pdo->exec("
                     ALTER TABLE dat_ban 
-                    ADD COLUMN `so_tien_da_coc` DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER `trang_thai_thanh_toan`
+                    ADD COLUMN `so_tien_da_coc` DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER `tien_coc`
                 ");
             }
 
@@ -151,14 +158,15 @@ class PaymentModel extends BaseModel
     }
 
     /**
-     * Tính toán lại số tiền đã trả và cập nhật trạng thái thanh toán của đơn đặt bàn
+     * Tính toán lại số tiền đã trả và cập nhật trạng thái thanh toán của đơn đặt bàn.
+     * Nếu thanh toán đủ 100%: chuyển trang_thai đơn → 'hoan_thanh' và giải phóng bàn.
      */
     public function recalculateBookingPayment($bookingId)
     {
         $bookingId = (int)$bookingId;
 
         // Lấy thông tin đơn đặt bàn
-        $stmtB = $this->pdo->prepare("SELECT tong_tien FROM dat_ban WHERE id = :id");
+        $stmtB = $this->pdo->prepare("SELECT tong_tien, trang_thai, banphong_id FROM dat_ban WHERE id = :id");
         $stmtB->execute([':id' => $bookingId]);
         $booking = $stmtB->fetch();
         if (!$booking) return false;
@@ -194,12 +202,42 @@ class PaymentModel extends BaseModel
                 trang_thai_thanh_toan = :trang_thai_thanh_toan
             WHERE id = :id
         ");
-        return $stmtUp->execute([
-            ':so_tien_da_tra'       => $tongDaTra,
-            ':so_tien_da_coc'       => $tongDaCoc,
-            ':trang_thai_thanh_toan'=> $trangThaiThanhToan,
-            ':id'                   => $bookingId,
+        $res = $stmtUp->execute([
+            ':so_tien_da_tra'        => $tongDaTra,
+            ':so_tien_da_coc'        => $tongDaCoc,
+            ':trang_thai_thanh_toan' => $trangThaiThanhToan,
+            ':id'                    => $bookingId,
         ]);
+
+        // ══════════════════════════════════════════════════════
+        // Nếu đã thanh toán đủ 100% → chuyển đơn sang 'hoan_thanh'
+        // và giải phóng toàn bộ bàn (xóa datban_banphong + reset banphong_id = NULL)
+        // ══════════════════════════════════════════════════════
+        if ($trangThaiThanhToan === 'da_thanh_toan'
+            && !in_array($booking['trang_thai'], ['hoan_thanh', 'da_huy', 'tu_choi'])
+        ) {
+            try {
+                // 1. Chuyển trạng thái đơn sang hoàn thành
+                $this->pdo->prepare("
+                    UPDATE dat_ban SET trang_thai = 'hoan_thanh' WHERE id = :id
+                ")->execute([':id' => $bookingId]);
+
+                // 2. Xóa liên kết bàn ghép (datban_banphong)
+                $this->pdo->prepare("
+                    DELETE FROM datban_banphong WHERE datban_id = :datban_id
+                ")->execute([':datban_id' => $bookingId]);
+
+                // 3. Reset banphong_id về NULL để bàn hiển thị trống
+                $this->pdo->prepare("
+                    UPDATE dat_ban SET banphong_id = NULL WHERE id = :id
+                ")->execute([':id' => $bookingId]);
+
+            } catch (\Exception $e) {
+                error_log("recalculateBookingPayment - giải phóng bàn lỗi: " . $e->getMessage());
+            }
+        }
+
+        return $res;
     }
 
     /**
@@ -269,6 +307,22 @@ class PaymentModel extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([':booking_id' => $bookingId]);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Lấy giao dịch đang chờ xác nhận (nếu có) của một đơn đặt bàn
+     */
+    public function getPendingPaymentByBookingId($bookingId)
+    {
+        $sql = "
+            SELECT * FROM {$this->table}
+            WHERE datban_id = :booking_id AND trang_thai = 'cho_xac_nhan'
+            ORDER BY id DESC
+            LIMIT 1
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':booking_id' => (int)$bookingId]);
+        return $stmt->fetch();
     }
 
     /**
@@ -352,6 +406,18 @@ class PaymentModel extends BaseModel
             return true;
         }
         return false;
+    }
+
+    /**
+     * Thiết lập số tiền cọc yêu cầu cho một đơn đặt bàn
+     */
+    public function setDepositRequirement($bookingId, $amount)
+    {
+        $stmt = $this->pdo->prepare("UPDATE dat_ban SET tien_coc = :amount WHERE id = :id");
+        return $stmt->execute([
+            ':amount' => (float)$amount,
+            ':id'     => (int)$bookingId,
+        ]);
     }
 
     /**

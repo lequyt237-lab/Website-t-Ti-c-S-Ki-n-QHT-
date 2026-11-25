@@ -807,6 +807,11 @@ class AdminController extends BaseModel
         $paymentModel = new PaymentModel();
         $maGiaoDich = $paymentModel->generateTransactionCode($bookingId);
 
+        // Trạng thái thanh toán:
+        // - Tiền mặt tại quầy (thu tiền trực tiếp tận tay): 'thanh_cong'
+        // - Chuyển khoản / Cọc chờ khách nộp: 'cho_xac_nhan' để xuất hiện nút Duyệt, không tự ý biến thành Thành công ngay
+        $status = ($method === 'tien_mat' && $type !== 'dat_coc') ? 'thanh_cong' : 'cho_xac_nhan';
+
         $res = $paymentModel->recordPayment([
             'datban_id'       => $bookingId,
             'nguoidung_id'    => $booking['nguoidung_id'],
@@ -814,15 +819,49 @@ class AdminController extends BaseModel
             'so_tien'         => $amount,
             'loai_thanh_toan' => $type,
             'phuong_thuc'     => $method,
-            'trang_thai'      => 'thanh_cong',
+            'trang_thai'      => $status,
             'noi_dung'        => $note,
-            'ghi_chu_admin'   => 'Admin ' . ($_SESSION['user']['ho_ten'] ?? 'Quản trị viên') . ' trực tiếp thu tiền',
+            'ghi_chu_admin'   => 'Admin ' . ($_SESSION['user']['ho_ten'] ?? 'Quản trị viên') . ' ghi nhận (' . ($status === 'thanh_cong' ? 'Đã thu' : 'Chờ xác nhận') . ')',
         ]);
 
         if ($res) {
-            $_SESSION['success'] = "Đã thu thành công " . number_format($amount, 0, ',', '.') . " đ cho đơn #DB$bookingId! (Mã GD: $maGiaoDich)";
+            if ($status === 'thanh_cong') {
+                $_SESSION['success'] = "Đã thu thành công " . number_format($amount, 0, ',', '.') . " đ cho đơn #DB$bookingId! (Mã GD: $maGiaoDich)";
+            } else {
+                $_SESSION['success'] = "Đã tạo bản ghi thu " . number_format($amount, 0, ',', '.') . " đ ở trạng thái Chờ xác nhận. Vui lòng bấm [Duyệt] khi đã nhận được tiền!";
+            }
         } else {
             $_SESSION['error'] = 'Lỗi ghi nhận khoản thu. Vui lòng thử lại.';
+        }
+
+        header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$bookingId");
+        exit;
+    }
+
+    // 8. Thiết lập số tiền cọc yêu cầu cho khách hàng
+    public function setDepositRequirement()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '?action=admin-dat-ban');
+            exit;
+        }
+
+        $bookingId = (int)($_POST['datban_id'] ?? 0);
+        $amount    = (float)($_POST['tien_coc'] ?? 0);
+
+        if ($bookingId <= 0 || $amount < 0) {
+            $_SESSION['error'] = 'Số tiền cọc không hợp lệ.';
+            header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$bookingId");
+            exit;
+        }
+
+        $paymentModel = new PaymentModel();
+        $res = $paymentModel->setDepositRequirement($bookingId, $amount);
+
+        if ($res) {
+            $_SESSION['success'] = "Đã thiết lập mức tiền cọc yêu cầu: " . number_format($amount, 0, ',', '.') . " đ cho đơn #DB$bookingId! Khách hàng sẽ thấy mức cọc này khi thanh toán.";
+        } else {
+            $_SESSION['error'] = 'Không thể lưu mức tiền cọc.';
         }
 
         header("Location: " . BASE_URL . "?action=admin-dat-ban-chi-tiet&id=$bookingId");
