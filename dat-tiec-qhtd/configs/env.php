@@ -1,12 +1,17 @@
 <?php
 
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+    || ((int)($_SERVER['SERVER_PORT'] ?? 80) === 443);
+$scheme = $isHttps ? 'https' : 'http';
+
 $isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1']);
 if ($isLocal) {
     $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
     $baseFolder = rtrim($scriptDir, '/') . '/';
-    $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($baseFolder === '//' ? '/' : $baseFolder);
+    $baseUrl = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . ($baseFolder === '//' ? '/' : $baseFolder);
 } else {
-    $baseUrl = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/';
+    $baseUrl = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'dat-tiec-qht.nfy.fyi') . '/';
 }
 define('BASE_URL', $baseUrl);
 
