@@ -175,10 +175,79 @@ class PaymentController
 
         // Tạo mã giao dịch
         $maGiaoDich = $this->paymentModel->generateTransactionCode($bookingId);
+        $noiDung    = trim($_POST['noi_dung'] ?? ('Thanh toan don tiec #DB' . $bookingId));
 
-        // Chuyển thẳng sang Cổng Thanh Toán Trực Tuyến VNPAY-QR (Quét Mã Thật)
+        // Lưu thông tin phiên giao dịch để đối chiếu khi VNPay Sandbox trả về
+        $_SESSION['vnpay_pending'][$maGiaoDich] = [
+            'booking_id' => $bookingId,
+            'amount'     => $amount,
+            'type'       => $paymentType,
+            'noi_dung'   => $noiDung,
+        ];
+
+        // Nếu đã cấu hình VNP_TMN_CODE và VNP_HASH_SECRET -> chuyển thẳng sang cổng VNPay Sandbox chính thức
+        if (defined('VNP_TMN_CODE') && VNP_TMN_CODE !== '' && defined('VNP_HASH_SECRET') && VNP_HASH_SECRET !== '') {
+            $vnpUrl = $this->buildVnpaySandboxUrl($maGiaoDich, $amount, $noiDung);
+            header('Location: ' . $vnpUrl);
+            exit;
+        }
+
+        // Fallback về màn hình mô phỏng nội bộ nếu chưa cấu hình khóa VNPay Sandbox
         header("Location: " . BASE_URL . "?action=vnpay-gateway&booking_id=$bookingId&amount=$amount&type=$paymentType&code=$maGiaoDich");
         exit;
+    }
+
+    /**
+     * Tạo URL chuyển hướng sang cổng thanh toán VNPay Sandbox (chuẩn HMAC-SHA512 v2.1.0)
+     */
+    private function buildVnpaySandboxUrl($txnRef, $amount, $orderInfo)
+    {
+        $tz = new DateTimeZone('Asia/Ho_Chi_Minh');
+        $now = new DateTime('now', $tz);
+        $expire = (clone $now)->modify('+15 minutes');
+
+        $ipAddr = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        if ($ipAddr === '::1') {
+            $ipAddr = '127.0.0.1';
+        }
+
+        $cleanOrderInfo = preg_replace('/[^a-zA-Z0-9 #\-_.:]/', '', $orderInfo);
+        if ($cleanOrderInfo === '') {
+            $cleanOrderInfo = 'Thanh toan don tiec ' . $txnRef;
+        }
+
+        $inputData = [
+            'vnp_Version'    => '2.1.0',
+            'vnp_TmnCode'    => VNP_TMN_CODE,
+            'vnp_Amount'     => (int)round($amount) * 100,
+            'vnp_Command'    => 'pay',
+            'vnp_CreateDate' => $now->format('YmdHis'),
+            'vnp_CurrCode'   => 'VND',
+            'vnp_IpAddr'     => $ipAddr,
+            'vnp_Locale'     => 'vn',
+            'vnp_OrderInfo'  => $cleanOrderInfo,
+            'vnp_OrderType'  => 'other',
+            'vnp_ReturnUrl'  => VNP_RETURN_URL,
+            'vnp_TxnRef'     => $txnRef,
+            'vnp_ExpireDate' => $expire->format('YmdHis'),
+        ];
+
+        ksort($inputData);
+        $query = '';
+        $hashdata = '';
+        $i = 0;
+        foreach ($inputData as $key => $value) {
+            if ($i === 1) {
+                $hashdata .= '&' . urlencode($key) . '=' . urlencode($value);
+            } else {
+                $hashdata .= urlencode($key) . '=' . urlencode($value);
+                $i = 1;
+            }
+            $query .= urlencode($key) . '=' . urlencode($value) . '&';
+        }
+
+        $vnpSecureHash = hash_hmac('sha512', $hashdata, VNP_HASH_SECRET);
+        return VNP_URL . '?' . $query . 'vnp_SecureHash=' . $vnpSecureHash;
     }
 
     /**
@@ -320,10 +389,108 @@ class PaymentController
     }
 
     /**
-     * Xử lý xác nhận khi khách quét mã VNPAY-QR thành công
+     * Xử lý xác nhận khi khách thanh toán xong (hỗ trợ cả VNPay Sandbox return & fallback nội bộ)
      */
     public function vnpayCallback()
     {
+        // 1. Trường hợp trả về từ cổng VNPay Sandbox chính thức
+        if (isset($_GET['vnp_SecureHash'])) {
+            $vnpSecureHash = $_GET['vnp_SecureHash'];
+            $inputData = [];
+            foreach ($_GET as $key => $value) {
+                if (substr($key, 0, 4) === 'vnp_') {
+                    $inputData[$key] = $value;
+                }
+            }
+            unset($inputData['vnp_SecureHash'], $inputData['vnp_SecureHashType']);
+            ksort($inputData);
+
+            $hashData = '';
+            $i = 0;
+            foreach ($inputData as $key => $value) {
+                if ($i === 1) {
+                    $hashData .= '&' . urlencode($key) . '=' . urlencode($value);
+                } else {
+                    $hashData .= urlencode($key) . '=' . urlencode($value);
+                    $i = 1;
+                }
+            }
+
+            $expectedHash = hash_hmac('sha512', $hashData, VNP_HASH_SECRET);
+            $code         = trim($_GET['vnp_TxnRef'] ?? '');
+            $amount       = ((float)($_GET['vnp_Amount'] ?? 0)) / 100;
+            $responseCode = $_GET['vnp_ResponseCode'] ?? '';
+            $pending      = $_SESSION['vnpay_pending'][$code] ?? null;
+
+            $bookingId = (int)($pending['booking_id'] ?? 0);
+            if ($bookingId <= 0 && preg_match('/-DB(\d+)-/', $code, $m)) {
+                $bookingId = (int)$m[1];
+            }
+            $type    = $pending['type'] ?? 'dat_coc';
+            $noiDung = $pending['noi_dung'] ?? ($_GET['vnp_OrderInfo'] ?? ('Thanh toan VNPay Sandbox cho don #DB' . $bookingId));
+
+            if (!hash_equals($expectedHash, $vnpSecureHash)) {
+                $_SESSION['error'] = 'Chữ ký phản hồi từ VNPay Sandbox không hợp lệ.';
+                header('Location: ' . BASE_URL . ($bookingId > 0 ? "?action=thanh-toan&id=$bookingId" : '?action=lich-su-dat-ban'));
+                exit;
+            }
+
+            if ($responseCode !== '00') {
+                $_SESSION['error'] = "Giao dịch VNPay Sandbox chưa hoàn tất hoặc đã bị hủy (Mã lỗi: $responseCode).";
+                header('Location: ' . BASE_URL . ($bookingId > 0 ? "?action=thanh-toan&id=$bookingId" : '?action=lich-su-dat-ban'));
+                exit;
+            }
+
+            if ($bookingId <= 0 || $amount <= 0 || empty($code)) {
+                $_SESSION['error'] = 'Dữ liệu đơn đặt bàn từ VNPay Sandbox không hợp lệ.';
+                header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+                exit;
+            }
+
+            // Tránh ghi trùng nếu người dùng F5 trang callback
+            if ($this->paymentModel->getPaymentByCode($code)) {
+                unset($_SESSION['vnpay_pending'][$code]);
+                header("Location: " . BASE_URL . "?action=thanh-toan-thanh-cong&code=" . urlencode($code));
+                exit;
+            }
+
+            $booking = $this->bookingModel->getBookingDetail($bookingId);
+            if (!$booking) {
+                $_SESSION['error'] = 'Không tìm thấy đơn đặt bàn tương ứng.';
+                header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
+                exit;
+            }
+
+            $userId = isset($_SESSION['user']) ? (int)$_SESSION['user']['id'] : ($booking['nguoidung_id'] ?? null);
+            $vnpTransNo = trim($_GET['vnp_TransactionNo'] ?? '');
+
+            $res = $this->paymentModel->recordPayment([
+                'datban_id'       => $bookingId,
+                'nguoidung_id'    => $userId,
+                'ma_giao_dich'    => $code,
+                'so_tien'         => $amount,
+                'loai_thanh_toan' => $type,
+                'phuong_thuc'     => 'vnpay',
+                'trang_thai'      => 'thanh_cong',
+                'noi_dung'        => $noiDung,
+                'anh_bien_lai'    => null,
+                'ghi_chu_admin'   => 'Thanh toán thành công qua VNPay Sandbox' . ($vnpTransNo ? " (Mã GD VNPAY: $vnpTransNo)" : ''),
+            ]);
+
+            unset($_SESSION['vnpay_pending'][$code]);
+
+            if ($res) {
+                $_SESSION['success'] = "Thanh toán qua VNPay Sandbox thành công! Nhà hàng đã ghi nhận đơn tiệc của bạn.";
+                header("Location: " . BASE_URL . "?action=thanh-toan-thanh-cong&code=" . urlencode($code));
+                exit;
+            }
+
+            $_SESSION['error'] = "Không thể lưu giao dịch VNPay Sandbox.";
+            header("Location: " . BASE_URL . "?action=thanh-toan&id=$bookingId");
+            exit;
+        }
+
+        // 2. Trường hợp fallback xác nhận từ màn hình nội bộ vnpay_gateway.php
         $data         = !empty($_POST) ? $_POST : $_GET;
         $bookingId    = (int)($data['booking_id'] ?? 0);
         $amount       = (float)($data['amount'] ?? 0);

@@ -715,30 +715,17 @@
                             <span><i class="bi bi-credit-card-2-front-fill me-1 text-success"></i>Tình Trạng Thanh Toán</span>
                             <span class="text-muted fw-normal" style="font-size:0.75rem;">(Tích hợp)</span>
                         </label>
-                        <select name="trang_thai_thanh_toan" class="form-select form-select-sm fw-bold mb-2">
+                        <select name="trang_thai_thanh_toan" class="form-select form-select-sm fw-bold">
                             <option value="chua_thanh_toan" <?= ($booking['trang_thai_thanh_toan'] ?? '') === 'chua_thanh_toan' ? 'selected' : '' ?>>
                                 🔴 Chưa thanh toán
                             </option>
                             <option value="da_dat_coc" <?= ($booking['trang_thai_thanh_toan'] ?? '') === 'da_dat_coc' ? 'selected' : '' ?>>
-                                🔵 Đã đặt cọc (<?= number_format($booking['so_tien_da_coc'] ?? 0, 0, ',', '.') ?> đ)
+                                🔵 Đã đặt cọc (30%)
                             </option>
                             <option value="da_thanh_toan" <?= ($booking['trang_thai_thanh_toan'] ?? '') === 'da_thanh_toan' ? 'selected' : '' ?>>
                                 🟢 Đã thanh toán đủ (100%)
                             </option>
                         </select>
-
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <label class="form-label small text-muted mb-0" style="font-size:0.72rem;">Đã thu thực tế (đ):</label>
-                                <input type="number" name="so_tien_da_tra" class="form-control form-control-sm fw-bold text-success" 
-                                       value="<?= (int)($booking['so_tien_da_tra'] ?? 0) ?>" min="0" step="10000" placeholder="0">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small text-muted mb-0" style="font-size:0.72rem;">Mức cọc (đ):</label>
-                                <input type="number" name="so_tien_da_coc" class="form-control form-control-sm fw-bold text-info" 
-                                       value="<?= (int)($booking['so_tien_da_coc'] ?? 0) ?>" min="0" step="10000" placeholder="0">
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Ghi chú nội bộ -->

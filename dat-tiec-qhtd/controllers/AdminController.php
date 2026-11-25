@@ -671,10 +671,20 @@ class AdminController extends BaseModel
         $soTienDaTra = isset($_POST['so_tien_da_tra']) && $_POST['so_tien_da_tra'] !== '' ? max(0, (float)$_POST['so_tien_da_tra']) : null;
         $soTienDaCoc = isset($_POST['so_tien_da_coc']) && $_POST['so_tien_da_coc'] !== '' ? max(0, (float)$_POST['so_tien_da_coc']) : null;
 
-        // Nếu admin chọn "Đã thanh toán đủ" mà chưa nhập số tiền đã trả thì tự động gán bằng tổng tiền
+        // Tự động tính số tiền theo trạng thái thanh toán (mặc định cọc 30%)
         if ($trangThaiThanhToan === 'da_thanh_toan') {
             if ($soTienDaTra === null || $soTienDaTra == 0) {
                 $soTienDaTra = $tongTien;
+            }
+        } elseif ($trangThaiThanhToan === 'da_dat_coc') {
+            $deposit30 = $tongTien > 0
+                ? min($tongTien, max(200000, ceil(($tongTien * 0.3) / 10000) * 10000))
+                : 200000;
+            if ($soTienDaCoc === null && (float)($booking['so_tien_da_coc'] ?? 0) <= 0) {
+                $soTienDaCoc = $deposit30;
+            }
+            if ($soTienDaTra === null && (float)($booking['so_tien_da_tra'] ?? 0) <= 0) {
+                $soTienDaTra = $deposit30;
             }
         } elseif ($trangThaiThanhToan === 'chua_thanh_toan') {
             if ($soTienDaTra === null) $soTienDaTra = 0;
