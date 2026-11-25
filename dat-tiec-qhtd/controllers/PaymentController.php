@@ -47,18 +47,6 @@ class PaymentController
             exit;
         }
 
-        if ($booking['trang_thai'] !== 'da_duyet') {
-            $_SESSION['error'] = 'Đơn đặt bàn chưa được quản trị viên duyệt bàn. Vui lòng chờ nhà hàng xác nhận duyệt đơn trước khi thanh toán.';
-            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
-            exit;
-        }
-
-        if ((float)$booking['tong_tien'] <= 0) {
-            $_SESSION['error'] = 'Đơn đặt bàn chưa có thông tin chi phí / món ăn. Vui lòng đặt món trước khi thanh toán.';
-            header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
-            exit;
-        }
-
         // Chặn nếu đơn đang có 1 giao dịch chờ xác nhận duyệt để tránh khách bị spam gửi trùng
         $pendingPayment = $this->paymentModel->getPendingPaymentByBookingId($bookingId);
         if ($pendingPayment) {
@@ -79,23 +67,28 @@ class PaymentController
         $daTra    = (float)($booking['so_tien_da_tra'] ?? 0);
         $conLai   = max(0, $tongTien - $daTra);
 
-        // Số tiền đặt cọc: Ưu tiên mức tiền cọc do Admin yêu cầu ($booking['tien_coc'])
+        // Số tiền đặt cọc:
+        // 1. Nếu Admin đã yêu cầu mức cọc cụ thể
         if (!empty($booking['tien_coc']) && (float)$booking['tien_coc'] > 0) {
-            $suggestedDeposit = min((float)$booking['tien_coc'], $conLai);
-        } else {
+            $suggestedDeposit = (float)$booking['tien_coc'];
+        } elseif ($tongTien > 0) {
             // Mặc định 30% tổng tiền (tối thiểu 200.000đ)
             $suggestedDeposit = ceil(($tongTien * 0.3) / 10000) * 10000;
-            if ($suggestedDeposit < 200000 && $tongTien >= 200000) {
+            if ($suggestedDeposit < 200000) {
                 $suggestedDeposit = 200000;
-            } elseif ($suggestedDeposit > $conLai) {
+            } elseif ($suggestedDeposit > $conLai && $conLai > 0) {
                 $suggestedDeposit = $conLai;
             }
+        } else {
+            // Đơn chưa chọn món ăn (tổng tiền = 0đ): Đặt cọc giữ bàn tiêu chuẩn 200.000đ
+            $suggestedDeposit = 200000;
         }
 
         // Cấu hình thanh toán ngân hàng
         $bankConfig = [
-            'bank_id'      => 'MB',              // MBBank
-            'bank_name'    => 'MBBank (Ngân hàng Quân Đội)',
+            'bank_id'      => 'MB',              // MBBank (Ngân hàng Quân Đội)
+            'bank_bin'     => '970422',          // Mã BIN MBBank
+            'bank_name'    => 'MBBank (Ngân hàng TMCP Quân Đội)',
             'account_no'   => '0988888888',
             'account_name' => 'NHA HANG QHT BANQUET',
             'branch'       => 'Chi nhánh Sở Giao Dịch Hà Nội',
@@ -111,7 +104,7 @@ class PaymentController
     }
 
     /**
-     * Xử lý xác nhận thanh toán từ trang checkout
+     * Xử lý xác nhận thanh toán từ trang checkout (Chỉ qua VNPAY-QR)
      */
     public function process()
     {
@@ -134,8 +127,8 @@ class PaymentController
             exit;
         }
 
-        if ($booking['trang_thai'] !== 'da_duyet' || (float)$booking['tong_tien'] <= 0) {
-            $_SESSION['error'] = 'Đơn đặt bàn chưa đủ điều kiện thanh toán (chưa được duyệt hoặc tổng tiền bằng 0).';
+        if (in_array($booking['trang_thai'], ['da_huy', 'tu_choi'])) {
+            $_SESSION['error'] = 'Đơn đặt bàn này đã bị hủy hoặc từ chối, không thể thanh toán.';
             header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
             exit;
         }
@@ -152,126 +145,40 @@ class PaymentController
         $daTra    = (float)($booking['so_tien_da_tra'] ?? 0);
         $conLai   = max(0, $tongTien - $daTra);
 
-        $paymentType   = trim($_POST['loai_thanh_toan'] ?? 'dat_coc');
-        $paymentMethod = trim($_POST['phuong_thuc'] ?? 'chuyen_khoan');
-        // so_tien_input là field ẩn được JS cập nhật cho cả dat_coc / toan_bo / tuy_chon
-        $customAmount  = (float)($_POST['so_tien'] ?? 0);
+        $paymentType  = trim($_POST['loai_thanh_toan'] ?? 'dat_coc');
+        $customAmount = (float)($_POST['so_tien'] ?? 0);
 
         // Xác định số tiền thanh toán thực tế
         $amount = 0;
         if ($paymentType === 'toan_bo') {
-            $amount = $conLai;
+            $amount = $conLai > 0 ? $conLai : ($customAmount > 0 ? $customAmount : 200000);
         } elseif ($paymentType === 'dat_coc') {
             if (!empty($booking['tien_coc']) && (float)$booking['tien_coc'] > 0) {
-                $suggestedDeposit = (float)$booking['tien_coc'];
-            } else {
+                $amount = (float)$booking['tien_coc'];
+            } elseif ($tongTien > 0) {
                 $suggestedDeposit = ceil(($tongTien * 0.3) / 10000) * 10000;
-                if ($suggestedDeposit < 200000 && $tongTien >= 200000) {
-                    $suggestedDeposit = 200000;
-                }
+                $amount = max(200000, min($suggestedDeposit, $conLai > 0 ? $conLai : $suggestedDeposit));
+            } else {
+                $amount = 200000; // Mặc định cọc giữ bàn 200.000đ khi chưa chốt món
             }
-            $amount = min($suggestedDeposit, $conLai);
         } else {
-            // tuy_chon: lấy từ hidden field so_tien_input (được JS set)
             $amount = $customAmount;
         }
 
-        // Fallback: nếu amount vẫn 0 nhưng có so_tien trong POST thì dùng
+        // Fallback: Nếu amount vẫn <= 0, lấy số tiền từ input hoặc 200.000đ
         if ($amount <= 0 && $customAmount > 0) {
             $amount = $customAmount;
         }
-
         if ($amount <= 0) {
-            $_SESSION['error'] = 'Số tiền thanh toán phải lớn hơn 0. Vui lòng nhập số tiền tùy chọn hoặc chọn hình thức khác.';
-            header("Location: " . BASE_URL . "?action=thanh-toan&id=$bookingId");
-            exit;
-        }
-
-        if ($amount > $conLai && $conLai > 0) {
-            $amount = $conLai;
+            $amount = 200000;
         }
 
         // Tạo mã giao dịch
         $maGiaoDich = $this->paymentModel->generateTransactionCode($bookingId);
 
-        // Xử lý theo từng phương thức thanh toán:
-        // 1. CỔNG VNPAY-QR → Chuyển sang màn hình Cổng thanh toán VNPAY-QR Quét Mã Thật
-        if ($paymentMethod === 'vnpay') {
-            header("Location: " . BASE_URL . "?action=vnpay-gateway&booking_id=$bookingId&amount=$amount&type=$paymentType&code=$maGiaoDich");
-            exit;
-        }
-
-        // 2. VÍ MOMO → xử lý ghi nhận ngay (mô phỏng), trạng thái cho_xac_nhan
-        if ($paymentMethod === 'momo') {
-            $userId = isset($_SESSION['user']) ? (int)$_SESSION['user']['id'] : ($booking['nguoidung_id'] ?? null);
-            $res = $this->paymentModel->recordPayment([
-                'datban_id'       => $bookingId,
-                'nguoidung_id'    => $userId,
-                'ma_giao_dich'    => $maGiaoDich,
-                'so_tien'         => $amount,
-                'loai_thanh_toan' => $paymentType,
-                'phuong_thuc'     => 'momo',
-                'trang_thai'      => 'cho_xac_nhan',
-                'noi_dung'        => trim($_POST['noi_dung'] ?? ("Thanh toan MoMo don #DB$bookingId")),
-                'ghi_chu_admin'   => 'Khách xác nhận đã chuyển qua ví MoMo - chờ đối soát',
-            ]);
-            if ($res) {
-                $_SESSION['success'] = 'Yêu cầu thanh toán MoMo đã được ghi nhận. Vui lòng chờ nhà hàng xác nhận!';
-                header("Location: " . BASE_URL . "?action=thanh-toan-thanh-cong&code=$maGiaoDich");
-            } else {
-                $_SESSION['error'] = 'Có lỗi xảy ra khi ghi nhận thanh toán MoMo. Vui lòng thử lại.';
-                header("Location: " . BASE_URL . "?action=thanh-toan&id=$bookingId");
-            }
-            exit;
-        }
-
-        // 2. CHUYỂN KHOẢN NGÂN HÀNG
-        $anhBienLai = null;
-        if (!empty($_FILES['anh_bien_lai']['name'])) {
-            try {
-                // Tạo thư mục nếu chưa có
-                $paymentUploadDir = PATH_ASSETS_UPLOADS . 'payments';
-                if (!is_dir($paymentUploadDir)) {
-                    mkdir($paymentUploadDir, 0777, true);
-                }
-                $anhBienLai = upload_file('payments', $_FILES['anh_bien_lai']);
-            } catch (Exception $e) {
-                // Nếu upload lỗi thì vẫn cho phép tiếp tục
-                error_log("Upload bill error: " . $e->getMessage());
-            }
-        }
-
-        $noiDung = trim($_POST['noi_dung'] ?? ("Thanh toan don tiec #DB" . $bookingId));
-        $userId = isset($_SESSION['user']) ? (int)$_SESSION['user']['id'] : ($booking['nguoidung_id'] ?? null);
-
-        // Trạng thái:
-        // - Chuyển khoản → chờ admin đối soát bill
-        // - Tiền mặt     → chờ admin xác nhận tại quầy
-        // - VNPAY/MoMo   → đã xử lý riêng bên trên, không rơi vào đây
-        $trangThai = in_array($paymentMethod, ['tien_mat', 'chuyen_khoan']) ? 'cho_xac_nhan' : 'thanh_cong';
-
-        $res = $this->paymentModel->recordPayment([
-            'datban_id'       => $bookingId,
-            'nguoidung_id'    => $userId,
-            'ma_giao_dich'    => $maGiaoDich,
-            'so_tien'         => $amount,
-            'loai_thanh_toan' => $paymentType,
-            'phuong_thuc'     => $paymentMethod,
-            'trang_thai'      => $trangThai,
-            'noi_dung'        => $noiDung,
-            'anh_bien_lai'    => $anhBienLai,
-            'ghi_chu_admin'   => $paymentMethod === 'tien_mat' ? 'Khách hẹn thanh toán tiền mặt tại quầy khi đến tiệc' : 'Khách xác nhận đã chuyển khoản thành công',
-        ]);
-
-        if ($res) {
-            $_SESSION['success'] = 'Giao dịch thanh toán đã được ghi nhận thành công!';
-            header("Location: " . BASE_URL . "?action=thanh-toan-thanh-cong&code=$maGiaoDich");
-            exit;
-        } else {
-            $_SESSION['error'] = 'Có lỗi xảy ra trong quá trình ghi nhận thanh toán. Vui lòng thử lại hoặc liên hệ hotline.';
-            header("Location: " . BASE_URL . "?action=thanh-toan&id=$bookingId");
-            exit;
-        }
+        // Chuyển thẳng sang Cổng Thanh Toán Trực Tuyến VNPAY-QR (Quét Mã Thật)
+        header("Location: " . BASE_URL . "?action=vnpay-gateway&booking_id=$bookingId&amount=$amount&type=$paymentType&code=$maGiaoDich");
+        exit;
     }
 
     /**
@@ -284,7 +191,7 @@ class PaymentController
         $type      = trim($_GET['type'] ?? 'dat_coc');
         $code      = trim($_GET['code'] ?? '');
 
-        if ($bookingId <= 0 || $amount <= 0) {
+        if ($bookingId <= 0) {
             $_SESSION['error'] = 'Thông tin giao dịch không hợp lệ.';
             header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
             exit;
@@ -297,8 +204,8 @@ class PaymentController
             exit;
         }
 
-        if ($booking['trang_thai'] !== 'da_duyet' || (float)$booking['tong_tien'] <= 0) {
-            $_SESSION['error'] = 'Đơn đặt bàn chưa đủ điều kiện thanh toán (chưa được duyệt hoặc tổng tiền bằng 0).';
+        if (in_array($booking['trang_thai'], ['da_huy', 'tu_choi'])) {
+            $_SESSION['error'] = 'Đơn đặt bàn này đã bị hủy hoặc từ chối, không thể thanh toán.';
             header('Location: ' . BASE_URL . '?action=lich-su-dat-ban');
             exit;
         }
@@ -311,6 +218,10 @@ class PaymentController
             exit;
         }
 
+        if ($amount <= 0) {
+            $amount = 200000;
+        }
+
         if (empty($code)) {
             $code = $this->paymentModel->generateTransactionCode($bookingId);
         }
@@ -318,6 +229,7 @@ class PaymentController
         // Cấu hình ngân hàng thanh toán chuẩn
         $bankConfig = [
             'bank_id'      => 'MB',              // MBBank (Ngân hàng Quân Đội)
+            'bank_bin'     => '970422',          // Mã BIN MBBank
             'bank_name'    => 'MBBank (Ngân hàng TMCP Quân Đội)',
             'account_no'   => '0988888888',
             'account_name' => 'NHA HANG QHT BANQUET',
@@ -328,12 +240,83 @@ class PaymentController
         $sdt = $booking['sdt_khach'] ?? $booking['so_dien_thoai'] ?? '';
         $transferContent = 'QHT DB' . $booking['id'] . ($sdt ? ' ' . preg_replace('/[^0-9]/', '', $sdt) : '');
 
-        // Đường dẫn mã QR động chuẩn EMVCo Napas247 / VNPAY-QR
-        $qrUrl = "https://img.vietqr.io/image/{$bankConfig['bank_id']}-{$bankConfig['account_no']}-compact2.png?amount={$amount}&addInfo=" . urlencode($transferContent) . "&accountName=" . urlencode($bankConfig['account_name']);
+        // Chuỗi payload EMVCo Napas247 VietQR chuẩn quốc tế
+        $emvcoPayload = $this->buildVietQrPayload(
+            $bankConfig['bank_bin'],
+            $bankConfig['account_no'],
+            $amount,
+            $transferContent,
+            $bankConfig['account_name']
+        );
+
+        // Đường dẫn ảnh VietQR chính thức
+        $qrUrl = "https://img.vietqr.io/image/{$bankConfig['bank_bin']}-{$bankConfig['account_no']}-compact2.png?amount={$amount}&addInfo=" . urlencode($transferContent) . "&accountName=" . urlencode($bankConfig['account_name']);
+
+        // Fallback qua dịch vụ QR Server phụ phòng trường hợp máy client bị chặn domain img.vietqr.io
+        $qrFallbackUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($emvcoPayload);
 
         $title = "Cổng Thanh Toán Trực Tuyến VNPAY-QR - QHT Banquet";
         // Render trực tiếp view gateway không qua layout main để giống hệt cổng VNPAY-QR thực tế
         require_once PATH_VIEW . 'payment/vnpay_gateway.php';
+    }
+
+    /**
+     * Hàm sinh chuỗi EMVCo Napas247 / VNPAY-QR chuẩn quốc tế
+     */
+    private function buildVietQrPayload($bankBin, $accountNo, $amount, $content, $accountName = 'NHA HANG QHT BANQUET')
+    {
+        $sub00 = '00' . str_pad(strlen($bankBin), 2, '0', STR_PAD_LEFT) . $bankBin;
+        $sub01 = '01' . str_pad(strlen($accountNo), 2, '0', STR_PAD_LEFT) . $accountNo;
+        $beneficiary = $sub00 . $sub01;
+
+        $tag38_00 = '0010A000000727';
+        $tag38_01 = '01' . str_pad(strlen($beneficiary), 2, '0', STR_PAD_LEFT) . $beneficiary;
+        $tag38_02 = '0208QRIBFTC';
+        $tag38_val = $tag38_00 . $tag38_01 . $tag38_02;
+        $tag38 = '38' . str_pad(strlen($tag38_val), 2, '0', STR_PAD_LEFT) . $tag38_val;
+
+        $raw = '000201';
+        $raw .= ((int)$amount > 0) ? '010211' : '010212';
+        $raw .= $tag38;
+        $raw .= '52040000';
+        $raw .= '5303704';
+
+        if ((int)$amount > 0) {
+            $amtStr = (string)((int)$amount);
+            $raw .= '54' . str_pad(strlen($amtStr), 2, '0', STR_PAD_LEFT) . $amtStr;
+        }
+
+        $raw .= '5802VN';
+
+        if (!empty($accountName)) {
+            $nameStr = strtoupper(substr($accountName, 0, 25));
+            $raw .= '59' . str_pad(strlen($nameStr), 2, '0', STR_PAD_LEFT) . $nameStr;
+        }
+
+        $raw .= '6006HANOI';
+
+        if (!empty($content)) {
+            $cleanContent = preg_replace('/[^a-zA-Z0-9 ]/', '', $content);
+            $cleanContent = substr($cleanContent, 0, 25);
+            $sub62_08 = '08' . str_pad(strlen($cleanContent), 2, '0', STR_PAD_LEFT) . $cleanContent;
+            $raw .= '62' . str_pad(strlen($sub62_08), 2, '0', STR_PAD_LEFT) . $sub62_08;
+        }
+
+        $raw .= '6304';
+        // Tính CRC16-CCITT
+        $crc = 0xFFFF;
+        for ($c = 0; $c < strlen($raw); $c++) {
+            $crc ^= (ord($raw[$c]) << 8);
+            for ($i = 0; $i < 8; $i++) {
+                if ($crc & 0x8000) {
+                    $crc = (($crc << 1) ^ 0x1021) & 0xFFFF;
+                } else {
+                    $crc = ($crc << 1) & 0xFFFF;
+                }
+            }
+        }
+        $crcHex = strtoupper(str_pad(dechex($crc), 4, '0', STR_PAD_LEFT));
+        return $raw . $crcHex;
     }
 
     /**

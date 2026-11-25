@@ -438,6 +438,9 @@
                                 </span>
                             <?php endif; ?>
 
+                            <a href="<?= BASE_URL ?>?action=thanh-toan&id=<?= $booking['id'] ?>" target="_blank" class="btn btn-outline-primary btn-sm fw-semibold" title="Mở trang thanh toán VNPAY-QR của đơn này">
+                                <i class="bi bi-qr-code me-1"></i>Trang Thanh Toán
+                            </a>
                             <a href="<?= BASE_URL ?>?action=hoa-don&booking_id=<?= $booking['id'] ?>" target="_blank" class="btn btn-outline-secondary btn-sm fw-semibold">
                                 <i class="bi bi-printer me-1"></i>In Hóa Đơn
                             </a>
