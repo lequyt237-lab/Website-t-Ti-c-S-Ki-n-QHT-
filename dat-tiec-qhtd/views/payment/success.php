@@ -127,8 +127,8 @@
                             <span class="fw-bold text-dark text-capitalize">
                                 <?php
                                 $pmMap = [
-                                    'chuyen_khoan' => '<i class="bi bi-qr-code text-success me-1"></i>Chuyển khoản VietQR',
-                                    'vnpay'        => '<i class="bi bi-credit-card text-primary me-1"></i>Cổng trực tuyến VNPAY',
+                                    'chuyen_khoan' => '<i class="bi bi-qr-code text-success me-1"></i>Chuyển khoản VietQR 24/7',
+                                    'vnpay'        => '<i class="bi bi-qr-code text-primary me-1"></i>Cổng VNPAY-QR (Quét mã App Ngân Hàng)',
                                     'momo'         => '<i class="bi bi-wallet2 text-danger me-1"></i>Ví điện tử MoMo',
                                     'tien_mat'     => '<i class="bi bi-cash-stack text-secondary me-1"></i>Tiền mặt tại quầy',
                                 ];

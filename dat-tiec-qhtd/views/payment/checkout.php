@@ -360,30 +360,30 @@
                                 2. Lựa chọn phương thức thanh toán:
                             </label>
 
-                            <!-- Method 1: Chuyển khoản QR Napas247 (Mặc định) -->
+                            <!-- Method 1: Chuyển khoản QR Napas247 tại chỗ (Mặc định) -->
                             <label class="method-card active" id="method_chuyen_khoan">
                                 <input type="radio" name="phuong_thuc" value="chuyen_khoan" checked onchange="selectMethod('chuyen_khoan')">
                                 <div class="p-2 rounded bg-success-subtle text-success fs-4">
                                     <i class="bi bi-qr-code-scan"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold text-dark">Chuyển khoản Ngân hàng (Quét mã VietQR 24/7)</div>
-                                    <div class="text-muted small">Hỗ trợ tất cả app ngân hàng (MB, Vietcombank, BIDV, Techcombank...). Xử lý tự động nhanh chóng.</div>
+                                    <div class="fw-bold text-dark">Quét Mã VietQR Chuyển Khoản 24/7 (Tại Chỗ)</div>
+                                    <div class="text-muted small">Mã QR thật chuẩn EMVCo Napas247. Mở app ngân hàng bất kỳ (MB, Vietcombank, BIDV, Techcombank...) để quét ngay.</div>
                                 </div>
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Khuyên dùng</span>
                             </label>
 
-                            <!-- Method 2: Cổng thanh toán VNPAY -->
+                            <!-- Method 2: Cổng thanh toán VNPAY-QR -->
                             <label class="method-card" id="method_vnpay">
                                 <input type="radio" name="phuong_thuc" value="vnpay" onchange="selectMethod('vnpay')">
                                 <div class="p-2 rounded bg-primary-subtle text-primary fs-4">
-                                    <i class="bi bi-credit-card"></i>
+                                    <i class="bi bi-qr-code"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold text-dark">Cổng thanh toán trực tuyến VNPAY</div>
-                                    <div class="text-muted small">Thanh toán qua thẻ ATM nội địa, Internet Banking, VNPAY-QR hoặc thẻ Quốc tế.</div>
+                                    <div class="fw-bold text-dark">Cổng Thanh Toán Trực Tuyến VNPAY-QR (Màn Hình Riêng)</div>
+                                    <div class="text-muted small">Giao diện Cổng VNPAY-QR chuyên dụng, có đồng hồ đếm ngược 15 phút, bảo mật SSL và quét mã thật qua app ngân hàng.</div>
                                 </div>
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">Online</span>
+                                <span class="badge bg-danger text-white px-2 py-1">VNPAY-QR</span>
                             </label>
 
                             <!-- Method 3: Ví MoMo -->
@@ -393,7 +393,7 @@
                                     <i class="bi bi-wallet2"></i>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div class="fw-bold text-dark">Ví điện tử MoMo</div>
+                                    <div class="fw-bold text-dark">Ví điện tử MoMo (Quét Mã QR)</div>
                                     <div class="text-muted small">Quét mã QR MoMo thanh toán tiện lợi và an toàn bằng ứng dụng MoMo trên điện thoại.</div>
                                 </div>
                             </label>
@@ -413,17 +413,30 @@
 
                         <!-- 3. KHỐI HIỂN THỊ VIETQR VÀ THÔNG TIN TÀI KHOẢN (Cho method chuyen_khoan) -->
                         <div id="section_chuyen_khoan" class="bank-qr-box mb-4">
-                            <h6 class="fw-bold text-dark mb-3">
-                                <i class="bi bi-qr-code text-success me-1"></i>Quét Mã VietQR Chuyển Khoản Nhanh 24/7
-                            </h6>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold text-dark mb-0">
+                                    <i class="bi bi-qr-code text-success me-1"></i>Quét Mã VietQR Chuyển Khoản Nhanh 24/7
+                                </h6>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="bi bi-patch-check-fill me-1"></i>Mã QR Thật
+                                </span>
+                            </div>
 
                             <div class="row align-items-center g-3">
                                 <div class="col-sm-5 text-center">
-                                    <div class="bg-white p-2 rounded-3 shadow-sm d-inline-block border">
-                                        <img id="qrImage" src="" alt="VietQR" class="img-fluid rounded" style="max-width: 190px;">
+                                    <div class="bg-white p-2 rounded-3 shadow-sm d-inline-block border position-relative">
+                                        <img id="qrImage" src="" alt="VietQR" class="img-fluid rounded" style="max-width: 190px;" crossorigin="anonymous">
                                     </div>
                                     <div class="text-muted small mt-2" style="font-size: 0.72rem;">
                                         <i class="bi bi-camera me-1"></i>Mở app ngân hàng bất kỳ để quét
+                                    </div>
+                                    <div class="mt-2 d-flex justify-content-center gap-1">
+                                        <button type="button" class="btn btn-xs btn-outline-primary py-1 px-2" style="font-size:0.7rem;" onclick="downloadCheckoutQr()">
+                                            <i class="bi bi-download me-1"></i>Tải QR
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-secondary py-1 px-2" style="font-size:0.7rem;" onclick="openVnpayDirect()">
+                                            <i class="bi bi-fullscreen me-1"></i>Mở VNPAY-QR
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="col-sm-7 text-start">
@@ -435,7 +448,7 @@
                                         <div class="mb-2">
                                             <div class="text-muted">Số tài khoản:</div>
                                             <div class="d-flex align-items-center gap-2">
-                                                <span class="fw-bold text-danger fs-6" id="bankAccNo"><?= $bankConfig['account_no'] ?></span>
+                                                <span class="fw-bold text-danger fs-6 font-monospace" id="bankAccNo"><?= $bankConfig['account_no'] ?></span>
                                                 <span class="badge bg-light text-dark border copy-badge" onclick="copyText('<?= $bankConfig['account_no'] ?>', 'Số tài khoản')">
                                                     <i class="bi bi-copy me-1"></i>Copy
                                                 </span>
@@ -447,7 +460,12 @@
                                         </div>
                                         <div class="mb-2">
                                             <div class="text-muted">Số tiền chuyển:</div>
-                                            <div class="fw-bold text-danger fs-6" id="qrDisplayAmount">0 đ</div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="fw-bold text-danger fs-6 font-monospace" id="qrDisplayAmount">0 đ</span>
+                                                <span class="badge bg-light text-dark border copy-badge" onclick="copyText(currentAmount, 'Số tiền')">
+                                                    <i class="bi bi-copy me-1"></i>Copy
+                                                </span>
+                                            </div>
                                         </div>
                                         <div>
                                             <div class="text-muted">Nội dung chuyển khoản (Bắt buộc):</div>
@@ -646,9 +664,9 @@ function selectMethod(method) {
 
     if (method === 'chuyen_khoan') {
         qrSection.style.display = 'block';
-        btnSubmit.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Tôi Đã Chuyển Khoản <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
+        btnSubmit.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Tôi Đã Quét Mã &amp; Chuyển Tiền <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
     } else if (method === 'vnpay') {
-        btnSubmit.innerHTML = `<i class="bi bi-credit-card-2-front-fill me-2"></i>Tiếp Tục Đến Cổng VNPAY <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
+        btnSubmit.innerHTML = `<i class="bi bi-qr-code me-2"></i>Mở Cổng VNPAY-QR Quét Mã Thật <span id="submitAmountText">${formatCurrency(currentAmount)}</span>`;
     } else if (method === 'momo') {
         momoSection.style.display = 'block';
         updateMomoQR(currentAmount);
@@ -660,11 +678,32 @@ function selectMethod(method) {
 }
 
 function copyText(text, label) {
-    navigator.clipboard.writeText(text).then(() => {
-        alert('Đã sao chép ' + label + ': ' + text);
-    }).catch(err => {
-        prompt('Sao chép thủ công ' + label + ':', text);
-    });
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Đã sao chép ' + label + ': ' + text);
+        }).catch(err => {
+            prompt('Sao chép ' + label + ':', text);
+        });
+    } else {
+        prompt('Sao chép ' + label + ':', text);
+    }
+}
+
+function downloadCheckoutQr() {
+    const qrImg = document.getElementById('qrImage');
+    if (!qrImg || !qrImg.src) return;
+    const a = document.createElement('a');
+    a.href = qrImg.src;
+    a.download = 'VietQR-DB<?= $booking['id'] ?>.png';
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function openVnpayDirect() {
+    const pType = document.getElementById('loai_thanh_toan').value || 'dat_coc';
+    window.location.href = `<?= BASE_URL ?>?action=vnpay-gateway&booking_id=${bookingId}&amount=${currentAmount}&type=${pType}`;
 }
 
 // Khởi tạo QR ban đầu

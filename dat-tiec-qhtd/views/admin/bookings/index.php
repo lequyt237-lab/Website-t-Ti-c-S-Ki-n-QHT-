@@ -69,14 +69,14 @@
             <input type="hidden" name="action" value="admin-dat-ban">
             <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
 
-            <div class="col-md-5 col-12">
+            <div class="col-md-4 col-12">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white border-end-0 text-muted">
                         <i class="bi bi-search"></i>
                     </span>
                     <input type="text" name="q" value="<?= htmlspecialchars($search) ?>" 
                            class="form-control border-start-0" 
-                           placeholder="Tìm theo Họ tên khách, SĐT hoặc Mã đơn (#ID)...">
+                           placeholder="Tìm theo Khách, SĐT hoặc #ID...">
                 </div>
             </div>
 
@@ -90,13 +90,22 @@
                 </div>
             </div>
 
-            <div class="col-md-4 col-sm-6 col-12 d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-sm px-3 d-flex align-items-center gap-1">
-                    <i class="bi bi-funnel-fill"></i> Lọc dữ liệu
+            <div class="col-md-3 col-sm-6 col-12">
+                <select name="pay_status" class="form-select form-select-sm">
+                    <option value="all" <?= ($payStatus ?? 'all') === 'all' ? 'selected' : '' ?>>-- Tình trạng thanh toán --</option>
+                    <option value="chua_thanh_toan" <?= ($payStatus ?? '') === 'chua_thanh_toan' ? 'selected' : '' ?>>🔴 Chưa thanh toán</option>
+                    <option value="da_dat_coc" <?= ($payStatus ?? '') === 'da_dat_coc' ? 'selected' : '' ?>>🔵 Đã đặt cọc</option>
+                    <option value="da_thanh_toan" <?= ($payStatus ?? '') === 'da_thanh_toan' ? 'selected' : '' ?>>🟢 Đã thanh toán đủ (100%)</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm px-3 w-100 d-flex align-items-center justify-content-center gap-1">
+                    <i class="bi bi-funnel-fill"></i> Lọc
                 </button>
-                <?php if (!empty($search) || !empty($date) || $status !== 'all'): ?>
+                <?php if (!empty($search) || !empty($date) || $status !== 'all' || ($payStatus ?? 'all') !== 'all'): ?>
                     <a href="<?= BASE_URL ?>?action=admin-dat-ban" class="btn btn-outline-secondary btn-sm px-2" title="Xóa bộ lọc">
-                        <i class="bi bi-x-lg"></i> Xóa lọc
+                        <i class="bi bi-x-lg"></i>
                     </a>
                 <?php endif; ?>
             </div>

@@ -57,8 +57,8 @@ match ($action) {
     'admin-set-tiec-delete'   => (new AdminController)->setTiecDelete(),
     'admin-set-tiec-detail'   => (new AdminController)->setTiecDetail(),
 
-    // Quản trị Thanh toán & Thu tiền (Admin)
-    'admin-thanh-toan'          => (new AdminController)->payments(),
+    // Quản trị Thanh toán & Thu tiền (Tích hợp trong Đặt bàn)
+    'admin-thanh-toan'          => header('Location: ' . BASE_URL . '?action=admin-dat-ban') ?: exit,
     'admin-thanh-toan-cap-nhat' => (new AdminController)->updatePaymentStatus(),
     'admin-thu-tien'            => (new AdminController)->adminRecordPayment(),
     'admin-dat-coc-yeu-cau'     => (new AdminController)->setDepositRequirement(),
