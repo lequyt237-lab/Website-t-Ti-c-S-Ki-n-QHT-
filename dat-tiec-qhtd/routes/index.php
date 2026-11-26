@@ -77,5 +77,15 @@ match ($action) {
     'dat-mon'           => (new BookingController)->orderFood(),
     'xu-ly-dat-mon'     => (new BookingController)->saveFoodOrder(),
 
+    // Đánh giá & Bình luận
+    'danh-gia'                 => (new ReviewController)->index(),
+    'gui-danh-gia'             => (new ReviewController)->submit(),
+    'xoa-danh-gia'             => (new ReviewController)->delete(),
+    'api-chi-tiet-danh-gia'    => (new ReviewController)->getReviewAjax(),
+
+    // Quản trị Đánh giá & Bình luận (Admin)
+    'admin-danh-gia'           => (new AdminController)->reviews(),
+    'admin-danh-gia-xoa'       => (new AdminController)->deleteReview(),
+
     default             => (new HomeController)->index(),
 };

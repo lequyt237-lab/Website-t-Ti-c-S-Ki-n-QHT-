@@ -31,6 +31,9 @@ class HomeController
             $bookingStats = $this->bookingModel->getBookingStatsByUserId($userId);
         }
 
+        $reviewModel = new ReviewModel();
+        $homeReviews = $reviewModel->getPublicReviews(3);
+        $reviewStats = $reviewModel->getStats();
 
         $title = 'Trang chủ - QHT Banquet';
         $view  = 'home';

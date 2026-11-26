@@ -351,6 +351,17 @@
                                         </a>
                                     <?php endif; ?>
                                     <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
+                                        <?php if (!empty($b['danh_gia_sao'])): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-warning text-dark px-2 fw-semibold" onclick='openReviewModalFromHistory(<?= $b['id'] ?>, <?= (int)$b['danh_gia_sao'] ?>, <?= json_encode((string)($b['danh_gia_binh_luan'] ?? '')) ?>)' title="Xem hoặc sửa đánh giá">
+                                                <i class="bi bi-star-fill text-warning me-1"></i><?= (int)$b['danh_gia_sao'] ?>★ Nhận xét
+                                            </button>
+                                        <?php elseif (in_array($b['trang_thai'], ['da_duyet', 'hoan_thanh'])): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary px-2 fw-semibold" onclick="openReviewModalFromHistory(<?= $b['id'] ?>, 5, '')" title="Đánh giá bữa tiệc">
+                                                <i class="bi bi-star me-1 text-warning"></i>Đánh giá
+                                            </button>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    <?php if (!in_array($b['trang_thai'], ['da_huy', 'tu_choi'])): ?>
                                         <?php if (($b['trang_thai_thanh_toan'] ?? '') === 'da_thanh_toan'): ?>
                                             <a href="<?= BASE_URL ?>?action=hoa-don&booking_id=<?= $b['id'] ?>" target="_blank" class="btn btn-sm btn-outline-success px-2 fw-semibold" title="Xem hóa đơn">
                                                 <i class="bi bi-receipt me-1"></i>Hóa đơn
@@ -501,6 +512,15 @@
                                                     <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=<?= $b['id'] ?>" class="btn btn-sm btn-warning text-dark px-3 fw-semibold shadow-sm">
                                                         <i class="bi bi-cart-plus me-1"></i>Đặt món
                                                     </a>
+                                                    <?php if (!empty($b['danh_gia_sao'])): ?>
+                                                        <button type="button" class="btn btn-sm btn-outline-warning text-dark px-2 fw-semibold" onclick='openReviewModalFromHistory(<?= $b['id'] ?>, <?= (int)$b['danh_gia_sao'] ?>, <?= json_encode((string)($b['danh_gia_binh_luan'] ?? '')) ?>)' title="Xem hoặc sửa đánh giá">
+                                                            <i class="bi bi-star-fill text-warning me-1"></i><?= (int)$b['danh_gia_sao'] ?>★ Nhận xét
+                                                        </button>
+                                                    <?php elseif (in_array($b['trang_thai'], ['da_duyet', 'hoan_thanh'])): ?>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary px-2 fw-semibold" onclick="openReviewModalFromHistory(<?= $b['id'] ?>, 5, '')" title="Đánh giá bữa tiệc">
+                                                            <i class="bi bi-star me-1 text-warning"></i>Đánh giá
+                                                        </button>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
                                                 <button type="button" class="btn btn-sm btn-dark px-3" onclick="viewBookingDetail(<?= $b['id'] ?>)">
                                                     <i class="bi bi-eye me-1"></i>Xem chi tiết

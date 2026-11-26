@@ -977,6 +977,58 @@
     </div>
 </section>
 
+<!-- ═══ TESTIMONIALS / ĐÁNH GIÁ THỰC KHÁCH ═══ -->
+<section class="py-5" style="background: #fdfbf7; border-top: 1px solid rgba(0,0,0,0.05); border-bottom: 1px solid rgba(0,0,0,0.05);">
+    <div class="container py-4">
+        <div class="text-center mb-5">
+            <div class="sec-eyebrow justify-content-center" style="color:var(--terra)">Ý Kiến Khách Hàng</div>
+            <h2 class="sec-title" style="color:var(--forest)">Trải nghiệm chân thực từ <em>Thực Khách</em></h2>
+            <p class="text-muted mx-auto" style="max-width: 600px; font-size: 0.95rem;">
+                Hơn <?= number_format($reviewStats['total_reviews'] ?? 0) ?> bữa tiệc đã được tổ chức thành công trọn vẹn với điểm hài lòng trung bình <?= number_format($reviewStats['avg_stars'] ?? 5.0, 1) ?>/5.0★.
+            </p>
+        </div>
+
+        <?php if (!empty($homeReviews)): ?>
+            <div class="row g-4 justify-content-center">
+                <?php foreach ($homeReviews as $r): ?>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm p-4" style="border-radius: 16px; background: #ffffff; transition: transform 0.25s ease;">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="text-warning" style="font-size: 1rem; letter-spacing: 2px;">
+                                    <?= str_repeat('★', (int)$r['so_sao']) . str_repeat('☆', 5 - (int)$r['so_sao']) ?>
+                                </div>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small px-2 py-1">
+                                    <i class="bi bi-patch-check-fill me-1"></i>Đã trải nghiệm
+                                </span>
+                            </div>
+                            <p class="card-text text-secondary mb-4 flex-grow-1" style="font-size: 0.95rem; line-height: 1.7; font-style: italic;">
+                                "<?= nl2br(htmlspecialchars($r['binh_luan'] ?: 'Món ăn rất ngon, không gian ấm cúng sang trọng và phục vụ rất chu đáo.')) ?>"
+                            </p>
+                            <div class="d-flex align-items-center pt-3 border-top mt-auto">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold me-3 shadow-sm" style="width: 44px; height: 44px; background: var(--forest); color: var(--amber-lt); font-size: 1.1rem;">
+                                    <?= mb_substr($r['user_name'] ?? 'K', 0, 1, 'UTF-8') ?>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark" style="font-size: 0.95rem;"><?= htmlspecialchars($r['user_name'] ?? 'Thực khách') ?></div>
+                                    <div class="small text-muted" style="font-size: 0.8rem;">
+                                        <?= !empty($r['set_ten']) ? htmlspecialchars($r['set_ten']) : (!empty($r['ban_ten']) ? htmlspecialchars($r['ban_ten']) : 'Tiệc gia đình') ?>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="text-center mt-5">
+            <a href="<?= BASE_URL ?>?action=danh-gia" class="btn btn-primary-q px-4 py-2" style="border-radius: 6px;">
+                <i class="bi bi-star-fill text-warning me-2"></i> Xem tất cả nhận xét & gửi đánh giá
+            </a>
+        </div>
+    </div>
+</section>
+
 <!-- ═══ CTA ═══ -->
 <section class="cta-sec">
     <div class="container">

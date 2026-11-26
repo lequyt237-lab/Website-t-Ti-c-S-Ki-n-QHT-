@@ -1218,4 +1218,40 @@ class AdminController extends BaseModel
         header('Location: ' . BASE_URL . '?action=admin-ban-phong');
         exit;
     }
+
+    /* ═══════════════════════════════════════════
+     * QUẢN LÝ ĐÁNH GIÁ & BÌNH LUẬN
+     * ═══════════════════════════════════════════ */
+
+    public function reviews()
+    {
+        $this->checkAdminAuth();
+        $reviewModel = new ReviewModel();
+        $reviews     = $reviewModel->getAllForAdmin();
+        $stats       = $reviewModel->getStats();
+
+        $title      = 'Quản lý Đánh Giá & Bình Luận - QHT Banquet';
+        $activeMenu = 'danh-gia';
+        $adminView  = 'reviews';
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    public function deleteReview()
+    {
+        $this->checkAdminAuth();
+        $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
+
+        if ($id <= 0) {
+            $_SESSION['error'] = 'Mã đánh giá không hợp lệ.';
+            header('Location: ' . BASE_URL . '?action=admin-danh-gia');
+            exit;
+        }
+
+        $reviewModel = new ReviewModel();
+        $reviewModel->deleteReview($id, null);
+
+        $_SESSION['success'] = "Đã xóa đánh giá #$id thành công.";
+        header('Location: ' . BASE_URL . '?action=admin-danh-gia');
+        exit;
+    }
 }

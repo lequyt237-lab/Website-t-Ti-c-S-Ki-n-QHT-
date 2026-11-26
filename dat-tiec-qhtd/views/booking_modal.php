@@ -194,6 +194,82 @@
   </div>
 </div>
 
+<!-- Modal Đánh Giá & Nhận Xét Bữa Tiệc -->
+<div class="modal fade" id="reviewBookingModal" tabindex="-1" aria-labelledby="reviewBookingModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      
+      <div class="modal-header text-white" style="background: linear-gradient(135deg, var(--forest-dk), var(--forest)); padding: 18px 24px;">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-warning text-dark fw-bold px-2 py-1" id="reviewModalBookingCode">#DB000</span>
+          </div>
+          <h5 class="modal-title fw-bold fs-5 mb-0" id="reviewBookingModalLabel">
+            <i class="bi bi-star-fill text-warning me-2"></i>Đánh Giá &amp; Nhận Xét Bữa Tiệc
+          </h5>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form action="<?= BASE_URL ?>?action=gui-danh-gia" method="POST" id="formSubmitBookingReview">
+        <input type="hidden" name="datban_id" id="reviewModalBookingId" value="">
+
+        <div class="modal-body p-4 bg-white">
+          
+          <!-- Chấm sao -->
+          <div class="text-center py-3 mb-3 bg-light rounded-3 border">
+            <div class="small fw-semibold text-secondary mb-2">Chấm điểm mức độ hài lòng của bạn:</div>
+            
+            <div class="d-inline-flex flex-row-reverse gap-2 mb-2" id="starRatingWidget" style="cursor:pointer;">
+              <input type="radio" id="bstar5" name="so_sao" value="5" class="d-none" checked onclick="updateBookingStarDesc(5)">
+              <label for="bstar5" class="fs-2 text-warning cursor-pointer" style="cursor:pointer;" title="5 sao"><i class="bi bi-star-fill"></i></label>
+              
+              <input type="radio" id="bstar4" name="so_sao" value="4" class="d-none" onclick="updateBookingStarDesc(4)">
+              <label for="bstar4" class="fs-2 text-warning cursor-pointer" style="cursor:pointer;" title="4 sao"><i class="bi bi-star-fill"></i></label>
+              
+              <input type="radio" id="bstar3" name="so_sao" value="3" class="d-none" onclick="updateBookingStarDesc(3)">
+              <label for="bstar3" class="fs-2 text-warning cursor-pointer" style="cursor:pointer;" title="3 sao"><i class="bi bi-star-fill"></i></label>
+              
+              <input type="radio" id="bstar2" name="so_sao" value="2" class="d-none" onclick="updateBookingStarDesc(2)">
+              <label for="bstar2" class="fs-2 text-warning cursor-pointer" style="cursor:pointer;" title="2 sao"><i class="bi bi-star-fill"></i></label>
+              
+              <input type="radio" id="bstar1" name="so_sao" value="1" class="d-none" onclick="updateBookingStarDesc(1)">
+              <label for="bstar1" class="fs-2 text-warning cursor-pointer" style="cursor:pointer;" title="1 sao"><i class="bi bi-star-fill"></i></label>
+            </div>
+
+            <div id="bookingStarDescText" class="fw-bold text-warning small">
+              ⭐⭐⭐⭐⭐ Tuyệt vời! Rất hài lòng về món ăn &amp; dịch vụ
+            </div>
+          </div>
+
+          <!-- Lời nhận xét -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-secondary text-uppercase" style="letter-spacing: 0.5px;">
+              <i class="bi bi-chat-quote-fill me-1 text-success"></i>Lời Nhận Xét &amp; Cảm Nhận:
+            </label>
+            <textarea name="binh_luan" id="bookingReviewCommentInput" class="form-control" rows="4" placeholder="Chia sẻ cảm nhận của bạn về hương vị món ăn, sự bày trí, không gian ấm cúng và cung cách phục vụ của nhân viên..."></textarea>
+            <div class="form-text small text-muted">
+              Đánh giá của bạn sẽ được hiển thị công khai trên trang Đánh giá của nhà hàng.
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer bg-light py-3 px-4 d-flex justify-content-between">
+          <div id="reviewDeleteBtnWrapper"></div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-secondary px-3 fw-semibold btn-sm" data-bs-dismiss="modal">Đóng</button>
+            <button type="submit" class="btn btn-warning px-4 fw-bold text-dark shadow-sm btn-sm" id="bookingReviewSubmitBtn">
+              <i class="bi bi-send-fill me-1"></i> Gửi Đánh Giá
+            </button>
+          </div>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+
 <script>
 /**
  * Xem chi tiết đơn đặt bàn
@@ -338,7 +414,11 @@ function viewBookingDetail(bookingId) {
                 `;
             }
             if (b.trang_thai !== 'da_huy' && b.trang_thai !== 'tu_choi' && b.trang_thai !== 'yeu_cau_huy') {
+                const isReviewed = b.danh_gia_sao ? true : false;
                 actionButtonsHtml += `
+                    <button type="button" class="btn btn-outline-warning text-dark btn-sm fw-bold me-2 shadow-sm" onclick="openReviewModalFromHistory(${b.id}, ${b.danh_gia_sao || 5}, '${(b.danh_gia_binh_luan || '').replace(/'/g, "\\'")}')">
+                        <i class="bi bi-star-fill text-warning me-1"></i>${isReviewed ? b.danh_gia_sao + '★ Sửa nhận xét' : 'Đánh giá tiệc'}
+                    </button>
                     <a href="<?= BASE_URL ?>?action=dat-mon&booking_id=${b.id}" class="btn btn-warning text-dark btn-sm fw-bold shadow-sm">
                         <i class="bi bi-cart-plus-fill me-1"></i>${dishes.length > 0 || b.ten_set ? 'Cập nhật món ăn' : 'Đặt món cho bàn này'}
                     </a>
@@ -374,5 +454,59 @@ function promptCancelBooking(bookingId) {
 
     const bsCancelModal = bootstrap.Modal.getOrCreateInstance(cancelModalEl);
     bsCancelModal.show();
+}
+
+const BOOKING_STAR_TEXTS = {
+    5: '⭐⭐⭐⭐⭐ Tuyệt vời! Rất hài lòng về món ăn & dịch vụ',
+    4: '⭐⭐⭐⭐☆ Hài lòng! Bữa tiệc diễn ra chu đáo, tốt đẹp',
+    3: '⭐⭐⭐☆☆ Tạm ổn! Trải nghiệm ở mức bình thường',
+    2: '⭐⭐☆☆☆ Chưa hài lòng! Cần cải thiện thêm chất lượng',
+    1: '⭐☆☆☆☆ Rất thất vọng! Không đạt mong đợi'
+};
+
+function updateBookingStarDesc(star) {
+    const descEl = document.getElementById('bookingStarDescText');
+    if (descEl) {
+        descEl.textContent = BOOKING_STAR_TEXTS[star] || '';
+    }
+}
+
+function openReviewModalFromHistory(bookingId, currentStars, currentComment) {
+    // Đóng modal chi tiết nếu đang mở
+    const detailModalEl = document.getElementById('bookingDetailModal');
+    if (detailModalEl) {
+        const detailModal = bootstrap.Modal.getInstance(detailModalEl);
+        if (detailModal) detailModal.hide();
+    }
+
+    const modalEl = document.getElementById('reviewBookingModal');
+    if (!modalEl) return;
+
+    document.getElementById('reviewModalBookingId').value = bookingId;
+    document.getElementById('reviewModalBookingCode').textContent = '#DB' + String(bookingId).padStart(4, '0');
+
+    currentStars = parseInt(currentStars) || 5;
+    const starRadio = document.getElementById('bstar' + currentStars);
+    if (starRadio) starRadio.checked = true;
+    updateBookingStarDesc(currentStars);
+
+    document.getElementById('bookingReviewCommentInput').value = currentComment || '';
+
+    const delWrapper = document.getElementById('reviewDeleteBtnWrapper');
+    const submitBtn = document.getElementById('bookingReviewSubmitBtn');
+    if (currentComment || currentStars < 5) {
+        submitBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Cập Nhật Đánh Giá';
+        delWrapper.innerHTML = `
+            <a href="<?= BASE_URL ?>?action=xoa-danh-gia&booking_id=${bookingId}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Bạn có chắc muốn xóa nhận xét của đơn này?');">
+                <i class="bi bi-trash3 me-1"></i>Xóa đánh giá
+            </a>
+        `;
+    } else {
+        submitBtn.innerHTML = '<i class="bi bi-send-fill me-1"></i> Gửi Đánh Giá';
+        delWrapper.innerHTML = '';
+    }
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
 }
 </script>

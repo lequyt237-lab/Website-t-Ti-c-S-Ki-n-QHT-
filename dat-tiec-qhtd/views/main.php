@@ -138,6 +138,7 @@
         <a href="<?= BASE_URL ?>" class="nav-link-q">Trang Chủ</a>
         <a href="<?= BASE_URL ?>?action=thuc-don" class="nav-link-q">Thực Đơn</a>
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
+        <a href="<?= BASE_URL ?>?action=danh-gia" class="nav-link-q <?= (($_GET['action'] ?? '') === 'danh-gia') ? 'fw-bold text-success' : '' ?>">Đánh Giá</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
         <div class="vr-nav"></div>
         <?php if (isset($_SESSION['user'])): ?>
@@ -208,6 +209,7 @@
         <a href="<?= BASE_URL ?>" class="nav-link-q">Trang Chủ</a>
         <a href="<?= BASE_URL ?>?action=thuc-don" class="nav-link-q">Thực Đơn</a>
         <a href="<?= BASE_URL ?>?action=set-tiec" class="nav-link-q">Set Tiệc</a>
+        <a href="<?= BASE_URL ?>?action=danh-gia" class="nav-link-q <?= (($_GET['action'] ?? '') === 'danh-gia') ? 'fw-bold text-success' : '' ?>">Đánh Giá</a>
         <a href="<?= BASE_URL ?>?action=lien-he" class="nav-link-q">Liên Hệ</a>
         <?php if (isset($_SESSION['user'])): ?>
           <a href="<?= BASE_URL ?>?action=tai-khoan" class="nav-link-q fw-bold text-success">

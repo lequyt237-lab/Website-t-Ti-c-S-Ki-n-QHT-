@@ -329,6 +329,12 @@
                 </a>
             </li>
             <li class="menu-item">
+                <a href="<?= BASE_URL ?>?action=admin-danh-gia" class="menu-link <?= str_starts_with($currentAction, 'admin-danh-gia') ? 'active' : '' ?>">
+                    <i class="bi bi-star-fill text-warning"></i>
+                    <span>Đánh Giá & Nhận Xét</span>
+                </a>
+            </li>
+            <li class="menu-item">
                 <a href="<?= BASE_URL ?>?action=admin" class="menu-link">
                     <i class="bi bi-balloon-fill"></i>
                     <span>Loại Dịp</span>

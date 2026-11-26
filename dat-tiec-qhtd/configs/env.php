@@ -5,7 +5,11 @@ $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || ((int)($_SERVER['SERVER_PORT'] ?? 80) === 443);
 $scheme = $isHttps ? 'https' : 'http';
 
-$isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1']);
+$isLocal = in_array($_SERVER['HTTP_HOST'] ?? '', ['localhost', '127.0.0.1'])
+    || php_sapi_name() === 'cli'
+    || empty($_SERVER['HTTP_HOST'])
+    || str_contains($_SERVER['HTTP_HOST'] ?? '', 'localhost')
+    || str_contains($_SERVER['HTTP_HOST'] ?? '', '127.0.0.1');
 if ($isLocal) {
     $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
     $baseFolder = rtrim($scriptDir, '/') . '/';

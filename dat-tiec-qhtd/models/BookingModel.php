@@ -112,11 +112,13 @@ class BookingModel extends BaseModel
                    (SELECT COUNT(*) FROM datban_banphong dbp WHERE dbp.datban_id = db.id) AS so_luong_ban_ghep,
                    bp.phu_phi, bp.anh AS anh_ban,
                    ld.ten AS ten_dip,
-                   st.ten AS ten_set, st.gia AS gia_set, st.so_nguoi_phu_hop AS set_so_nguoi
+                   st.ten AS ten_set, st.gia AS gia_set, st.so_nguoi_phu_hop AS set_so_nguoi,
+                   dg.id AS danh_gia_id, dg.so_sao AS danh_gia_sao, dg.binh_luan AS danh_gia_binh_luan, dg.ngay AS danh_gia_ngay
             FROM {$this->table} db
             LEFT JOIN ban_phong bp ON db.banphong_id = bp.id
             LEFT JOIN loai_dip ld ON db.loaidip_id = ld.id
             LEFT JOIN set_tiec st ON db.set_id = st.id
+            LEFT JOIN danh_gia dg ON dg.datban_id = db.id
             WHERE db.nguoidung_id = :user_id
         ";
 
@@ -160,6 +162,7 @@ class BookingModel extends BaseModel
             LEFT JOIN ban_phong bp ON db.banphong_id = bp.id
             LEFT JOIN loai_dip ld ON db.loaidip_id = ld.id
             LEFT JOIN set_tiec st ON db.set_id = st.id
+            LEFT JOIN danh_gia dg ON dg.datban_id = db.id
             WHERE db.nguoidung_id = :user_id
             ORDER BY db.id DESC
             LIMIT :limit
@@ -225,12 +228,14 @@ class BookingModel extends BaseModel
                    (SELECT COUNT(*) FROM datban_banphong dbp WHERE dbp.datban_id = db.id) AS so_luong_ban_ghep,
                    bp.phu_phi, bp.mo_ta AS mota_ban, bp.anh AS anh_ban,
                    ld.ten AS ten_dip, ld.mo_ta AS mota_dip,
-                   st.ten AS ten_set, st.gia AS gia_set, st.mo_ta AS mota_set, st.so_nguoi_phu_hop AS set_so_nguoi
+                   st.ten AS ten_set, st.gia AS gia_set, st.mo_ta AS mota_set, st.so_nguoi_phu_hop AS set_so_nguoi,
+                   dg.id AS danh_gia_id, dg.so_sao AS danh_gia_sao, dg.binh_luan AS danh_gia_binh_luan, dg.ngay AS danh_gia_ngay
             FROM {$this->table} db
             LEFT JOIN nguoidung nd ON db.nguoidung_id = nd.id
             LEFT JOIN ban_phong bp ON db.banphong_id = bp.id
             LEFT JOIN loai_dip ld ON db.loaidip_id = ld.id
             LEFT JOIN set_tiec st ON db.set_id = st.id
+            LEFT JOIN danh_gia dg ON dg.datban_id = db.id
             WHERE db.id = :id
         ";
 
@@ -340,12 +345,14 @@ class BookingModel extends BaseModel
                    nd.ho_ten AS ten_khach, nd.so_dien_thoai AS sdt_khach,
                    bp.ten AS ten_ban, bp.loai AS loai_ban, bp.suc_chua, bp.phu_phi,
                    ld.ten AS ten_dip,
-                   st.ten AS ten_set
+                   st.ten AS ten_set,
+                   dg.id AS danh_gia_id, dg.so_sao AS danh_gia_sao, dg.binh_luan AS danh_gia_binh_luan, dg.ngay AS danh_gia_ngay
             FROM {$this->table} db
             JOIN nguoidung nd ON db.nguoidung_id = nd.id
             LEFT JOIN ban_phong bp ON db.banphong_id = bp.id
             LEFT JOIN loai_dip ld ON db.loaidip_id = ld.id
             LEFT JOIN set_tiec st ON db.set_id = st.id
+            LEFT JOIN danh_gia dg ON dg.datban_id = db.id
             WHERE (nd.so_dien_thoai = :phone OR nd.so_dien_thoai LIKE :phone_like";
 
         $params = [
