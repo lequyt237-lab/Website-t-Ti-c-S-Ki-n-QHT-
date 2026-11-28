@@ -4,6 +4,12 @@ class BookingModel extends BaseModel
 {
     protected $table = 'dat_ban';
 
+    public function __construct()
+    {
+        parent::__construct();
+        $this->ensureBookingPaymentSchema();
+    }
+
 
     // Lấy danh sách tất cả bàn & phòng
     public function getAllRoomsAndTables()
