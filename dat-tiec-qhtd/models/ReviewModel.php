@@ -121,11 +121,11 @@ class ReviewModel extends BaseModel
         $limit = max(1, (int)$limit);
         $sql = "
             SELECT dg.*, 
-                   db.id AS booking_id, db.ngay_dat, db.ca,
-                   nd.ho_ten AS user_name,
-                   bp.ten AS ban_ten, bp.loai AS ban_loai,
-                   st.ten AS set_ten,
-                   ld.ten AS dip_ten
+                   db.id AS booking_id, db.ngay_dat, db.ca, db.nguoidung_id AS user_id,
+                   nd.ho_ten AS user_name, nd.ho_ten AS ten_khach,
+                   bp.ten AS ban_ten, bp.ten AS ten_ban, bp.loai AS ban_loai,
+                   st.ten AS set_ten, st.ten AS ten_set,
+                   ld.ten AS dip_ten, ld.ten AS ten_dip
             FROM {$this->table} dg
             JOIN dat_ban db ON dg.datban_id = db.id
             LEFT JOIN nguoidung nd ON db.nguoidung_id = nd.id
@@ -167,6 +167,7 @@ class ReviewModel extends BaseModel
         $row  = $stmt->fetch();
 
         return [
+            'total'         => (int)($row['total_reviews'] ?? 0),
             'total_reviews' => (int)($row['total_reviews'] ?? 0),
             'avg_stars'     => round((float)($row['avg_stars'] ?? 5.0), 1),
             'star_5'        => (int)($row['star_5'] ?? 0),

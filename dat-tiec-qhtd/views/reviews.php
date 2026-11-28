@@ -9,8 +9,8 @@
  * - $isLoggedIn
  */
 
-$totalReviews = $stats['total'];
-$avgStars = number_format($stats['avg_stars'], 1);
+$totalReviews = $stats['total'] ?? $stats['total_reviews'] ?? 0;
+$avgStars = number_format($stats['avg_stars'] ?? 5.0, 1);
 ?>
 
 <style>
@@ -275,9 +275,14 @@ $avgStars = number_format($stats['avg_stars'], 1);
             <div class="row g-4">
                 <?php foreach ($reviews as $rev): ?>
                     <?php
-                    $initial = mb_strtoupper(mb_substr($rev['ten_khach'] ?? 'K', 0, 1, 'UTF-8'));
-                    $isAuthor = ($isLoggedIn && (int)$rev['user_id'] === (int)$_SESSION['user']['id']);
+                    $tenKhach = $rev['ten_khach'] ?? $rev['user_name'] ?? 'Khách hàng';
+                    $initial = mb_strtoupper(mb_substr($tenKhach, 0, 1, 'UTF-8'));
+                    $revUserId = $rev['user_id'] ?? null;
+                    $isAuthor = ($isLoggedIn && $revUserId !== null && (int)$revUserId === (int)($_SESSION['user']['id'] ?? 0));
                     $isAdmin  = ($isLoggedIn && ($_SESSION['user']['vai_tro'] ?? '') === 'admin');
+                    $tenDip   = $rev['ten_dip'] ?? $rev['dip_ten'] ?? '';
+                    $tenBan   = $rev['ten_ban'] ?? $rev['ban_ten'] ?? '';
+                    $tenSet   = $rev['ten_set'] ?? $rev['set_ten'] ?? '';
                     ?>
                     <div class="col-md-6 col-lg-4">
                         <div class="review-card">
@@ -289,7 +294,7 @@ $avgStars = number_format($stats['avg_stars'], 1);
                                             <?= $initial ?>
                                         </div>
                                         <div>
-                                            <h6 class="fw-bold mb-0 text-dark"><?= htmlspecialchars($rev['ten_khach']) ?></h6>
+                                            <h6 class="fw-bold mb-0 text-dark"><?= htmlspecialchars($tenKhach) ?></h6>
                                             <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.65rem;">
                                                 <i class="bi bi-patch-check-fill me-1"></i>Đã trải nghiệm tiệc
                                             </span>
@@ -312,12 +317,12 @@ $avgStars = number_format($stats['avg_stars'], 1);
                                 <div class="p-2 rounded bg-light border small text-secondary mb-3" style="font-size: 0.78rem;">
                                     <i class="bi bi-calendar2-check text-primary me-1"></i>
                                     <strong>Tiệc:</strong> 
-                                    <?= !empty($rev['ten_dip']) ? htmlspecialchars($rev['ten_dip']) : 'Tiệc gia đình' ?>
-                                    <?php if (!empty($rev['ten_ban'])): ?>
-                                        • <?= htmlspecialchars($rev['ten_ban']) ?>
+                                    <?= !empty($tenDip) ? htmlspecialchars($tenDip) : 'Tiệc gia đình' ?>
+                                    <?php if (!empty($tenBan)): ?>
+                                        • <?= htmlspecialchars($tenBan) ?>
                                     <?php endif; ?>
-                                    <?php if (!empty($rev['ten_set'])): ?>
-                                        • <?= htmlspecialchars($rev['ten_set']) ?>
+                                    <?php if (!empty($tenSet)): ?>
+                                        • <?= htmlspecialchars($tenSet) ?>
                                     <?php endif; ?>
                                 </div>
 
