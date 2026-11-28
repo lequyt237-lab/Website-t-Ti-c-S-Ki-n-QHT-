@@ -5,24 +5,8 @@ class AdminController extends BaseModel
     public function __construct()
     {
         parent::__construct();
-        $this->initCombineTableDb();
+        $this->ensureBookingPaymentSchema();
         $this->checkAdminAuth();
-    }
-
-    // Tự động khởi tạo bảng ghép bàn datban_banphong nếu chưa tồn tại
-    private function initCombineTableDb()
-    {
-        try {
-            $this->pdo->exec("
-                CREATE TABLE IF NOT EXISTS `datban_banphong` (
-                  `id` INT AUTO_INCREMENT PRIMARY KEY,
-                  `datban_id` INT NOT NULL,
-                  `banphong_id` INT NOT NULL,
-                  INDEX `idx_datban` (`datban_id`),
-                  INDEX `idx_banphong` (`banphong_id`)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-            ");
-        } catch (Exception $e) {}
     }
 
     // Middleware kiểm tra quyền admin

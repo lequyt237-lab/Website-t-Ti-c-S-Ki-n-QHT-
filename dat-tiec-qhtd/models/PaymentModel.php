@@ -7,73 +7,7 @@ class PaymentModel extends BaseModel
     public function __construct()
     {
         parent::__construct();
-        $this->ensureSchema();
-    }
-
-    /**
-     * Tự động kiểm tra và thêm bảng thanh_toan và các cột trong dat_ban nếu chưa có
-     */
-    private function ensureSchema()
-    {
-        try {
-            // 1. Kiểm tra bảng thanh_toan
-            $checkTable = $this->pdo->query("SHOW TABLES LIKE '{$this->table}'")->fetch();
-            if (!$checkTable) {
-                $createSql = "
-                    CREATE TABLE IF NOT EXISTS `{$this->table}` (
-                        `id` INT AUTO_INCREMENT PRIMARY KEY,
-                        `datban_id` INT NOT NULL,
-                        `nguoidung_id` INT NULL,
-                        `ma_giao_dich` VARCHAR(64) NOT NULL UNIQUE,
-                        `so_tien` DECIMAL(12, 2) NOT NULL DEFAULT 0,
-                        `loai_thanh_toan` ENUM('dat_coc', 'toan_bo', 'thanh_toan_them') NOT NULL DEFAULT 'dat_coc',
-                        `phuong_thuc` ENUM('chuyen_khoan', 'vnpay', 'momo', 'tien_mat') NOT NULL DEFAULT 'chuyen_khoan',
-                        `trang_thai` ENUM('cho_xac_nhan', 'thanh_cong', 'that_bai', 'da_huy') NOT NULL DEFAULT 'thanh_cong',
-                        `ngay_thanh_toan` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        `noi_dung` VARCHAR(255) NULL,
-                        `anh_bien_lai` VARCHAR(255) NULL,
-                        `ghi_chu_admin` TEXT NULL,
-                        `ngay_tao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        INDEX `idx_datban` (`datban_id`),
-                        INDEX `idx_magd` (`ma_giao_dich`)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-                ";
-                $this->pdo->exec($createSql);
-            }
-
-            // 2. Kiểm tra các cột trong dat_ban
-            $cols = $this->pdo->query("SHOW COLUMNS FROM dat_ban")->fetchAll(PDO::FETCH_COLUMN);
-
-            if (!in_array('trang_thai_thanh_toan', $cols)) {
-                $this->pdo->exec("
-                    ALTER TABLE dat_ban 
-                    ADD COLUMN `trang_thai_thanh_toan` ENUM('chua_thanh_toan', 'da_dat_coc', 'da_thanh_toan', 'hoan_tien') NOT NULL DEFAULT 'chua_thanh_toan' AFTER `trang_thai`
-                ");
-            }
-
-            if (!in_array('tien_coc', $cols)) {
-                $this->pdo->exec("
-                    ALTER TABLE dat_ban 
-                    ADD COLUMN `tien_coc` DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER `trang_thai_thanh_toan`
-                ");
-            }
-
-            if (!in_array('so_tien_da_coc', $cols)) {
-                $this->pdo->exec("
-                    ALTER TABLE dat_ban 
-                    ADD COLUMN `so_tien_da_coc` DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER `tien_coc`
-                ");
-            }
-
-            if (!in_array('so_tien_da_tra', $cols)) {
-                $this->pdo->exec("
-                    ALTER TABLE dat_ban 
-                    ADD COLUMN `so_tien_da_tra` DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER `so_tien_da_coc`
-                ");
-            }
-        } catch (Exception $e) {
-            error_log("PaymentModel schema check error: " . $e->getMessage());
-        }
+        $this->ensureBookingPaymentSchema();
     }
 
     /**
